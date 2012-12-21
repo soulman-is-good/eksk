@@ -1,0 +1,275 @@
+/* 
+    Document   : admin
+    Created on : 29.09.2011, 14:51:32
+    Author     : Soul_man
+    Description:
+        Purpose of the stylesheet follows.
+*/
+
+root { 
+    display: block;
+}
+
+.menu {
+    background:url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPHJhZGlhbEdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNzUlIj4KICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM0ODI0NzgiIHN0b3Atb3BhY2l0eT0iMSIvPgogICAgPHN0b3Agb2Zmc2V0PSI0NSUiIHN0b3AtY29sb3I9IiM2MDY3YWEiIHN0b3Atb3BhY2l0eT0iMC4yNCIvPgogICAgPHN0b3Agb2Zmc2V0PSI3NCUiIHN0b3AtY29sb3I9IiM2ZjkyY2IiIHN0b3Atb3BhY2l0eT0iMCIvPgogICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjN2RiOWU4IiBzdG9wLW9wYWNpdHk9IjAiLz4KICA8L3JhZGlhbEdyYWRpZW50PgogIDxyZWN0IHg9Ii01MCIgeT0iLTUwIiB3aWR0aD0iMTAxIiBoZWlnaHQ9IjEwMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+);
+}
+
+.admin {
+    font-family: Tahoma, serif;
+    font-size:14px;
+}
+.admin table.form td {
+    padding:5px 0px 5px 10px;
+}
+
+.admin-button {
+    position: relative;
+    border:none;
+    cursor: pointer;
+    background:#4d357d;
+    color:#FFF !important;
+    font-size:18px;
+    padding:6px 28px;
+    -moz-border-radius:5px;
+    -webkit-border-radius:5px;
+    -o-border-radius:5px;
+    border-radius:5px;
+    behavior:url(pie.htc);
+}
+.admin-button:active {
+    top:2px;
+}
+
+.admin label {
+    font-size: 20px;
+    color:#000000;
+}
+
+.admin input.field {
+    width: 347px;
+    border:1px solid #000;
+    background: #fff;
+    font-size: 16px;
+    padding:10px 16px 6px;
+}
+
+.admin textarea.field {
+    width: 347px;
+    border:1px solid #000;
+    background: #fff;
+    font-size: 16px;
+    padding:10px 16px 6px;
+}
+
+.admin-panel, .admin-panel-hidden, .admin-scape {
+    position:fixed;
+    left:0px;
+    bottom:0px;
+    width:100%;
+    z-index:5000;
+}
+
+.admin-scape {
+    background: #FFFFFF;    
+    bottom:17px;
+    display: none;
+}
+
+.admin-scape .inner {
+    border:7px solid #4D357D;
+    border-bottom:none;
+    height: 585px;
+    padding: 0 0 0 22px;
+}
+
+.admin-scape-upper {
+    height: 50px;
+    padding: 10px 10px  0 0;
+    font:25px Tahoma;
+    color:#4d357d;
+}
+.admin-scape-upper span a{
+    color:#4d357d !important;
+}
+
+.admin-main-content {
+    height: 392px;
+    width: 100%;
+    position: relative;
+    overflow: auto;
+}
+.button-toolbar {
+    height: 74px;
+}
+
+.admin-panel {
+    height:100px;
+    color:#4D357D;
+    border-top:7px solid #4D357D;
+    background: url(/images/admin/logo.gif) no-repeat right bottom #FFF;
+    overflow: hidden;
+}
+
+.admin-panel-hidden {
+    background: none transparent;
+    height: 25px;
+    text-align: center;
+}
+
+.admin-panel-upper {
+    height:11px;
+    text-align: center;
+    display: table;
+    width: 100%;
+}
+.admin-panel-upper .buttCont{
+    display: inline;
+    font-size: 11px;
+    height: 11px;
+    width:129px;
+    vertical-align: top;
+    background: #4D357D;
+}
+
+.admin-system-close, .admin-system-minimize{
+    float:right;
+    padding:1px 19px 3px 20px;
+/*    margin-top:5px;*/
+    font-size: 11px;
+    color:#848282 !important;
+}
+.admin-system-close{
+    background: url(/images/admin/panel/close.gif) no-repeat right center;
+}
+.admin-system-minimize{
+    background: url(/images/admin/panel/minimize.gif) no-repeat right center;
+}
+
+.admin-panel-upper .showbutton {
+    background: url(/images/admin/panel/_hide.gif) no-repeat center center;    
+}
+.admin-panel-show {
+    background: url(/images/admin/panel/_gradient.gif) repeat-x left top #4D357D;
+    display: inline;
+    width:129px;
+    height:25px;
+    font-size: 25px;
+}
+
+.admin-panel-show .hidebutton {
+    background: url(/images/admin/panel/_show.gif) no-repeat center 4px transparent;
+    font-size: 25px;
+}
+
+.admin-modules {
+    padding:0px 32px 0px;
+    height: 72px;
+}
+
+.admin-module {
+    float:left;
+    padding:8px 10px 22px;
+    text-align: center;
+/*    width:40px;*/
+    height: 53px;
+}
+.admin-module-sep {
+    width:1px;
+    height: 72px;
+    font-size: 1px;
+    border-right: 1px solid #BFB2D9;
+    background: #8470AB;
+    float:left;
+}
+.admin-module a {
+    font-size: 10px;
+    color:#4d357d !important;
+}
+/*.admin-button {
+    position: relative;
+    color:#4d357d;
+    font-size: 20px;
+    height: 31px;
+    background: url(/images/admin/buttons/c.gif) repeat-x;
+    display:inline;
+}
+
+.admin-button a {
+    padding:0px 8px;
+    color:#4D357D;
+}
+
+.admin-button .al {
+    position: absolute;
+    left:0px;
+    top:0px;
+    height: 31px;
+    width: 7px;
+    background: url(/images/admin/buttons/l.gif) no-repeat;
+}
+
+.admin-button .ar {
+    position: absolute;
+    right:0px;
+    top:0px;
+    height: 31px;
+    width: 7px;
+    background: url(/images/admin/buttons/r.gif) no-repeat;
+}*/
+
+.admin div.n {
+    border-right: 5px solid #ffcccc;
+}
+
+.admin .head div {
+    font-size: 10px;
+    color:#4D357D;
+}
+.admin .records {
+/*    height:34px;*/
+    padding-bottom: 10px;
+}
+.admin .records div {
+    float:left;
+}
+.admin .records td {
+    padding-right:10px;
+}
+
+.admin-status-1 {
+    background: url(/images/admin/eye.gif) no-repeat left top;
+    width: 18px;
+    height: 14px;
+    font-size: 1px;
+    cursor: pointer;
+}
+
+.admin-status-0 {
+    background: url(/images/admin/eye.gif) no-repeat left bottom;
+    cursor: pointer;
+    width: 18px;
+    height: 14px;
+    font-size: 1px;
+}
+
+.admin-list {
+    border-collapse: collapse;
+    font-family: Tahoma;
+}
+
+.admin-list th {
+    font-size: 12px;
+    background: #777777;
+    color:#FFFFFF;
+    padding:0px 5px;
+    border-right: 1px solid #FFF;
+}
+.admin-list td {
+    font-size: 11px;
+    padding:0px 5px;
+    border-right: 1px solid #000;
+}
+
+.admin-list tr.n {
+    background: #cccccc;
+}
