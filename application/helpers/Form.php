@@ -12,9 +12,11 @@
  */
 class Form extends X3_Form {
     
-    public function __construct($class=null,$attr=array()) {
-        parent::__construct($class, $attr);
-    }
+    public $defaultWrapper = array(
+        'row'=>"<tr><td class=\"label\"><label for=\"%Id\">%label</label></td><td class=\"field\"><div class=\"wrapper\">%field</div></td><td>%required</td></tr>",
+        'wraper'=>"<table>%rows<tr><td colspan=\"3\">%submit</td></tr></table>"
+    );
+    
     public $defaultScripts = array(
         'text'=>"<script>
                     if(typeof CKEDITOR.instances['%Id'] != 'undefined')
@@ -28,6 +30,10 @@ class Form extends X3_Form {
             })
             </script>"        
     );
+    
+    public function __construct($class=null,$attr=array()) {
+        parent::__construct($class, $attr);
+    }
 }
 
 ?>

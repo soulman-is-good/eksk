@@ -13,21 +13,18 @@
 <link href="/favicon.ico" rel="shortcut icon" type="image/x-icon">
 </head>
 <body itemscope itemtype="http://schema.org/WebPage">
-    <div id="<?=isset($main)?'index':'inner'?>">
+    <div class="main-block <?=X3::app()->module->controller->id." ".X3::app()->module->controller->action?>">
         <div class="header"><header>
-                    <nav>
-                    <div class="main_menu">
-                        <?=X3_Widget::run('@layouts:menu.php')?>
-                        <br/>
-                    </div>
-                    </nav>
+                <?=X3_Widget::run('@layouts:header.php',array('main'=>isset($main)))?>
         </header></div>
         <div class="body">
+            <?=X3_Widget::run('@layouts:menu.php',array('type'=>'Боковое'))?>
             <?=$content?>
+            <div class="shadow"><i></i><b></b><em></em></div>
         </div>
         <div class="footer">
             <footer>
-                <?//X3_Widget::run('@layouts:footer.php',array('ismain'=>isset($main)));?>
+                <?=X3_Widget::run('@layouts:footer.php',array('main'=>isset($main)));?>
             </footer>
         </div>
     </div>

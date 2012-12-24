@@ -17,7 +17,8 @@ class Menu extends X3_Module_Table {
 
     public $_fields = array(
         'id'=>array('integer[10]','unsigned','primary','auto_increment'),
-        'parent_id'=>array('integer[10]','unsigned','index','default'=>'NULL','ref'=>array('Menu','id','query'=>array('@condition'=>array('parent_id'=>NULL))),'tree'=>array()),
+//        'parent_id'=>array('integer[10]','unsigned','index','default'=>'NULL','ref'=>array('Menu','id','query'=>array('@condition'=>array('parent_id'=>NULL))),'tree'=>array()),
+        'type'=>array("enum['Боковое','Нижнее']",'default'=>'Боковое'),
         'role'=>array('string[255]','default'=>'*'),
         'title'=>array('string[255]','language'),
         'link'=>array('string[255]','default'=>'/'),
@@ -38,8 +39,9 @@ class Menu extends X3_Module_Table {
     }
     public function fieldNames() {
         return array(
-            'parent_id'=>'Родитель',
+//            'parent_id'=>'Родитель',
             'title'=>'Заголовок',
+            'type'=>'Тип меню',
             'link'=>'Ссылка',
             'role'=>'Видят только',
             'weight'=>'Порядок',
@@ -49,21 +51,15 @@ class Menu extends X3_Module_Table {
     public function moduleTitle() {
         return 'Меню';
     }
-    public function actionInsert(){
-        $model = $this->table->select('*')->where('id=1')->asObject(true);
-        $this->template->render('insert',array('model'=>$model));
-    }
-
     public function getDefaultScope() {
         return array(
-            '@condition'=>array('parent_id'=>'NULL'),
             '@order'=>array('weight')
         );
     }
     
     public function beforeValidate() {
-        if($this->parent_id == 0)
-            $this->parent_id = null;
+//        if($this->parent_id == 0)
+//            $this->parent_id = null;
         return true;
     }
     

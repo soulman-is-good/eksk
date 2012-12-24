@@ -28,25 +28,13 @@ class UserIdentity extends X3_User{
     }
     
     public function  authenticate() {
-        $user = User::newInstance()->table->select('*')->where("`login`='$this->username'")->asObject(true);
-        if($user == NULL) {
-            if($this->username == 'sudo'){
-                $user = new User;
-                $user->login = 'sudo';
-                $user->password = $this->password;
-                $user->email = 'admin@maggroup.kz';
-                $user->role = 'root';
-                $user->name = 'Super Admin';
-                $user->save();
-            }else
-                throw new X3_404();
-        }elseif($this->password != $user->password){
-            var_dump($this->password , $user->password);exit;
+        $user = User::newInstance()->table->select('*')->where("`email`='$this->username'")->asObject(true);
+        if($this->password != $user->password){
             return false;
         }
         $this->id = $user->id;
         $this->login = $user->login;
-        $this->name = $user->name;
+        $this->name = $user->name." ".$user->surname;
         $this->role = $user->role;
         $this->email = $user->email;
         $user->lastbeen_at = time();

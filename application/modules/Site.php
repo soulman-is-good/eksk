@@ -58,7 +58,11 @@ class Site extends X3_Module {
         );
     }
     public function actionIndex() {
-        $this->template->render('index',array('main'=>true));
+        $user = User::getByPk(X3::user()->id);
+        if($user == null)
+            throw new X3_404();
+        
+        $this->template->render('index',array('user'=>$user));
     }
 
     public function actionMap() {

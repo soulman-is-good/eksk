@@ -312,6 +312,7 @@ class X3_Form extends X3_Renderer {
             if((isset($flds['default']) && ($flds['default']=='NULL' || is_null($flds['default']))) || in_array('null', $flds));
                 $required = '&nbsp;';
             $tmp = str_replace("%field", $tmp, $wrapper);
+            $tmp = str_replace("%Id", "{$class}_$name", $tmp);
             $tmp = str_replace("%label", $field, $tmp);
             $tmp = str_replace("%required", $required, $tmp);
             $_html .= $tmp;

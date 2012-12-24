@@ -20,7 +20,10 @@ class User extends X3_Module_Table {
     
     public $_fields = array(
         'id'=>array('integer[10]','unsigned','primary','auto_increment'),
+        'image' => array('file', 'default' => 'NULL', 'allowed' => array('jpg', 'gif', 'png', 'jpeg'), 'max_size' => 10240),
         'name'=>array('string[255]','default'=>''),
+        'surname'=>array('string[255]','default'=>''),
+        'thirdname'=>array('string[255]','default'=>''),
         'login'=>array('string[64]','unique'),
         'email'=>array('email','unique'),
         'password'=>array('string[255]','password'),
@@ -31,12 +34,14 @@ class User extends X3_Module_Table {
     
     public function fieldNames() {
         return array(
-            'name'=>'Имя',
-            'login'=>'Логин',
-            'password'=>'Пароль',
+            'name'=>X3::translate('Имя'),
+            'surname'=>X3::translate('Фамилия'),
+            'thirdname'=>X3::translate('Отчество'),
+            'login'=>X3::translate('Логин'),
+            'password'=>X3::translate('Пароль'),
             'email'=>'E-mail',
-            'role'=>'Роль',
-            'lastbeen_at'=>'Последнее посещение',
+            'role'=>X3::translate('Роль'),
+            'lastbeen_at'=>X3::translate('Последнее посещение'),
         );
     }
 
@@ -44,8 +49,8 @@ class User extends X3_Module_Table {
         return array(
             'allow'=>array(
                 '*'=>array('login'),
-                'user'=>array('settings','logout','password'),
-                'admin'=>array('settings','logout','password','cart','balance','history','credit')
+                'user'=>array('edit','logout','password'),
+                'admin'=>array('edit','admins','logout','password')
             ),
             'deny'=>array(
                 '*'
@@ -66,8 +71,9 @@ class User extends X3_Module_Table {
     public static function getByPk($pk,$class=__CLASS__) {
         return parent::getByPk($pk,$class);
     }
-    public function actionSettings() {
+    public function actionEdit() {
         $id = X3::app()->user->id;
+        exit;
         $user = $this->table->select('*')->where('id='.$id)->asObject(true);
         $success = null;
         if(isset($_POST['User'])){
@@ -101,15 +107,21 @@ class User extends X3_Module_Table {
         }
         $this->template->render('settings',array('user'=>$user,'success'=>$success));
     }
+    
+    public function actionAdmins() {
+        $count = User::num_rows(array('role'=>'admin'));
+        $models = User::get(array('role'=>'admin'));
+        $this->template->render('admins',array('count'=>$count,'models'=>$models));
+    }
 
     public function actionLogin() {
         $error = false;
-        $u = array('uid'=>'','password'=>'');
+        $u = array('email'=>'','password'=>'');
         if(isset($_POST['User'])){
             $u = array_extend($u,$_POST['User']);
-            $u['login'] = mysql_real_escape_string($u['login']);
+            $u['email'] = mysql_real_escape_string($u['email']);
             $u['password'] = mysql_real_escape_string($u['password']);
-            $user = new UserIdentity($u['login'], $u['password']);
+            $user = new UserIdentity($u['email'], $u['password']);
             if($user->login()){
                 $this->controller->redirect($_SERVER['HTTP_REFERER']);
             }else{

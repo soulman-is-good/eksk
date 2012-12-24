@@ -4,7 +4,7 @@
  * 
  */
 (function($){
-    $.fn,attrs = function(){
+    $.fn.attrs = function(){
         var attributes = this[0].attributes;
         var result = {};
         for(i in attributes){
@@ -22,13 +22,14 @@
             multiselect:false, //rebulids one's group checkboxes into multiselect dropdown
             selectableText:false, //TODO: text can be selected. Click event goes to an arrow
             editableText:false, //TODO: text can be edited to filter results, overloads selectableText property
-            width:false //width of the select element. Could be 'fit' or standart css
+            width:false, //width of the select element. Could be 'fit' or standart css
+            fcclass:'select'
         }
         var temp_css = {};
         ops = $.extend({},ops,useroptions);
         var self = this;
         
-        var container = $('<div />').addClass('select');
+        var container = $('<div />').addClass(ops.fcclass);
         var selected = $('<div />').addClass('selected');
         var options = $('<div />').addClass('options');
         
@@ -150,6 +151,7 @@
                     })
                     options.append(option);
                     if($(this).is(':selected')){
+                        option.addClass('active')
                         selected.html(title);
                     }
                     
@@ -205,7 +207,17 @@
     }
     $(function(){
         $('select[fcselect]').each(function(){
-            $(this).fcselect();
+            var data = $(this).data();
+            var ops = {
+                emulateChangeAction:true, 
+                multiselect:false,
+                selectableText:false,
+                editableText:false,
+                width:false,
+                fcclass:'select'
+            }
+            ops = $.extend({}, ops, data);
+            $(this).fcselect(ops);
         })
         $('span[fcselect], div[fcselect]').each(function(){
             $(this).fcselect({multiselect:true});

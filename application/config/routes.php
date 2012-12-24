@@ -19,5 +19,8 @@ array(
     '/^\/news\/([0-9]+)?(.*)$/' => array('/news/show/id/$1$2', true),
     //Jobs
     '/^\/jobs\/([0-9]+)?(.*)$/' => array('/jobs/show/id/$1$2', true),
+    
+    
+    '/^\/admins(.*)$/' => array('/user/admins/$1', true),
 )
 ?>

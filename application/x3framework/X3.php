@@ -29,7 +29,11 @@ defined('IS_SAME_AJAX') or define('IS_SAME_AJAX', IS_AJAX && IS_SAME_DOMAIN);
  */
 define('BASE_PATH', dirname(__FILE__));
 class X3 {
-
+    
+    /**
+     *
+     * @var X3_App returns X3_App  
+     */
     private static $_app;
 
     /**
@@ -82,16 +86,23 @@ class X3 {
 
     /**
      *
-     * @return object Returns web application
+     * @return X3_App Returns web application
      */
     public static function app() {
         return self::$_app;
     }
-    
+    /**
+     * 
+     * @return X3_MySQLConnection
+     */
     public static function db() {
         return self::$_app->db;
     }
     
+    /**
+     * 
+     * @return X3_User
+     */
     public static function user() {
         return self::$_app->user;
     }

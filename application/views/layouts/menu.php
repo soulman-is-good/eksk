@@ -1,22 +1,24 @@
 <?php
-$menus = Menu::get(array('@condition'=>array('status','parent_id'=>NULL),'@order'=>'weight, title'));
-X3::app()->menuCount = $menus->count();
+if($type == 'Нижнее'):
+$menus = Menu::get(array('@condition'=>array('status','type'=>'Нижнее'),'@order'=>'weight, title'));
 ?>
-<ul>
-    <?foreach($menus as $menu):
-        $submenus = Menu::get(array('@condition'=>array('status','parent_id'=>$menu->id),'@order'=>'weight, title'));
-        $count = $submenus->count();
-    ?>
-    <li>
-        <a href="<?=$menu->link?>" <?if($count>0):?>class="sub"<?endif;?>><?=$menu->title?></a>
-        <?if($count>0):?>
-        <div class="submenu">
-            <b><!--bridge--></b>
-            <?foreach($submenus as $sm):?>
-            <div><a href="<?=$sm->link?>"><?=$sm->title?></a></div>
-            <?endforeach;?>
-        </div>
-        <?endif;?>
-    </li>
+    <?foreach($menus as $menu):?>
+    <a href="<?=$menu->link?>"><?=$menu->title?></a>
     <?endforeach;?>
-</ul>
+<?elseif(!X3::user()->isGuest()):?>
+    <div class="left_menu">
+        <a href="#notify" class="menu_item notify"><span><?=X3::translate('Мои оповещения');?></span></a>
+        <?if(X3::app()->request->isActive('/')):?>
+        <span class="menu_item profile"><span><?=X3::translate('Мой профиль');?></span></span>
+        <?else:?>
+        <a href="/" class="menu_item profile"><span><?=X3::translate('Мой профиль');?></span></a>
+        <?endif;?>
+        <a href="#ksk/" class="menu_item ksk"><span><?=X3::translate('КСК');?></span></a>
+        <a href="#users/" class="menu_item users"><span><?=X3::translate('Жильцы');?></span></a>
+        <?if(X3::app()->request->isActive('/admins')):?>
+        <span class="menu_item admins"><span><?=X3::translate('Администраторы');?></span></span>
+        <?else:?>
+        <a href="/admins/" class="menu_item admins"><span><?=X3::translate('Администраторы');?></span></a>
+        <?endif;?>
+    </div>
+<? endif; ?>
