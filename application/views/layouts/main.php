@@ -20,7 +20,6 @@
         <div class="body">
             <?=X3_Widget::run('@layouts:menu.php',array('type'=>'Боковое'))?>
             <?=$content?>
-            <div class="shadow"><i></i><b></b><em></em></div>
         </div>
         <div class="footer">
             <footer>

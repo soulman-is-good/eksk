@@ -12,6 +12,11 @@
  */
 class Starter extends X3_Component {
     
+    public $allowed = array(
+        'user/login',
+        'admin/add',
+    );
+    
     public function init() {
         $this->addTrigger('onStartApp');
         $this->addTrigger('onRender');
@@ -19,7 +24,7 @@ class Starter extends X3_Component {
     }
     
     public function onStartApp($controller,$action) {
-        if(X3::user()->isGuest() && $controller!='user' && $action!='login'){
+        if(X3::user()->isGuest() && !in_array($controller.'/'.$action,$this->allowed)){
             $controller = 'user';
             $action = 'login';
         }

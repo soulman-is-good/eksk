@@ -157,9 +157,27 @@ html, body {height:100%;font:14px Arial, sans-serif;background: #bed9e6;}
     min-height:100%;
     position:relative;
     min-width:900px;
+    padding-bottom:40px;
 }
 * html #index,* html #inner {height:100%}
 
+.errors {
+    background: #FFE8E8;
+    padding:20px;
+    margin:10px;
+    border:2px solid #EDA3A3;
+    border-radius: 10px;
+}
+.errors ul {
+    list-style: none;
+    padding:0;
+    margin:0;
+}
+.errors ul li {
+    color:#470000;
+    padding:0px;
+    margin:2px 0px;
+}
 .eksk-form {
 }
 
@@ -196,10 +214,11 @@ html, body {height:100%;font:14px Arial, sans-serif;background: #bed9e6;}
 }
 
 .header .user-block {
-    padding:20px 20px 0 0;
+    padding:15px 20px 0 0;
 }
 .header a.quit {
     margin:0 10px 0;
+    border:none;
 }
 .header a.user {
     margin-top:-2px;
@@ -216,9 +235,10 @@ html, body {height:100%;font:14px Arial, sans-serif;background: #bed9e6;}
 
 .left_menu {
     width:180px;
-    position:absolute;
+    float:left;
+/*    position:absolute;
     left:-200px;
-    top:0px;
+    top:0px;*/
 }
 
 .left_menu .menu_item {
@@ -227,13 +247,40 @@ html, body {height:100%;font:14px Arial, sans-serif;background: #bed9e6;}
     border-bottom:none;
     text-align: center;
     margin-bottom:18px;
-    padding-top:112px;
+    padding-top:111px;
 }
+
+/*********
+Active/Passive buttons
+*********/
+.left_menu a.menu_item {background-position:0px 0px;}
+.left_menu span.menu_item {background-position:0px -130px;}
+
+.left_menu a.menu_item.notify {background-position:0px 0px;}
+.left_menu span.menu_item.notify {background-position:0px -130px;}
+
+.left_menu a.menu_item.profile {background-position:-180px 0px;}
+.left_menu span.menu_item.profile {background-position:-180px -130px;}
+
+.left_menu a.menu_item.ksk {background-position:-360px 0px;}
+.left_menu span.menu_item.ksk {background-position:-360px -130px;}
+
+.left_menu a.menu_item.users {background-position:-540px 0px;}
+.left_menu span.menu_item.users {background-position:-540px -130px;}
+
+.left_menu a.menu_item.admins {background-position:-720px 0px;}
+.left_menu span.menu_item.admins {background-position:-720px -130px;}
+/*********
+Active/Passive buttons
+*********/
+
 .left_menu a.menu_item span {
     border-bottom:1px solid #95c4e4;
 }
 .left_menu span.menu_item span {
     color:#000;
+    font-size:16px;
+    border-bottom:1px solid transparent;
     text-shadow: 0 1px 0 #FFF;
 }
 .left_menu .menu_item:hover span {
@@ -241,9 +288,8 @@ html, body {height:100%;font:14px Arial, sans-serif;background: #bed9e6;}
 }
 .body {
     padding-bottom:40px;
-    background:#FFF;
     position:relative;
-    margin:0px 10px 140px 210px;
+    margin:0px 10px 140px 10px;
     border-radius: 10px;
     -webkit-border-radius: 10px;
     -moz-border-radius: 10px;
@@ -253,6 +299,9 @@ html, body {height:100%;font:14px Arial, sans-serif;background: #bed9e6;}
 }
 .user.login .body {
     margin:0px 110px 140px;
+}
+.user.login .eksk-wnd, .eksk-wnd.login {
+    margin:0 auto;
 }
 
 .site.index .head em {
@@ -274,7 +323,7 @@ html, body {height:100%;font:14px Arial, sans-serif;background: #bed9e6;}
 /***
 Administrators list
  ***/
-.user.admins .eksk-wnd .content{
+.eksk-wnd .content{
     margin:20px;
 }
 .user.admins .eksk-wnd .content .stats{
@@ -315,20 +364,20 @@ Administrators list
     display:block;
     clear:both;
 }
-.body .shadow {
+.shadow {
     height:55px;
     position:absolute;
     bottom:-54px;
     left:0px;
     width:100%;
 }
-.body .shadow em {
+.shadow em {
     display:block;
     background: url(../images/shadow.png) repeat-x 0 0;
     margin:0 65px;
     height:55px;
 }
-.body .shadow i {
+.shadow i {
     display:block;
     float:left;
     background: url(../images/shadow.png) no-repeat left bottom;
@@ -336,7 +385,7 @@ Administrators list
     height:55px;
     margin-left:5px;
 }
-.body .shadow b {
+.shadow b {
     display:block;
     float:right;
     background: url(../images/shadow.png) no-repeat right bottom;
@@ -350,7 +399,11 @@ height:1px;
 
 .eksk-wnd {
     background:#fff;
+    position:relative;
+    margin:0 0 0 200px;
     border-radius: 10px;
+    padding:0 0 30px 0;
+    max-width:780px;
     -webkit-border-radius: 10px;
     -moz-border-radius: 10px;
     -khtml-border-radius: 10px;
@@ -394,7 +447,9 @@ height:1px;
     height:115px;
 }
 .footer footer {
-    margin:0 110px;
+    margin:0 0 0 200px;
+    max-width:760px;
+    
 }
 .footer table{
     width:100%;
@@ -403,37 +458,23 @@ height:1px;
 .footer .devby {
     text-align:right;
 }
-.footer .callus span {
-    color:#025a2a;
-    display:block;
-}
-
-.footer-links, .search-bar {
-    padding:26px 0 0 0;
+.footer .devby a{
+    border: none;
 }
 .footer-links a {
-    color:#025a2a;
-    text-decoration: none;
-    border-bottom:1px solid #b3cdbf;
-    font:normal 11px Arial, sans-serif;
+    font-size:13px;
     margin:0 20px 0 0;
 }
 .footer-links span {
-    font:normal 11px Arial, sans-serif;
     margin:0 20px 0 0;
-    color:#b0da80;
-}
-.footer-links a:hover {
-    border-bottom-color: transparent;
 }
 .footer-links.langs a, .footer-links.langs span {
     margin:0 4px 0 0;
 }
-
 .footer .copyright {
     color:#666666;
     font-size:11px;
-    margin:36px 0 0 36px;
+    margin:15px 0 0 0px;
 }
 
 
@@ -521,7 +562,7 @@ runWindow Classes
     position:fixed;
     left:0px;
     top:0px;
-    background: #075A2C;
+    background: #000;
     width:100%;
     height:100%;
     z-index:554;
@@ -553,9 +594,6 @@ runWindow Classes
 
 @media all and (-webkit-min-device-pixel-ratio:0) {
   /*здесь стили для хрома*/
-  button {
-      padding: 3px 0 4px;
-  }
 }
 
 

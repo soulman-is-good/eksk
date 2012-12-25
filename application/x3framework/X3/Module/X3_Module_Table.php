@@ -133,6 +133,9 @@ class X3_Module_Table extends X3_Module implements Iterator, ArrayAccess {
         return true;
     }
 
+    /**
+     * @return X3_MySQL_Model
+     */
     public function getTable() {
         return $this->table;
     }

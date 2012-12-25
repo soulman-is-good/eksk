@@ -75,6 +75,10 @@ class Notify extends X3_Module_Table{
         }
     }
     
+    public function sendMessage($messsage,$from=0,$to=0) {
+        return true;
+    }
+    
         
     public static function sendMail($mailName,$data=array(),$to=null,$from=null,$cc=array()) {
         if(NULL===($mail = self::get(array('name'=>$mailName),1)))
@@ -83,7 +87,7 @@ class Notify extends X3_Module_Table{
             return "Письмо '$mailName' не открыто к рассылке";
         $mailer = new X3_Mailer();
         $mailer->copy = $cc;
-        $mailer->email = 'info@kansha.kz';
+        $mailer->email = 'noreply@eksk.kz';
         $mailer->encoding = 'UTF-8';
         $mail->title = $mail->formLetter($data,$mailer,$mail->title);
         if(!isset($data['title']))
@@ -95,7 +99,7 @@ class Notify extends X3_Module_Table{
         if(is_null($to) && !empty($mail->to)){
             $rcps = explode(',',$mail->to);
         }elseif(is_null($to))
-            $rcps = array('info@kansha.kz');
+            $rcps = array('info@eksk.kz');
         else 
             $rcps = explode(',',$to);
         foreach($rcps as $to)

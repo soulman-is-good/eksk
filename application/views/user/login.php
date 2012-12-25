@@ -14,4 +14,5 @@ $form = new Form($user);
         </table>
         <?=$form->end()?>
     </div>
+    <div class="shadow"><i></i><b></b><em></em></div>
 </div>

@@ -2,6 +2,9 @@
 if($type == 'Нижнее'):
 $menus = Menu::get(array('@condition'=>array('status','type'=>'Нижнее'),'@order'=>'weight, title'));
 ?>
+    <a href="#">Пользовательское соглашение</a>&nbsp;
+    <a href="#">Правила</a>&nbsp;
+    <a href="#">Помощь</a>&nbsp;
     <?foreach($menus as $menu):?>
     <a href="<?=$menu->link?>"><?=$menu->title?></a>
     <?endforeach;?>

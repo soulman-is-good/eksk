@@ -228,9 +228,10 @@ function wnd(content,modal,width,height,closeOnTap){
             content.find('[logic="title"]').remove();
         }else{
             content.find('[logic="title"]')
-            .append(ops.title)
-            .append($('<div class="wnd_title_right"></div>').append($('<a href="#close" title="Закрыть" class="closeLink">&times;</a>')
-                    .click(function(){$.rusWindows[id].close();return false;})));
+            .append($('<div class="buttons" style="margin-top:4px;"></div>').append($('<a href="#close" title="Закрыть">Закрыть</a>')
+                    .click(function(){$.rusWindows[id].close();return false;}))
+            )
+            .append(ops.title);
         }
         if(ops.footer === false){
             content.find('[logic="footer"]').remove();
@@ -246,29 +247,32 @@ function wnd(content,modal,width,height,closeOnTap){
             $.rusWindows[id].setPositionXY(ops.position.x,ops.position.y);
         return $.rusWindows[id];
     }
-    $.dialog = function(content,title){
+    $.dialog = function(content,title,button){
         var ops = {
             'modal':true,
-            'width':400,
+            'width':640,
             'height':140,
             'title':false,
-            'template':'<div class="show_wnd"><div class="dialog_title" logic="title"></div><div class="dialog_content" logic="content"></div><div class="dialog_footer" logic="footer"></div></div>',
+            'template':'<div class="eksk-wnd" style="margin:0"><div class="head" logic="title"></div><div class="content" logic="content"></div><div class="dialog_footer" logic="footer"></div><div class="shadow">&nbsp;</div></div>',
             'position':'center',
             'footer':false
         };
+        var self = this;
         if(typeof title == 'undefined')
-            title = 'MAG';
+            title = 'eKSK';
         if(typeof content == 'undefined')
             content = '';
-        ops.title = title;
+        ops.title = $('<h1 />').append(title);
         var div = $('<div />');
-        var footer = $('<div />').css({'padding':'5px'});
+        var footer = $('<div />').css({'padding':'5px 5px 5px 15px'});
         div.append(content);
         ops.footer = footer;
         var zindex = 1*parseInt($('.blackscreen:last').css('z-index')) + 10;
         var rwnd = div.rusWindow(ops);
+        var ok = {callback:function(){},caption:'Ok'};
+        ok = $.extend({}, ok, button);
         $(rwnd.blackscreen).css('z-index',zindex);
-        footer.append($('<button />').attr({'type':'button'}).html('Ok').prepend('<i></i>').append('<b></b>').click(function(){rwnd.close()}));
+        footer.append($('<button />').attr({'type':'button'}).html(ok.caption).click(function(){if(ok.callback.call(rwnd))rwnd.close()}));
         $(rwnd.content).parent().css('z-index',zindex+1)
         return rwnd;
     }
@@ -285,7 +289,7 @@ function wnd(content,modal,width,height,closeOnTap){
             $.rusWindows['@loader'] = undefined;
             return true;
         }
-        var content = $('<img />').attr({'src':'/static/css/loader02.gif'});
+        var content = $('<img />').attr({'src':'/images/preloader.gif'});
         var zindex = 1*parseInt($('.blackscreen:last').css('z-index')) + 11;
         var rwnd = new wnd(content,true,content.width(),content.height(),false);
         rwnd.setZindex(zindex);

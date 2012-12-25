@@ -23,21 +23,20 @@ class User extends X3_Module_Table {
         'image' => array('file', 'default' => 'NULL', 'allowed' => array('jpg', 'gif', 'png', 'jpeg'), 'max_size' => 10240),
         'name'=>array('string[255]','default'=>''),
         'surname'=>array('string[255]','default'=>''),
-        'thirdname'=>array('string[255]','default'=>''),
-        'login'=>array('string[64]','unique'),
-        'email'=>array('email','unique'),
+        'gender'=>array('enum["Мужской","Женский"]','default'=>'Мужской'),
+        'email'=>array('email','unique'), //as login
         'password'=>array('string[255]','password'),
         'role'=>array('string[255]','default'=>'user'),
-        'lastbeen_at'=>array('integer[10]','unsigned','default'=>'0','datetime'),
-        'status'=>array('integer[1]','unsigned','default'=>'1') //0-deleted, 1-active, 2-activation, 3-banned
+        'akey'=>array('string[255]'),
+        'date_of_birth'=>array('datetime','default'=>'0'),
+        'lastbeen_at'=>array('datetime','default'=>'0'),
+        'status'=>array('integer[1]','unsigned','default'=>'0')
     );
     
     public function fieldNames() {
         return array(
             'name'=>X3::translate('Имя'),
             'surname'=>X3::translate('Фамилия'),
-            'thirdname'=>X3::translate('Отчество'),
-            'login'=>X3::translate('Логин'),
             'password'=>X3::translate('Пароль'),
             'email'=>'E-mail',
             'role'=>X3::translate('Роль'),
@@ -50,12 +49,12 @@ class User extends X3_Module_Table {
             'allow'=>array(
                 '*'=>array('login'),
                 'user'=>array('edit','logout','password'),
-                'admin'=>array('edit','admins','logout','password')
+                'admin'=>array('edit','admins','logout','password','delete')
             ),
             'deny'=>array(
                 '*'
             ),
-            'handle'=>'redirect:user/login'
+            'handle'=>'redirect:/user/login.html'
         );
     }
 
@@ -109,12 +108,22 @@ class User extends X3_Module_Table {
     }
     
     public function actionAdmins() {
-        $count = User::num_rows(array('role'=>'admin'));
-        $models = User::get(array('role'=>'admin'));
+        $count = User::num_rows(array('role'=>'admin','status'));
+        $models = User::get(array('role'=>'admin','status'));
         $this->template->render('admins',array('count'=>$count,'models'=>$models));
     }
 
+    public function actionDelete() {
+        if(!X3::user()->isAdmin() || !isset($_GET['id']))
+            $this->redirect('/');
+        $id = (int)$_GET['id'];
+        User::deleteByPk($id);
+        $this->redirect('/admins/');
+    }
+    
     public function actionLogin() {
+        if(!X3::user()->isGuest())
+            $this->redirect('/');
         $error = false;
         $u = array('email'=>'','password'=>'');
         if(isset($_POST['User'])){
@@ -123,7 +132,10 @@ class User extends X3_Module_Table {
             $u['password'] = mysql_real_escape_string($u['password']);
             $user = new UserIdentity($u['email'], $u['password']);
             if($user->login()){
-                $this->controller->redirect($_SERVER['HTTP_REFERER']);
+                $url = $_SERVER['HTTP_REFERER'];
+                if(strpos($url,'user/login')!==false)
+                    $url = '';
+                $this->controller->redirect($url);
             }else{
                 $error = 'Логин или пароль не верны.';
             }
@@ -143,6 +155,8 @@ class User extends X3_Module_Table {
             $this->password = $user['password'];
             $_POST['notouch']=true;
         }
+        if($this->getTable()->getIsNewRecord())
+            $this->akey = md5(time().rand(10,99)).rand(10,99);
     }
 
     public function afterValidate() {
@@ -151,7 +165,7 @@ class User extends X3_Module_Table {
     }
 
     public function afterSave($bNew=false) {
-        if(X3::app()->user->id == $this->id){
+        if(!$this->getTable()->getIsNewRecord() && X3::app()->user->id == $this->id){
             if(!is_null($this->name))
                 X3::app()->user->name = $this->name;
             if(!is_null($this->role))
@@ -159,9 +173,6 @@ class User extends X3_Module_Table {
             if(!is_null($this->email))
                 X3::app()->user->email = $this->email;
         }
-        $path = X3::app()->cache->directory . DIRECTORY_SEPARATOR . "admin.list.user";
-        if(file_exists($path))
-            X3::app()->cache->flush($path);
         return TRUE;
     }
 

@@ -3,7 +3,7 @@
         <td>
             <div class="footer-links">
                 <nav>
-                <?=X3_Widget::run('@layouts:menu.php',array('type'=>'Нижнее'))?>                    
+                <?=X3_Widget::run('@layouts:menu.php',array('type'=>'Нижнее'))?>
                 </nav>
             </div>
         </td>

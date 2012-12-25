@@ -33,7 +33,6 @@ class UserIdentity extends X3_User{
             return false;
         }
         $this->id = $user->id;
-        $this->login = $user->login;
         $this->name = $user->name." ".$user->surname;
         $this->role = $user->role;
         $this->email = $user->email;

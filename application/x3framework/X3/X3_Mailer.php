@@ -33,9 +33,9 @@ class X3_Mailer extends X3_Component {
     protected static $instance = null;
     protected $boundary1 = 0;
     protected $boundary2 = 0;
-    protected $copy = array();
+    public $copy = array();
     protected $files = array();
-    public $email = 'admin@instinct.kz';
+    public $email = 'admin@eksk.kz';
     public $encoding = 'KOI8-R';
 
     public static function getInstance() {
