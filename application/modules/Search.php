@@ -10,72 +10,52 @@
  *
  * @author Soul_man
  */
-class Search extends X3_Module_Table{
+class Search extends X3_Module{
     
-    public $encoding = 'UTF-8';
-    public $tableName = 'data_search';
-    
-    public $_fields = array(
-            'id'=>array('integer[11]','unsigned','primary','auto_increment'),
-            'ip'=>array('string[32]'),
-            'keyword'=>array('string[255]','index'),
-            'count'=>array('integer','default'=>'1')
-    );
-    
+    public function filter() {
+        return array(
+            'allow'=>array(
+                'user'=>array('index'),
+                'ksk'=>array('index'),
+                'admin'=>array('index')
+            ),
+            'deny'=>array(
+                '*'=>array('*'),
+            ),
+            'handle'=>'redirect:/user/login.html'
+        );
+    }
     
     public function actionIndex() {
-        if(isset($_GET['q'])){
+        if(isset($_POST['q'])){
             X3::user()->SearchPage = 0;
-            X3::user()->search = $_GET['q'];
-            $this->redirect('/search/results.html');
+            X3::user()->search = $_POST['q'];
         }
-        $this->template->render('index');
-    }
-    public function actionResults() {
-        if(($search = strip_tags(X3::user()->search))!='' && ($search = trim($search))!='' && mb_strlen($search,$this->encoding)>2){
+        if(($search = strip_tags(X3::user()->search['word']))!='' && ($search = trim($search))!='' && mb_strlen($search,'UTF-8')>1){
             $search = preg_replace("/[\s]+/"," ",$search);
             $search = preg_replace("/<>/","",$search);
             //keywords logic
-            $words = explode(' ', $search);
-            X3::db()->query("LOCK TABLES data_search WRITE");
-            foreach($words as $word){
-                $tmp = mysql_real_escape_string($word);
-                $s = X3::db()->fetch("SELECT id,count FROM data_search WHERE keyword LIKE '$tmp'");
-                if($s){ if($s['ip'] != $_SERVER['REMOTE_ADDR'])
-                    X3::db()->query("UPDATE data_search SET count=".($s['count']+1)." WHERE id=".$s['id']);
-                }else{
-                    $s = new self;
-                    $s->ip = $_SERVER['REMOTE_ADDR'];
-                    $s->keyword = $word;
-                    $s->count = 1;
-                    if(!$s->save()){
-                        var_dump($s->getTable()->getErrors());exit;
-                    }
-                }
-            }
-            X3::db()->query("UNLOCK TABLES");
             $query = "status";
+            $type = X3::user()->search['type'];
             $title = "title" . (X3::user()->lang!='ru'?"_".X3::user()->lang:'');
             $text = "text" . (X3::user()->lang!='ru'?"_".X3::user()->lang:'');
             $attrs = array(
-                'data_news'=>array(
-                    'default'=>'status',
-                    'fields'=>array("$title","$text"),
-                    'select'=>array("id AS link","$title AS title","$text AS text","'data_page' AS `type`"),
-                    'link'=>"/news/[LINK].html"
-                ),
-                'data_page'=>array(
-                    'default'=>'status',
-                    'fields'=>array("$title","$text"),
-                    'select'=>array("`name` AS link","$title AS title","$text AS text","'data_page' AS `type`"),
-                    'link'=>"/page/[LINK].html"
+                'user'=>array(
+                    'table'=>'data_user',
+                    'default'=>"status>0 AND role='admin'",
+                    'fields'=>array("name","surname"),
+                    'select'=>array("`id` AS link","CONCAT(name,' ',surname) AS title","NULL AS text","'user' AS `type`"),
+                    'link'=>"/user/[LINK].html"
                 ),
             );
-            $t = "([ATTR] LIKE '%".implode("%' OR [ATTR] LIKE '%",explode(' ',X3::db()->validateSQL($search)))."%')";
+            $words = explode(' ',X3::db()->validateSQL($search));
+            $t = "([ATTR] LIKE '%".implode("%' OR [ATTR] LIKE '%",$words)."%')";
             $o = array();
             $qs = array();
             $i=0;
-            foreach($attrs as $table=>$ats){
+            $ats = $attrs[$type];
+            $table = $ats['table'];
+            if(!empty($ats['fields'])){
                 $q = $ats['default'];
                 foreach($ats['fields'] as $attr){
                     $o[]= str_replace("[ATTR]","$attr",$t);
@@ -93,32 +73,11 @@ class Search extends X3_Module_Table{
             if(!is_resource($models)){
                 throw new X3_Exception($query . "<br/>\n" . X3::db()->getErrors(),500);
             }
-            $this->template->render('results',array('models'=>$models,'paginator'=>$pagiator,'data'=>$attrs,'cnt'=>$cnt));
+            $this->template->render('results',array('models'=>$models,'paginator'=>$pagiator,'data'=>$ats,'cnt'=>$cnt));
         }else{
-            $this->redirect('/search.html');
+            $this->template->render('results',array('models'=>null,'paginator'=>'','data'=>'','cnt'=>0));
         }
-    }
-    
-    
-    public function actionJobs() {
-        if(isset($_POST['q'])){
-            X3::user()->JobsPage = 0;
-            X3::user()->jobs = $_POST['q'];
-            $this->redirect('/jobs.html');
-        }
-        $cities = X3::db()->query("SELECT r.id, r.$title title FROM data_region r INNER JOIN data_jobs j ON j.city_id=r.id WHERE r.status AND j.status GROUP BY r.id ORDER BY r.title ");
-        if(!is_resource($cities))
-            throw new X3_Exception(X3::db()->getErrors(),500);
-        $spheres = X3::db()->query("SELECT r.id, r.$title title FROM data_sphere r INNER JOIN data_jobs j ON j.sphere_id=r.id WHERE r.status AND j.status GROUP BY r.id ORDER BY r.title ");
-        if(!is_resource($spheres))
-            throw new X3_Exception(X3::db()->getErrors(),500);
-        $titles = X3::db()->query("SELECT j.$title title, j.age age FROM data_jobs j INNER JOIN data_sphere s ON j.sphere_id=s.id INNER JOIN data_region r ON r.id=j.city_id 
-            WHERE r.status AND s.status AND j.status ORDER BY r.title ");
-        if(!is_resource($titles))
-            throw new X3_Exception(X3::db()->getErrors(),500);
-        $this->template->render('@views:jobs:search.php',array('cities'=>$cities,'spheres'=>$spheres,'titles'=>$titles));
-    }
-    
+    }    
 }
 
 ?>

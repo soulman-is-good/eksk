@@ -29,7 +29,12 @@ class X3_String extends X3_Component {
             $this->encoding = X3::app()->encoding;
         }
     }
-
+    /**
+     * 
+     * @param string $string
+     * @param string $encoding
+     * @return \self
+     */
     public static function create($string, $encoding = null) {
         return new self($string, $encoding);
     }

@@ -24,6 +24,14 @@ return array(
             'password'=>'NjkmrjDgthtl',
             'database'=>'eksk'
         ),
+        'mongo'=>array(
+            'class'=>'X3_MongoConnection',
+            'host'=>'localhost',
+            'user'=>null,
+            'password'=>null,
+            'database'=>'eksk',
+            'lazyConnect'=>true,            
+        ),
         'seo'=>array(
             'class'=>'SeoHelper'
         ),

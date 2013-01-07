@@ -6,10 +6,10 @@ class Upload extends X3_Component {
     public $message = null;
     public $model = null;
     public $field = null;
-    private $tmp_name = null;
+    public $tmp_name = null;
     public $source = false;
 
-    public function __construct($file,$filename,$allowed=array(),$max_size = 20971520) {
+    public function __construct($file,$filename=null,$allowed=array(),$max_size = 20971520) {
         if($file instanceof  X3_Module){
             $class = get_class($file);
             $this->model = $model = $file;
@@ -24,9 +24,12 @@ class Upload extends X3_Component {
             foreach ($file as $k=>$f){
                 $file[$k] = $f[$field];
             }
-            $filename = null;
+            $filename = $class . "-" . time() . rand(100,999) . "." . $ext;
         }else{
-            $class = __CLASS__;
+            if(is_string($file))
+                $file = isset($_FILES[$file])?$_FILES[$file]:null;
+            if($filename == null)
+                $filename = $file['name'];
         }
         if (isset($file) && $file['error']==0) {
             $this->tmp_name = $tmp_name = $file['tmp_name'];
@@ -35,8 +38,6 @@ class Upload extends X3_Component {
                                 1 + strrpos($file['name'], "."));
                 $ext = strtolower($ext);
                 if($ext == '') $ext = 'jpg';
-                if($filename==null)
-                    $filename = $class . "-" . time() . rand(100,999) . "." . $ext;
                 if (isset($max_size) && filesize($tmp_name) > $max_size) {
                     $this->message = 'Error: File size > '.round($max_size/1024).'K.';
                 } elseif (!empty($allowed) && !in_array($ext, $allowed)) {
@@ -72,26 +73,26 @@ class Upload extends X3_Component {
                         elseif(isset($model) && ((isset($model->_fields[$field]['default']) && $model->_fields[$field]['default']=='NULL') || in_array('null',$model->_fields[$field]))){
                             $model->table[$this->field] = NULL;
                         }else
-                            $this->message = "Нужно прикрепить файл";
+                            $this->message = X3::translate("Нужно прикрепить файл");
                     break;
                     case UPLOAD_ERR_CANT_WRITE:
-                        $this->message = "Ошибка при записи файла на диск";
+                        $this->message = X3::translate("Ошибка при записи файла на диск");
                     break;
                     case UPLOAD_ERR_EXTENSION:
-                        $this->message = "Ошибка при загузке файла (UPLOAD_ERR_EXTENSION)";
+                        $this->message = X3::translate("Ошибка при загузке файла (UPLOAD_ERR_EXTENSION)");
                     break;
                     case UPLOAD_ERR_NO_TMP_DIR:
-                        $this->message = "Отсутствует временная директория для загрузки фала";
+                        $this->message = X3::translate("Отсутствует временная директория для загрузки фала");
                     break;
                     case UPLOAD_ERR_FORM_SIZE:
-                        $this->message = "Превышен максимальный размер загружаемого файла (MAX_FILE_SIZE)";
+                        $this->message = X3::translate("Превышен максимальный размер загружаемого файла (MAX_FILE_SIZE)");
                     break;
                     case UPLOAD_ERR_PARTIAL:
-                        $this->message = "Файл был загружен частично.";
+                        $this->message = X3::translate("Файл был загружен частично.");
                     break;
                     case UPLOAD_ERR_INI_SIZE:
                         $max = ini_get('upload_max_filesize');
-                        $this->message = "Превышен максимальный размер загружаемого файла ($max)";
+                        $this->message = X3::translate("Превышен максимальный размер загружаемого файла ($max)");
                     break;
                     default:
                         $this->message = "Ошибка при загузке файла (UNKNOWN#{$file['error']})";
@@ -108,9 +109,11 @@ class Upload extends X3_Component {
         $class="";
         if($this->source) return true;
         if(!is_file($this->tmp_name)) return false;
-        if(isset($this->model))
+        if($this->model instanceof  X3_Module){
             $class = get_class($this->model);
-        $path = "uploads/$class/";
+            $path = "uploads/$class/";
+        }else
+            $path = "uploads/";
         if(!is_dir($path))
             @mkdir($path,0777);
         if ($this->message===null && @move_uploaded_file($this->tmp_name, X3::app()->basePath . "/$path" . $this->filename)) {

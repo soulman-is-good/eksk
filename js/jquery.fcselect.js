@@ -39,11 +39,11 @@
          */
         this.normalizeTag = function(){
             if(ops.multiselect){
-                if(self.tagName == 'SELECT'){
+                if(self[0].tagName == 'SELECT'){
                     var rep = $('<div />');
                     $(self).children('option').each(function(){
-                        if(this[0].hasAttribute('active'))
-                            $(this).removeAttr('active').attr('checked',true);
+                        if(this.hasAttribute('selected'))
+                            $(this).removeAttr('selected').attr('checked',true);
                         var input = $('<input />').attr($(this).attrs()).attr({'type':'checkbox'});
                         //TODO: handle events from SELECT to INPUT
                         rep.append(input)
@@ -170,8 +170,8 @@
             if(!ops.selectableText)
                 container.bind('click',function(e){
                     if(options.is(':visible')){
-//                        options.toggle();
-//                        $(document).unbind('click',self.hideOptions)
+                        options.toggle();
+                        $(document).unbind('click',self.hideOptions)
                     }else{
                         $('[fcselect]').each(function(){$(this).data('fcselect').hideOptions()});
                         options.toggle();
@@ -185,9 +185,9 @@
         
         //Initialize
         this.normalizeTag();
-        $(this).css({'visibility':'hidden','overflow':'hidden','width':'0px','height':'0px','position':'absolute','left':'-9999px','top':'-9999px'});
+        $(self).css({'visibility':'hidden','overflow':'hidden','width':'0px','height':'0px','position':'absolute','left':'-9999px','top':'-9999px'});
         container.html('');
-        container.insertAfter(self);        
+        container.insertAfter(self);
         this.draw();
 //        container.css({'top':'0px'});
         if(ops.width !== false){

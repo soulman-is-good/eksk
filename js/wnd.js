@@ -28,6 +28,7 @@ function wnd(content,modal,width,height,closeOnTap){
 			if(speed>=0)
 				this.move(speed);
 		}
+                return this;
 	}
 
 	this.setTitle = function(title, close){
@@ -38,6 +39,7 @@ function wnd(content,modal,width,height,closeOnTap){
 			clTxt = '';
 		this.title = '<div class="wnd_title"><div class="wnd_title_left">'+title+'</div>'+clTxt+'</div>';
 		this.setContent(this.content, -1);
+                return this;
 	}
 
 	this.getContent = function(){
@@ -47,6 +49,7 @@ function wnd(content,modal,width,height,closeOnTap){
 	this.setZindex = function(zIndex){
 		$(this.object).css('z-index',zIndex);
 		if(modal){$(this.blackscreen).css('z-index',zIndex-1);}
+                return this;
 	}
 
 	this.setSize = function(width,height){
@@ -58,6 +61,7 @@ function wnd(content,modal,width,height,closeOnTap){
 			this.height=height;
 			this.object.css('height',height+'px')
 		}
+                return this;
 	}
 
 	this.closeTimeOut = function(timeout, action){
@@ -72,6 +76,7 @@ function wnd(content,modal,width,height,closeOnTap){
 		if(this.object!=null){
 			$(this.object).css({'left':this.posX+'px','top':this.posY+'px'});
 		}
+                return this;
 	}
 
 	this.move = function(speed){
@@ -81,6 +86,7 @@ function wnd(content,modal,width,height,closeOnTap){
 		}else{
 			this.moveXY(speed);
 		}
+                return this;
 	}
 
 	this.setPositionXY = function(x,y){
@@ -88,16 +94,19 @@ function wnd(content,modal,width,height,closeOnTap){
 		if(y!=null){this.posY=y;}
 		this.relObj = null;
 		this.move();
+                return this;
 	}
 	
 	this.moveUpDown = function(y){
 		this.posY=this.posY+y;
 		this.moveXY();
+                return this;
 	}
 
 	this.moveLeftRight = function(y){
 		this.posX=this.posX+x;
 		this.moveXY();
+                return this;
 	}
 
 	this.setRelativePosition = function(rel,shiftX,shiftY,obj){
@@ -106,6 +115,7 @@ function wnd(content,modal,width,height,closeOnTap){
 		this.shiftY=shiftY || 0;
 		this.relDest=rel;
 		this.move();
+                return this;
 	}
 
 	this.relMove = function(){
@@ -144,6 +154,7 @@ function wnd(content,modal,width,height,closeOnTap){
 			this.posY=this.relObj.scrollTop()+10;
 		if(this.posX<0)
 			this.posX=10;		
+                return this;
 	}
 
 	this.ajaxLoad = function(addr,post,action,json){
@@ -165,6 +176,7 @@ function wnd(content,modal,width,height,closeOnTap){
 				self.move();
 			}
 		});
+                return this;
 	}
 	
 	this.close = function(){
@@ -175,6 +187,7 @@ function wnd(content,modal,width,height,closeOnTap){
 		$(self.blackscreen).fadeOut(200, function(){
 			$(self.blackscreen).remove();
 		})
+                return this;
 	}
 	this.draw = function(){
                 //Предлагаю заменить на это, чтобы можно было вставлять "обвешаный" контент с ивентами
@@ -270,9 +283,11 @@ function wnd(content,modal,width,height,closeOnTap){
         var zindex = 1*parseInt($('.blackscreen:last').css('z-index')) + 10;
         var rwnd = div.rusWindow(ops);
         var ok = {callback:function(){},caption:'Ok'};
-        ok = $.extend({}, ok, button);
+        if(button !== 'no buttons'){
+            ok = $.extend({}, ok, button);
+            footer.append($('<button />').attr({'type':'button'}).html(ok.caption).click(function(){if(ok.callback.call(rwnd))rwnd.close()}));
+        }
         $(rwnd.blackscreen).css('z-index',zindex);
-        footer.append($('<button />').attr({'type':'button'}).html(ok.caption).click(function(){if(ok.callback.call(rwnd))rwnd.close()}));
         $(rwnd.content).parent().css('z-index',zindex+1)
         return rwnd;
     }

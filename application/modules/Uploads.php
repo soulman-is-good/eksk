@@ -1,33 +1,25 @@
 <?php
-
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
- * Description of News
+ * Description of Uploads
  *
  * @author Soul_man
  */
-class Uploads extends X3_Module {
+
+/**
+ * @property string $id primary key
+ * @property integer $created_at unix timestamp
+ */
+class Uploads extends X3_Module_Table {
 
     public $encoding = 'UTF-8';
 
-    /*
-     * uncomment if want new model functional
-     */
+    public $tableName = 'data_uploads';
 
-    //public $tableName = 'data_news';
-
-    /* public $_fields = array(
-      'id'=>array('integer[10]','unsigned','primary','auto_increment'),
-      'title'=>array('string[255]','language'), //language means this field will be fully languaged X3::app()->languages array
-      'content'=>array('content','language'),
-      'text'=>array('text','language'),
-      'status'=>array('boolean','default'=>'1'),
+    public $_fields = array(
+      'id'=>array('string[128]','primary'),
+      'name'=>array('string[256]','default'=>'NULL'),
       'created_at'=>array('integer[10]','unsigned','default'=>'0')
-      ); */
+    );
     public static function newInstance($class = __CLASS__) {
         return parent::newInstance($class);
     }
@@ -35,9 +27,9 @@ class Uploads extends X3_Module {
     public static function getInstance($class = __CLASS__) {
         return parent::getInstance($class);
     }
-
+    
     public function beforeAction(&$action) {
-        if ($this->controller->action == 'captcha')
+        if ($this->controller->action == 'captcha' || $this->controller->action == 'get')
             return true;
         if(!X3_DEBUG && !X3::user()->isAdmin())
             throw new X3_404();
@@ -73,6 +65,29 @@ class Uploads extends X3_Module {
         file_put_contents('uploads/' . $name, $gif);
         echo $gif;
         exit;
+    }
+    
+    public function actionGet() {
+        $ins = $_GET['file'];
+        $model = self::getByPk($ins);
+        if($model == null) 
+            throw new X3_404();
+        $file = X3::app()->basePath . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $model->id;
+        if (file_exists($file)) {
+            header('Content-Description: File Transfer');
+            header('Content-Type: application/octet-stream');
+            header('Content-Disposition: attachment; filename='.$model->name);
+            header('Content-Transfer-Encoding: binary');
+            header('Expires: 0');
+            header('Cache-Control: must-revalidate');
+            header('Pragma: public');
+            header('Content-Length: ' . filesize($file));
+            ob_clean();
+            flush();
+            readfile($file);
+            exit;
+        }
+        throw new X3_404();
     }
     
     public function cleanCaptcha($time) {

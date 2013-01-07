@@ -48,14 +48,18 @@ class X3_MongoConnection extends X3_Component {
     }
 
     public function connect($config = array()) {
-        if(self::$_db !== NULL) return false;
+        if(self::$_db !== NULL || !class_exists('Mongo')) return false;
         if(empty($config)) $config = $this->config;
         $server  = (isset($config['user']))?$config['user']:'';
         $server .= (isset($config['password']))?':'.$config['password']:'';
         $server .= (isset($config['user']) || isset($config['user']))?'@':'';
         $server .= (isset($config['host']))?$config['host']:'localhost';
         $dbname = (isset($config['database']))?$config['database']:'local';
-        $connection = new Mongo($server);        
+        try{
+            $connection = new Mongo($server);        
+        }catch(Exception $e){
+            throw new X3_Exception($e->getMessage(),500);
+        }
         if($connection===false){
             throw new X3_Exception("Could not connect to mongo server", 500);
         }if(false===(self::$_db = $connection->selectDB($dbname))){
@@ -81,6 +85,7 @@ class X3_MongoConnection extends X3_Component {
     
     public function query($val=null,$pass=true) {
         $this->connect();
+        if(!class_exists('Mongo')) return NULL;
         if(is_string($val)){
             //TODO: if json to array() if sql to array;
 //            if($this->bTransaction && $pass && (strpos($val,"INSERT")!==false || strpos($val, "UPDATE")!==false || strpos($val, "ALTER")!==false)){

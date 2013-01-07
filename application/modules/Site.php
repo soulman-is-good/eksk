@@ -20,19 +20,16 @@ class Site extends X3_Module {
     
     public function filter() {
         return array(
-        /*    'allow'=>array(
-                '*'=>array('*'),
-                'user'=>array('map','limit','feedback','error'),
-                'sale'=>array('map','limit','feedback','error'),
-                'admin'=>array('map','limit','feedback','error')
+            'allow'=>array(
+                '*'=>array('error'),
+                'user'=>array('index'),
+                'ksk'=>array('index'),
+                'admin'=>array('index')
             ),
             'deny'=>array(
                 '*'=>array('*'),
-                'admin'=>array('index'),
-                'user'=>array('index'),
-                'sale'=>array('index')
             ),
-            'handle'=>'redirect:/user/settings.html'*/
+            'handle'=>'redirect:/user/login.html'
         );
     }
     
@@ -58,124 +55,15 @@ class Site extends X3_Module {
         );
     }
     public function actionIndex() {
-        $user = User::getByPk(X3::user()->id);
+        if(isset($_GET['id']))
+            $id = (int)$_GET['id'];
+        else
+            $id = X3::user()->id;
+        $user = User::getByPk($id);
         if($user == null)
             throw new X3_404();
         
         $this->template->render('index',array('user'=>$user));
-    }
-
-    public function actionMap() {
-        if (!isset($_GET['type']) || $_GET['type'] != 'xml') {
-            $this->template->render('sitemap');
-        }else{
-            //throw new X3_404();
-            $this->template->layout = null;
-            $links = array();
-            $i=0;
-            $file = 0;
-            $files = array();
-            //NEWS
-            $models = X3::db()->query("SELECT id FROM data_news WHERE status");
-            while($m = mysql_fetch_assoc($models)){
-                $links[] = str_replace(array('&',"'",'"','>','<'),array('&amp;','&apos;','&quot;','&gt;','&lt;'),X3::app()->baseUrl . "/news/" . $m['id'] . ".html");
-                $i++;
-                if($i%50000==0){
-                    $fname=$file==0?"sitemap.xml":"sitemap".($file-1).".xml";file_put_contents(X3::app()->basePath."/$fname",  X3_Widget::run('@views:site:map.php',array('links'=>$links)));
-                    $links = array();
-                    $files[] = $fname;
-                    $file++;
-                }
-                
-            }
-            if($i%50000!=0){
-                $fname=$file==0?"sitemap.xml":"sitemap".($file-1).".xml";file_put_contents(X3::app()->basePath."/$fname",  X3_Widget::run('@views:site:map.php',array('links'=>$links)));
-                $links = array();
-                $files[] = $fname;
-            }
-            $robot  = "User-agent: *\r\n";
-            $robot .= "Disallow: /admin\r\n";
-            $robot .= "Disallow: /login\r\n";
-            $robot .= "Host: www.kansha.kz\r\n";
-            $robot .= "Sitemap: http://www.kansha.kz/sitemap.xml\r\n";
-            for($j=0;$j<$file;$j++){
-                $robot .= "Sitemap: http://www.kansha.kz/sitemap$j.xml\r\n";
-            }
-            file_put_contents(X3::app()->basePath.'/robots.txt', $robot);
-            if($file>0){
-                echo $i." links generated.";
-                $index = X3_Widget::run('@views:site:map_index.php',array('files'=>$files));
-                file_put_contents(X3::app()->basePath.'/sitemap_index.xml',$index);
-                //header ("content-type: text/xml");
-                //echo $index;
-            }else{
-                echo $i." links generated.";
-                //header ("content-type: text/xml");
-                //echo file_get_contents(X3::app()->basePath.'/sitemap.xml');
-            }
-            exit;
-            //$this->template->render('map',array('links'=>$links));
-        }
-    }
-
-    public function actionFeedback() {
-        $fos = array('subject'=>'','text'=>'','name'=>'','email'=>'','company'=>'','city'=>'','phone'=>'');
-        $success=false;
-        $errors = array();
-        if(isset($_POST['Fos'])){
-            $fos = array_extend($fos,$_POST['Fos']);
-            X3::import('application:extensions:swift:swift_required.php',true);
-            $transport = Swift_MailTransport::newInstance();
-            $user = User::getByPk(X3::app()->user->id);
-            $subject = strip_tags($fos['subject']);
-            $subject = trim($subject);
-            $name = strip_tags($fos['name']);
-            $name = trim($name);
-            $city = strip_tags($fos['city']);
-            $city = trim($city);
-            $company = strip_tags($fos['company']);
-            $phone = strip_tags($fos['phone']);
-            $text = strip_tags($fos['text']);
-            $email = strip_tags($fos['email']);
-            $text = trim($text);
-            $text = nl2br($text);
-            if(empty($name))
-                $errors['name'] = 'Поле Имя не заполнено.';
-            if(empty($city))
-                $errors['city'] = 'Поле Город не заполнено.';
-            if(empty($text))
-                $errors['text'] = 'Поле Сообщение не заполнено.';
-            if(empty($email))
-                $errors['email'] = 'Поле E-mail не заполнено.';
-            elseif(preg_match("/^(?!(?:(?:\\x22?\\x5C[\\x00-\\x7E]\\x22?)|(?:\\x22?[^\\x5C\\x22]\\x22?)){255,})(?!(?:(?:\\x22?\\x5C[\\x00-\\x7E]\\x22?)|(?:\\x22?[^\\x5C\\x22]\\x22?)){65,}@)(?:(?:[\\x21\\x23-\\x27\\x2A\\x2B\\x2D\\x2F-\\x39\\x3D\\x3F\\x5E-\\x7E]+)|(?:\\x22(?:[\\x01-\\x08\\x0B\\x0C\\x0E-\\x1F\\x21\\x23-\\x5B\\x5D-\\x7F]|(?:\\x5C[\\x00-\\x7F]))*\\x22))(?:\\.(?:(?:[\\x21\\x23-\\x27\\x2A\\x2B\\x2D\\x2F-\\x39\\x3D\\x3F\\x5E-\\x7E]+)|(?:\\x22(?:[\\x01-\\x08\\x0B\\x0C\\x0E-\\x1F\\x21\\x23-\\x5B\\x5D-\\x7F]|(?:\\x5C[\\x00-\\x7F]))*\\x22)))*@(?:(?:(?!.*[^.]{64,})(?:(?:(?:xn--)?[a-z0-9]+(?:-[a-z0-9]+)*\\.){1,126}){1,}(?:(?:[a-z][a-z0-9]*)|(?:(?:xn--)[a-z0-9]+))(?:-[a-z0-9]+)*)|(?:\\[(?:(?:IPv6:(?:(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){7})|(?:(?!(?:.*[a-f0-9][:\\]]){7,})(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){0,5})?::(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){0,5})?)))|(?:(?:IPv6:(?:(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){5}:)|(?:(?!(?:.*[a-f0-9]:){5,})(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){0,3})?::(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){0,3}:)?)))?(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9]{2})|(?:[1-9]?[0-9]))(?:\\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9]{2})|(?:[1-9]?[0-9]))){3}))\\]))$/iD", $email)==0 && $email!=''){
-                $errors['email'] = 'Поле Email заполнено не корректно.';
-            }
-            if(empty($errors)){
-                $Aemail = Syssettings::getValue('AdminEmail','string[255]','Email администратора','Настройки','soulman.is.good@gmail.com');
-                $message = Swift_Message::newInstance()->setSubject('Письмо от пользователя '.$name)->setTo($Aemail);
-                if($fos['email']!='')
-                    $message->setFrom($fos['email']);
-                $date = date("d.m.Y H:i");
-                $message->setBody("Пользователь с именем <strong>$name</strong>({$_SERVER['REMOTE_ADDR']}) $date написал сообщение с темой '{$subject}'<br/>$text<hr/>
-                <b>Прочие данные:</b><br/>Имя: $name<br />Компания: $company<br/>Город: $city<br/>Телефон: $phone<br/>Email: $email<br />", 'text/html');
-                $mailer = Swift_Mailer::newInstance($transport);
-                try {
-                    $mailer->send($message);
-                    $success='Сообщение успешно отправлено!';
-                    X3_Session::getInstance()->writeOnce('fos',$success);
-                    $this->controller->refresh();
-                    //$fos = array('subject'=>'','text'=>'','name'=>'','email'=>'','company'=>'','city'=>'','phone'=>'');
-                } catch (Exception $e) {
-                    $errors['common']=$e->getMessage();
-                    exit;
-                }
-            }
-        }
-        $this->template->render('feedback',array('fos'=>$fos,'errors'=>$errors,'fsuccess'=>$success));
-    }
-
-    public function actionContacts() {        
-        $this->template->render('contacts',array());
     }
 
     public function actionLimit() {
@@ -191,7 +79,6 @@ class Site extends X3_Module {
     }
     
     public function actionWeights() {
-        echo '1111';
         $model = ucfirst($_POST['module']);
         $ids = explode(',',$_POST['ids']);
         if(empty($ids)) exit;

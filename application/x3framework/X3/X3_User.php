@@ -62,11 +62,7 @@ class X3_User extends X3_Component {
     }
 
     public function login(){
-        if($this->authenticate()) {
-            setcookie($this->key_prefix . "user.remind", "1", time()+86400, "/",null, false, true);//by day
-            return true;
-        }else
-            return false;
+        return $this->authenticate();
     }
     
     public function remember($time=3600) {

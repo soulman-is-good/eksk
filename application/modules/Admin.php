@@ -53,7 +53,7 @@ class Admin extends X3_Module {
             throw new X3_404();
         $key = base64_decode($_GET['key']);
         $key = explode('|',$key);
-        if(NULL === ($user = User::get(array('akey'=>$key[0]))))
+        if(NULL === ($user = User::get(array('akey'=>$key[0]),1)))
             throw new X3_404();
         if(isset($_POST['User'])){
             $post = $_POST['User'];
@@ -67,7 +67,6 @@ class Admin extends X3_Module {
             if($user->surname == ''){
                 $user->addError('surname', X3::translate('Введите Вашу фамилию'));
             }
-            $user->role = 'admin';
             $user->status = 1;
             $errors = $user->getTable()->getErrors();
             if(empty($errors) && $user->save()){

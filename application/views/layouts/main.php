@@ -27,5 +27,22 @@
             </footer>
         </div>
     </div>
+    <script>
+        var message_timeout = null;
+        var message_count = function(){
+            $.get('/message/count.html',function(m){
+                m = parseInt(m);
+                $('.menu_item.message b').remove();
+                if(!isNaN(m) && m>0){
+                    $('.menu_item.message').append('<b>'+m+'</b>');
+                    message_timeout = setTimeout(function(){message_count()}, 3000);
+                }
+            })
+        }
+        $(function(){
+            $('.eksk-wnd').height($('.body').height());
+            message_count();
+        })
+    </script>
 </body>
 </html>

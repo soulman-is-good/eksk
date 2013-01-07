@@ -97,7 +97,7 @@ class X3_Controller extends X3_Component implements X3_Interface_Controller {
                 $nactions = $deny['*'];
                 if(!is_array($nactions)) $nactions = array($nactions);
             }
-            if ((in_array($action, $aactions) || reset($aactions)=='*') && (!in_array($action, $nactions) || reset($nactions)!='*')) {
+            if ((in_array($action, $aactions) || reset($aactions)=='*') || empty($nactions) || (!in_array($action, $nactions) && reset($nactions)!='*')) {
                 return true;
             } else {
                 if (isset($filter['handle'])) {

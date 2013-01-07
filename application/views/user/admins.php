@@ -4,7 +4,7 @@
 <div class="eksk-wnd">
     <div class="head">
         <div class="buttons">
-            <div class="wrapper inline-block"><a class="button inline-block" id="add_admin" href="#admin/add.html">Добавить администратора</a></div>
+            <div class="wrapper inline-block"><a class="button inline-block" id="add_admin" href="#admin/add.html"><?=X3::translate('Добавить администратора')?></a></div>
         </div>
         <h1><?=X3::translate('Администраторы');?></h1>
     </div>
@@ -16,11 +16,15 @@
             <?foreach($models as $model):?>
             <tr>
                 <td class="ava"><img src="/images/default.png" width="100" alt="" /></td>
-                <td class="name"><a href="/user/<?=$model->id?>.html"><?=$model->name?> <?=$model->surname?></a></td>
+                <td class="name"><a href="/user/<?=$model->id?>.html"><?=$model->name?> <?=$model->surname?></a> <?if($model->status == 2):?><em>заблокирован</em><?endif;?></td>
                 <td class="ops">
-                    <a href="/user/send/id/<?=$model->id?>.html"><span>Написать сообщение</span></a>
-                    <a href="/user/message/id/<?=$model->id?>.html"><span>Блокировать</span></a>
-                    <a href="/user/delete/id/<?=$model->id?>.html"><span>Удалить</span></a>
+                    <a href="/user/message/id/<?=$model->id?>.html"><span><?=X3::translate('Написать сообщение')?></span></a>
+                    <?if($model->status == 2):?>
+                        <a href="/user/block/id/<?=$model->id?>.html"><span><?=X3::translate('Разблокировать')?></span></a>
+                    <?else:?>
+                        <a href="/user/block/id/<?=$model->id?>.html"><span><?=X3::translate('Блокировать')?></span></a>
+                    <?endif;?>
+                    <a onclick="return confirm('<?=X3::translate('Вы действительно хотите удалить эту запись?')?>');" href="/user/delete/id/<?=$model->id?>.html"><span><?=X3::translate('Удалить')?></span></a>
                 </td>
             </tr>
             <?endforeach;?>

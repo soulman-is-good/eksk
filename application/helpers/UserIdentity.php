@@ -29,11 +29,16 @@ class UserIdentity extends X3_User{
     
     public function  authenticate() {
         $user = User::newInstance()->table->select('*')->where("`email`='$this->username'")->asObject(true);
-        if($this->password != $user->password){
-            return false;
+        if($user == null){
+            return X3::translate('Введен неверный логин');
         }
+        if($this->password != $user->password){
+            return X3::translate('Пароль не подходит к этому логину');
+        }
+        if($user->status == 2)
+            return X3::translate('Ваш аккаунт заблокирован');
         $this->id = $user->id;
-        $this->name = $user->name." ".$user->surname;
+        $this->fullname = $user->name." ".$user->surname;
         $this->role = $user->role;
         $this->email = $user->email;
         $user->lastbeen_at = time();

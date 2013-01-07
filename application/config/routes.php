@@ -21,6 +21,11 @@ array(
     '/^\/jobs\/([0-9]+)?(.*)$/' => array('/jobs/show/id/$1$2', true),
     
     
+    '/^\/user\/login.html$/' => array('/user/login.html', true),
+    //'/^\/user\/logout.html$/' => array('/user/login.html', true),
+    '/^\/user\/([0-9]+)(.*)$/' => array('/user/index/id/$1$2', true),
+    '/^\/message\/with\/([0-9]+)(.*)$/' => array('/message/with/id/$1$2', true),
+    '/^\/users(.*)$/' => array('/user/list$1', true),
     '/^\/admins(.*)$/' => array('/user/admins/$1', true),
 )
 ?>
