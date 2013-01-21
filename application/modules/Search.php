@@ -42,10 +42,17 @@ class Search extends X3_Module{
             $attrs = array(
                 'user'=>array(
                     'table'=>'data_user',
-                    'default'=>"status>0 AND role='admin'",
+                    'default'=>"status>0 AND role='user'",
                     'fields'=>array("name","surname"),
                     'select'=>array("`id` AS link","CONCAT(name,' ',surname) AS title","NULL AS text","'user' AS `type`"),
                     'link'=>"/user/[LINK].html"
+                ),
+                'message'=>array(
+                    'table'=>'data_message m INNER JOIN data_user u ON u.id=m.user_to',
+                    'default'=>"m.user_from=".X3::user()->id,
+                    'fields'=>array("content"),
+                    'select'=>array("u.id AS link","IF(u.role='admin';CONCAT('Администратор#',u.id);CONCAT(u.name,' ',u.surname)) AS title","content AS text","'message' AS `type`"),
+                    'link'=>"/message/with/[LINK].html"
                 ),
             );
             $words = explode(' ',X3::db()->validateSQL($search));

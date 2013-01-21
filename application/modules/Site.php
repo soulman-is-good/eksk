@@ -65,7 +65,7 @@ class Site extends X3_Module {
         
         $this->template->render('index',array('user'=>$user));
     }
-
+    
     public function actionLimit() {
         $limit = (int)$_POST['val'];
         if($limit<=0 || !IS_AJAX) exit;
@@ -109,6 +109,15 @@ class Site extends X3_Module {
             $page->save();
         }
         $this->template->render('error',array('model'=>$page));
+    }
+    
+    public function actionGo() {
+        if(!isset($_GET['url']))
+            throw new X3_404();
+        $url = base64_decode($_GET['url']);
+        header('Location: '.$url);
+        //TODO: render warning page
+        exit;
     }
 }
 ?>

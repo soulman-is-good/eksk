@@ -18,7 +18,7 @@ class Menu extends X3_Module_Table {
     public $_fields = array(
         'id'=>array('integer[10]','unsigned','primary','auto_increment'),
 //        'parent_id'=>array('integer[10]','unsigned','index','default'=>'NULL','ref'=>array('Menu','id','query'=>array('@condition'=>array('parent_id'=>NULL))),'tree'=>array()),
-        'type'=>array("enum['Боковое','Нижнее']",'default'=>'Боковое'),
+        'type'=>array("enum['Боковое','Нижнее']",'default'=>'Нижнее'),
         'role'=>array('string[255]','default'=>'*'),
         'title'=>array('string[255]','language'),
         'link'=>array('string[255]','default'=>'/'),
@@ -41,9 +41,9 @@ class Menu extends X3_Module_Table {
         return array(
 //            'parent_id'=>'Родитель',
             'title'=>'Заголовок',
-            'type'=>'Тип меню',
+            //'type'=>'Тип меню',
             'link'=>'Ссылка',
-            'role'=>'Видят только',
+            //'role'=>'Видят только',
             'weight'=>'Порядок',
             'status'=>'Видимость',
         );
@@ -62,15 +62,6 @@ class Menu extends X3_Module_Table {
 //            $this->parent_id = null;
         return true;
     }
-    
-//    public function __getLink() {
-//        $link = $this->getTable()->getAttribute('link');
-//        if(X3::user()->isAdmin() || strpos($link,'::')===false)
-//            return $link;
-//        list($model,$attr,$val) = explode('::',$link);
-//        $instance = X3_Module_Table::get(array("$attr"=>$val),1,$model);
-//        $instance->$attr
-//    }
     
     public function afterSave() {
         if(is_file('sitemap.xml'))

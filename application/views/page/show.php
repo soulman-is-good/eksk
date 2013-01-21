@@ -1,9 +1,6 @@
-<div class="content page">
-    <div class="left_part">
-        <?=X3_Widget::run("@views:_widgets:news.php",array('inner'=>true));?>
+<div class="eksk-wnd<?=(!X3::user()->isGuest()?'':' login')?>">
+    <div class="head">
+        <h1<?=(!X3::user()->isGuest()?'':' class="center"')?>><?=$model->title?></h1>
     </div>
-    <div class="right_part">
-        <h1><?=$model->title?></h1>
-        <article><?=$model->text?></article>
-    </div>
+    <div class="content"><?=$model->text?></div>
 </div>

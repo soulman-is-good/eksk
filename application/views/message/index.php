@@ -1,11 +1,11 @@
 <?php
-if(!is_string($paginator)){
-    //TODO: users to whom are allowed to send message.
-    $uq = X3::db()->query("SELECT id, CONCAT(name,' ',surname) AS username FROM data_user WHERE status>0 AND id<>".X3::user()->id);
-    $users = array();
-    while($u = mysql_fetch_assoc($uq))
-        $users[$u['id']] = $u['username'];
-}
+$users = Message::getUserList();
+$id = X3::user()->id;
+$me = (object)X3::db()->fetch("SELECT id, CONCAT(name,' ',surname) name, image,role FROM data_user WHERE id = ".$id);
+$me->name = $me->role=='admin'?X3::translate('Администратор').'#'.$me->id:$me->name;
+$me->avatar = '/images/default.png';
+if(is_file('uploads/User/'.$me->image))
+        $me->avatar = '/uploads/User/50x50/' . $me->image;
 ?>
 <div class="eksk-wnd">
     <div class="head">
@@ -16,27 +16,39 @@ if(!is_string($paginator)){
     </div>
     <div class="content">
         <div class="admin-list">
-            <?foreach($models as $user):
-                $model = Message::get(array('@condition'=>array(array('user_from'=>$user->id,'user_to'=>X3::user()->id),array('user_to'=>$user->id,'user_from'=>X3::user()->id)),'@order'=>'created_at DESC','@limit'=>'1'),1);
+            <?while($model = mysql_fetch_object($models)):
+                //$user = (object)X3::db()->fetch("SELECT id, CONCAT(name,' ',surname) name, image FROM data_user WHERE id = ".$model->user_to);
+                $model->name = $model->role=='admin'?X3::translate('Администратор').' #'.$model->id:$model->name;
+                $m = X3::db()->fetch("SELECT status, user_from, content, created_at FROM data_message WHERE (user_to=$id AND user_from=$model->id)
+                        OR (user_from=$id AND user_to=$model->id)
+                        ORDER BY status, created_at DESC LIMIT 1
+                        ");
+                //var_dump($m, X3::db()->getErrors());
+                $model->avatar = '/images/default.png';
+                if(is_file('uploads/User/'.$model->image))
+                    $model->avatar = '/uploads/User/100x100/' . $model->image;
+                //$model = Message::get(array('@condition'=>array(array('user_from'=>$user->id,'user_to'=>X3::user()->id),array('user_to'=>$user->id,'user_from'=>X3::user()->id)),'@order'=>'created_at DESC','@limit'=>'1'),1);
                 ?>
-                <div href="/message/with/<?=$user->id?>.html" class="message_block<?=$model->status==1 || $model->user_from==X3::user()->id?'':' unread'?>">
+                <div href="/message/with/<?=$model->id?>.html" class="message_block<?=$m==false || $m['status']==1 || $m['user_from'] == $id?'':' unread'?>">
                     <div class="inside_block">
                         <div class="left_side">
-                            <a href="/message/with/<?=$user->id?>.html">
-                                <img width="100" src="/images/default.png" />
+                            <a href="/message/with/<?=$model->id?>.html">
+                                <img width="100" src="<?=$model->avatar?>" />
                             </a>
                         </div>
                         <div class="middle_side">
-                                <a href="/user/<?=$user->id?>.html"><?=$user->name?> <?=$user->surname?></a>
-                                <i><?=I18n::date($model->created_at)?>, <?=date("H:i",$model->created_at)?></i>
+                                <a href="/user/<?=$model->id?>.html"><?=$model->name?></a>
+                                <i><?=I18n::date($m['created_at'])?>, <?=date("H:i",$m['created_at'])?></i>
                         </div>
                         <div class="right_side">
-                            <p><?=X3_String::create($model->content)->carefullCut(512);?></p>
-                            <div class="wrapper"><a href="/message/with/<?=$user->id?>.html" class="button"><?=X3::translate('Ответить')?></a></div>
+                            <p><?=$m!=false && $m['user_from'] == $id?'<img src="'.$me->avatar.'" class="miniava" width="50" alt="" title="'.addslashes($me->name).'" />':''?><?=nl2br(X3_String::create($m['content'])->carefullCut(512));?>
+                                <?=$m!=false && $m['user_from'] == $id?'<div class="clear">&nbsp;</div>':''?>
+                            </p>
+                            <div style="clear:left" class="wrapper"><a href="/message/with/<?=$model->id?>.html" class="button answerme"><?=X3::translate('Ответить')?></a></div>
                         </div>
                     </div>
                 </div>
-            <?endforeach;?>
+            <?endwhile;?>
         </div>
     </div>
     <div id="navi">
@@ -55,7 +67,7 @@ if(!is_string($paginator)){
                 <td class="field" style="padding:5px 0px">
                     <?if(is_string($paginator)):?>
                     <input type="hidden" name="Message[user_to]"  value="<?=$user->id?>" />
-                    <span id="user_to"><?=$user->name?> <?=$user->surname?></span>
+                    <span id="user_to"><?=$user->fullname?></span>
                     <?else:?>
                     <select fcselect name="Message[user_to]">
                     <?foreach($users as $id=>$name):?>
@@ -81,7 +93,7 @@ if(!is_string($paginator)){
                 <td class="label">&nbsp;</td>
                 <td class="field">
                     <div class="table_faq">
-                        <div class="bg_form"><button id="send_btn"><?=X3::translate('Отправить')?></button></div>
+                        <div class="bg_form" style="margin-left:64px;"><button id="send_btn"><?=X3::translate('Отправить')?></button></div>
                         <div class="att_files">
                                 <table>
                                         <tbody><tr>
@@ -110,7 +122,7 @@ if(!is_string($paginator)){
 <script>
     var file_tpl = '<span class="file_link"><a filetitle href="#">Скриншот ошибки</a><a fileremove class="red_cross" href="#"><img width="7" height="" src="/images/zeropic.png" /></a></span>';
     $(function(){
-        $('#send_message').click(function(){
+        $('#send_message, .answerme').click(function(){
             var eform = $($('#form_tmpl').html());
             var self = $.dialog(eform,'<?=X3::translate('Написать сообщение');?>','no buttons').setSize(750).setRelativePosition('center');
             eform.find('#send_btn').click(function(){
@@ -131,7 +143,12 @@ if(!is_string($paginator)){
                 })
                 return false;
             });
-            eform.find('[fcselect]').fcselect({width:602});
+            var select = eform.find('[fcselect]');
+            if($(this).hasClass('answerme')){
+                var uid = (/\/([0-9]+)\.html/).exec($(this).attr('href')).pop();
+                select.val(uid);
+            }
+            select.fcselect({width:602});
             eform.find('#file').change(function(){
                 $(this).parent().submit();
                 $.loader();

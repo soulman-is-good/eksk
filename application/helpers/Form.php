@@ -13,7 +13,7 @@
 class Form extends X3_Form {
     
     public $defaultWrapper = array(
-        'row'=>"<tr><td class=\"label\"><label for=\"%Id\">%label</label></td><td class=\"field\"><div class=\"wrapper\">%field</div></td><td>%required</td></tr>",
+        'row'=>"<tr><td class=\"label\"><label for=\"%Id\">%label</label></td><td class=\"field\"><div class=\"wrapperEx inline-block\">%field</div></td><td>%required</td></tr>",
         'wraper'=>"<table>%rows<tr><td colspan=\"3\">%submit</td></tr></table>"
     );
     
@@ -33,6 +33,17 @@ class Form extends X3_Form {
     
     public function __construct($class=null,$attr=array()) {
         parent::__construct($class, $attr);
+    }
+    
+    public function error($param) {
+        if($this->module instanceof X3_Module){
+            $errors = $this->module->getTable()->getErrors();
+            $errors = $errors[$param];
+            if(!empty($errors)){
+                return array_shift($errors);
+            }
+        }
+        return false;
     }
 }
 

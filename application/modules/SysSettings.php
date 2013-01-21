@@ -115,6 +115,6 @@ class SysSettings extends X3_Module_Table {
         }
         return array();
     }
-
+    
 }
 ?>

@@ -149,7 +149,7 @@ class I18n extends X3_Component {
                 'декабря',
             )
         );
-        $number = $number<0?$number*-1:$number;
+        $number = ($number<0?$number*-1:$number)%12;
         switch ($type){
             case self::FULL_MONTH:
                 return (is_null($number)||$number>11?$fullMonths[X3::user()->lang]:$fullMonths[X3::user()->lang][$number]);

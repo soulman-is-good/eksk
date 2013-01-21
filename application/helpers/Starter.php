@@ -18,6 +18,19 @@ class Starter extends X3_Component {
         'admin/deny',
         'user/deny',
         'user/add',
+        'page/*',
+        'city/*',
+    );
+    
+    private $admin = array(
+        'menu/list',
+        'menu/add',
+        'menu/edit',
+        'menu/delete',
+        'sysSettings/list',
+        'sysSettings/add',
+        'sysSettings/edit',
+        'sysSettings/delete',
     );
     
     public function init() {
@@ -27,7 +40,7 @@ class Starter extends X3_Component {
     }
     
     public function onStartApp($controller,$action) {
-        if(X3::user()->isGuest() && !in_array($controller.'/'.$action,$this->allowed)){
+        if(X3::user()->isGuest() && !in_array($controller.'/*',$this->allowed) && !in_array($controller.'/'.$action,$this->allowed)){
             $controller = 'user';
             $action = 'login';
         }
@@ -40,6 +53,10 @@ class Starter extends X3_Component {
             }
         }
         $this->stopBubbling(__METHOD__);
+        if(in_array($controller . "/" . $action, $this->admin)){
+            $_GET['module'] = ucfirst($controller);
+            return array('admin',$action);
+        }
         return array($controller,$action);
     }
     

@@ -116,9 +116,9 @@ class X3_Form extends X3_Renderer {
             if(in_array('fromurl',$this->module->_fields[$text]))
                 $attributes['%content'] .= '<br/>URL: '.X3_Html::form_tag('input', array('type'=>'text','name'=>get_class($this->module) . '[' . $value . '_url]'));
             if(is_file($file)){
-                $attributes['%content'] .= "<br />" . X3_Html::open_tag('a', array('href'=>'/'.$file,'target'=>'_blank')) . $this->module->$text . X3_Html::close_tag('a');
+                $attributes['%content'] .= "<br />" . X3_Html::open_tag('a', array('href'=>'/'.$file,'target'=>'_blank','style'=>'margin-right:120px')) . $this->module->$text . X3_Html::close_tag('a');
                 if((isset($this->module->_fields[$text]['default']) && $this->module->_fields[$text]['default']=='NULL') || (in_array('null', $this->module->_fields[$text]))){
-                    $attributes['%content'] .= '<br/>'.X3_Html::form_tag('input', array('type'=>'checkbox','name'=>get_class($this->module) . '[' . $value . '_delete]')).'Удалить?';
+                    $attributes['%content'] .= X3_Html::form_tag('input', array('type'=>'checkbox','name'=>get_class($this->module) . '[' . $value . '_delete]')).'Удалить?';
                 }
             }
         }

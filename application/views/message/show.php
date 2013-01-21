@@ -14,10 +14,10 @@
                 <div class="message_block<?=$model->status==1 || $model->user_from==X3::user()->id?'':' unread'?>" pid="<?=$model->id?>">
                         <div class="inside_block">
                         <div class="left_side">
-                                <img width="100" src="/images/default.png">
+                                <img width="100" src="<?=$user['avatar']?>">
                         </div>
                         <div class="middle_side">
-                                <a href="/user/<?=$model->user_from?>.html"><?=$user?></a>
+                                <a href="/user/<?=$model->user_from?>.html"><?=$user['title']?></a>
                                 <i><?=I18n::date($model->created_at)?>, <?=date("H:i",$model->created_at)?></i>
                         </div>
                         <div class="right_side">
@@ -50,7 +50,7 @@
                 </td>
                 <td class="field" style="padding:5px 0px">
                     <input type="hidden" name="Message[user_to]"  value="<?=$with?>" />
-                    <span id="user_to"><?=$users[$with]?></span>
+                    <span id="user_to"><?=$users[$with]['title']?></span>
                 </td>
             </tr>
             <tr>

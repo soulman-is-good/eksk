@@ -11,34 +11,52 @@ class User_Settings extends X3_Module_Table {
     public $_fields = array(
         'id' => array('integer[10]', 'unsigned', 'primary', 'auto_increment'),
         'user_id' => array('integer[10]', 'unsigned', 'index', 'ref'=>array('User','id','default'=>'name')),
-        'about' => array('content','default'=>'NULL'),
+        'about' => array('content[512]','default'=>'NULL'),
         'mobile' => array('string','default'=>''),
         'home' => array('string','default'=>''),
         'work' => array('string','default'=>''),
         'skype' => array('string','default'=>''),
-        'email' => array('string','default'=>''),
+        'email' => array('email','default'=>''),
         'site' => array('string','default'=>''),
     );
     
     public function onValidate($attr,$pass) {
         $pass = false;
-        if($attr == 'mobile' || $attr == 'home' || $attr == 'work') {
-            //TODO: phone validation
-            if(preg_match("/^[0-9]{3} [0-9]{3}.[0-9]{2}.[0-9]{2}$/",$this->$attr) == false){
-                $this->addError($attr,'Не корректно указан номер телефона.');
+        if(($attr == 'mobile') && trim($this->$attr) != '') {
+            $this->$attr = str_replace("_", "", $this->$attr);
+            if(preg_match("/^[0-9]{3} [0-9]{3}.{0,1}[0-9]{2}.{0,1}[0-9]{2}$/",$this->$attr) == false){
+                $this->addError($attr,X3::translate('Не корректно указан номер телефона.'));
+            }
+        }
+        if(($attr == 'home') && trim($this->$attr) != '') {
+            $this->$attr = str_replace("_", "", $this->$attr);
+            if(preg_match("/^[0-9]{3,5} [0-9\s]{8,9}$/",$this->$attr) == false){
+                $this->addError($attr,X3::translate('Не корректно указан номер телефона.'));
+            }
+        }
+        if(($attr == 'work') && trim($this->$attr) != '') {
+            $this->$attr = str_replace("_", "", $this->$attr);
+            if(preg_match("/^[0-9]{3,5} [0-9\s]{8,9} [0-9]{0,6}$/",$this->$attr) == false){
+                $this->addError($attr,X3::translate('Не корректно указан номер телефона.'));
+            }
+        }
+        if($attr == 'site' && $this->$attr!=''){
+            $this->$attr = trim(str_replace('javascript:','',$this->$attr));
+            if(strpos($this->$attr,'http://')!==0) {
+                $this->addError($attr,X3::translate('Не корректно указан Веб-cайт'));
             }
         }
     }
 
     public function fieldNames() {
         return array(
-            'about' => 'О себе',
-            'mobile' => 'Мобильный',
-            'home' => 'Домашний',
-            'work' => 'Рабочий',
+            'about' => X3::translate('О себе'),
+            'mobile' => X3::translate('Мобильный'),
+            'home' => X3::translate('Домашний'),
+            'work' => X3::translate('Рабочий'),
             'skype' => 'Skype',
             'email' => 'E-Mail',
-            'site' => 'Веб-сайт',
+            'site' => X3::translate('Веб-сайт'),
         );
     }
 
@@ -68,48 +86,8 @@ class User_Settings extends X3_Module_Table {
         return parent::getByPk($pk, $class,$asArray);
     }
     
-    public function getLink() {
-        return "/news/$this->id.html";
-    }
-     
-    public function actionIndex() {
-        $q = array('@condition'=>array('status'),'@order'=>'created_at DESC');
-        $nc = News::num_rows($q);
-        $pagnews = new Paginator('News', $nc);
-        $nq = $q;
-        $nq['@offset']=$pagnews->offset;
-        $nq['@limit']=$pagnews->limit;
-        $news = News::get($nq);
-        SeoHelper::setMeta();
-        $this->template->render('index', array('models' => $news,'paginator'=>$pagnews));
-    }
-
-    public function actionShow() {
-        if (!isset($_GET['id']))
-            throw new X3_404;
-        $id = (int) $_GET['id'];
-        $model = self::getByPk($id);
-        if ($model === null)
-            throw new X3_404;
-        if($model->metatitle == '') $model->metatitle = $model->title;
-        SeoHelper::setMeta($model->metatitle, $model->metakeywords, $model->metadescription);
-        $this->template->render('show', array('model' => $model));
-    }
-
-    public function date() {
-        return date('d', $this->created_at) . " " . I18n::months((int) date('m', $this->created_at)-1, I18n::DATE_MONTH) . " " . date('Y', $this->created_at);
-    }
-    
     public function beforeValidate() {
-        if(strpos($this->created_at,'.')!==false){
-            $this->created_at = strtotime($this->created_at);
-        }elseif($this->created_at === 0)
-            $this->created_at = time();
-    }
 
-    public function afterSave() {
-        if (is_file('application/cache/news.show.' . $this->id))
-            @unlink('application/cache/news.show.' . $this->id);
     }
 
 }

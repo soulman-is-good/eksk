@@ -9,7 +9,7 @@ if (!function_exists("dump")) {
 
 if (!function_exists("trace")) {
 	function trace($s) {
-		if (SFB_DEBUG || 1) {
+		if (0 && SFB_DEBUG) {
 			$oFile = @fopen("log.txt", "a");
 			$sDump  = $s."\n";
 			@fputs ($oFile, $sDump );

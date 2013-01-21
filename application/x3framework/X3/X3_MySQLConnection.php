@@ -119,9 +119,12 @@ class X3_MySQLConnection extends X3_Component {
         elseif($sql == null)
             return null;
         $q = $this->query($sql,false);
-        
         if(!is_resource($q))
             return false;
+        if(strpos($sql, "COUNT(")){
+            list($count) = mysql_fetch_array($q, MYSQL_NUM);
+            return $count;
+        }
         return mysql_num_rows($q);
     }
 

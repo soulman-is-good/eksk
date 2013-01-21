@@ -194,11 +194,9 @@ class X3 {
 //                 . $dirData['dirname']
 //                 . '/strings/'
 //                 . $dirData['filename'] . '.str.php';
-        if(!empty($substitude))
-            foreach ($substitude as $key => $value) {
-                $message = str_replace("{".$key."}", $value, $message);
-            }
         X3::app()->fire('onTranslate',array(&$message));
+        if(!empty($substitude))
+            $message = strtr($message,$substitude);
         return $message;
     }
 

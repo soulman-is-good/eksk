@@ -2,9 +2,6 @@
 if($type == 'Нижнее'):
 $menus = Menu::get(array('@condition'=>array('status','type'=>'Нижнее'),'@order'=>'weight, title'));
 ?>
-    <a href="#">Пользовательское соглашение</a>&nbsp;
-    <a href="#">Правила</a>&nbsp;
-    <a href="#">Помощь</a>&nbsp;
     <?foreach($menus as $menu):?>
     <a href="<?=$menu->link?>"><?=$menu->title?></a>
     <?endforeach;?>
@@ -25,16 +22,24 @@ $menus = Menu::get(array('@condition'=>array('status','type'=>'Нижнее'),'@
         <?else:?>
         <a href="/" class="menu_item profile"><span><?=X3::translate('Мой профиль');?></span></a>
         <?endif;?>
-        <a href="#ksk/" class="menu_item ksk"><span><?=X3::translate('КСК');?></span></a>
+        <?if(!X3::user()->isKsk()):?>
+            <?if(X3::app()->request->isActive('/ksk')):?>
+            <span class="menu_item ksk"><span><?=X3::translate('КСК');?></span></span>
+            <?else:?>
+            <a href="/ksk/" class="menu_item ksk"><span><?=X3::translate('КСК');?></span></a>
+            <?endif;?>
+        <?endif;?>
         <?if(X3::app()->request->isActive('/users')):?>
         <span class="menu_item users"><span><?=X3::translate('Жильцы');?></span></span>
         <?else:?>
         <a href="/users/" class="menu_item users"><span><?=X3::translate('Жильцы');?></span></a>
         <?endif;?>
-        <?if(X3::app()->request->isActive('/admins')):?>
-        <span class="menu_item admins"><span><?=X3::translate('Администраторы');?></span></span>
-        <?else:?>
-        <a href="/admins/" class="menu_item admins"><span><?=X3::translate('Администраторы');?></span></a>
+        <?if(X3::user()->isAdmin()):?>
+            <?if(X3::app()->request->isActive('/admins')):?>
+            <span class="menu_item admins"><span><?=X3::translate('Администраторы');?></span></span>
+            <?else:?>
+            <a href="/admins/" class="menu_item admins"><span><?=X3::translate('Администраторы');?></span></a>
+            <?endif;?>
         <?endif;?>
     </div>
 <? endif; ?>

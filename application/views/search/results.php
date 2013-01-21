@@ -24,7 +24,11 @@ $limit = ceil($limit/2);
             <?$i=1;while($model = mysql_fetch_assoc($models)):?>
             <tr>
                 <td class="ava"><img src="/images/default.png" width="100" alt="" /></td>
-                <td class="name"><a href="<?=str_replace('[LINK]',$model['link'],$data['link'])?>"><?=$model['title']?></a></td>
+                <td class="name"><a href="<?=str_replace('[LINK]',$model['link'],$data['link'])?>"><?=$model['title']?></a>
+                    <?if($model['text']!=''):?>
+                    <p><?=nl2br(X3_String::create($model['text'])->carefullCut(512));?></p>
+                    <?endif;?>
+                </td>
             </tr>
             <?if($i++==$limit) break;endwhile;?>
         </table>

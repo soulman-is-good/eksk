@@ -7,12 +7,26 @@
 <title><?=X3::app()->name?></title>
 <script type="text/javascript" src="/js/jquery.js"></script>
 <script type="text/javascript" src="/js/jquery.fcselect.js"></script>
+<script type="text/javascript" src="/js/jquery.fctabs.js"></script>
+<script type="text/javascript" src="/js/jquery.maskedinput.min.js"></script>
 <script type="text/javascript" src="/js/placeholder.js"></script>
 <script type="text/javascript" src="/js/wnd.js"></script>
+<script type="text/javascript" src="http://api-maps.yandex.ru/2.0-stable/?lang=ru-RU&coordorder=longlat&load=package.full"></script>
+
+<script type="text/javascript">
+String.prototype.repeat = function( num ){return new Array( num + 1 ).join( this );}    
+</script>
+<?if(X3::user()->superAdmin):?>
+<script type="text/javascript" src="/js/admin.js"></script>
+    <?if(X3::app()->module->controller->action == 'edit' || X3::app()->module->controller->action == 'create'):?>
+    <script type="text/javascript" src="/js/ckeditor/ckeditor.js"></script>
+    <?include("js/sfbrowser/connectors/php/init.php");?>
+    <?endif;?>
+<?endif;?>
 
 <link href="/favicon.ico" rel="shortcut icon" type="image/x-icon">
 </head>
-<body itemscope itemtype="http://schema.org/WebPage">
+<body itemscope itemtype="http://schema.org/WebPage" <?=X3::user()->isGuest()?'class="unauthorized"':''?>>
     <div class="main-block <?=X3::app()->module->controller->id." ".X3::app()->module->controller->action?>">
         <div class="header"><header>
                 <?=X3_Widget::run('@layouts:header.php',array('main'=>isset($main)))?>
@@ -40,7 +54,7 @@
             })
         }
         $(function(){
-            $('.eksk-wnd').height($('.body').height());
+            $('.eksk-wnd').css('min-height',$('.body').height()+'px');
             message_count();
         })
     </script>

@@ -25,7 +25,12 @@ array(
     //'/^\/user\/logout.html$/' => array('/user/login.html', true),
     '/^\/user\/([0-9]+)(.*)$/' => array('/user/index/id/$1$2', true),
     '/^\/message\/with\/([0-9]+)(.*)$/' => array('/message/with/id/$1$2', true),
+    '/^\/message\/page\/(.*)$/' => array('/message/index/page/$1', true),
+    '/^\/forum\/([0-9]+)(.*)$/' => array('/forum/show/id/$1$2', true),
+    '/^\/forum\/edit\/id\/([0-9]+)$/' => array('/forum/create/id/$1', true),
+    '/^\/forum\/page\/(.*)$/' => array('/forum/index/page/$1', true),
     '/^\/users(.*)$/' => array('/user/list$1', true),
+    '/^\/ksk(.*)$/' => array('/user/list/type/ksk$1', true),
     '/^\/admins(.*)$/' => array('/user/admins/$1', true),
 )
 ?>

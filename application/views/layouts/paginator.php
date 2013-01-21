@@ -36,6 +36,7 @@ if($min<1)
         <?endif;?>
 <?if($P->page == $P->pages-1):?>
         <li><span><?=$P->pages?></span></li>
+        <li><a rel="prev" href="/<?=$P->url?>/page/<?=$P->page?>.<?=X3::app()->request->suffix?>"><i>&larr;</i><?=X3::translate('Предыдущая страница');?></a></li>
 <?else:?>
         <li><a <?=($P->page==$P->pages-2)?'rel="next"':''?> href="/<?=$P->url?>/page/<?=$P->pages?>.<?=X3::app()->request->suffix?>"><?=$P->pages?></a></li>
         <?if($P->page>0):?>

@@ -13,7 +13,7 @@ if(X3::user()->isAdmin() || X3::user()->isKsk()){
 $form = new Form();
 ?>
 <?if(X3::user()->isGuest()):?>
-<h1>eКСК</h1>
+<h1><a href="/">eКСК</a></h1>
 <? else: ?>
 <div class="fright user-block">
     <a class="fright quit" href="/user/logout.html"><img src="/images/quit.png" title="Выход" alt="X" /></a>

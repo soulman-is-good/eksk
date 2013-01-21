@@ -24,12 +24,12 @@ class Upload extends X3_Component {
             foreach ($file as $k=>$f){
                 $file[$k] = $f[$field];
             }
-            $filename = $class . "-" . time() . rand(100,999) . "." . $ext;
+            $filename = $class . "-" . time() . rand(100,999);
         }else{
             if(is_string($file))
                 $file = isset($_FILES[$file])?$_FILES[$file]:null;
             if($filename == null)
-                $filename = $file['name'];
+                $filename = pathinfo($file['name'],PATHINFO_FILENAME);
         }
         if (isset($file) && $file['error']==0) {
             $this->tmp_name = $tmp_name = $file['tmp_name'];
@@ -43,7 +43,7 @@ class Upload extends X3_Component {
                 } elseif (!empty($allowed) && !in_array($ext, $allowed)) {
                     $this->message = 'Error: Invalid file type.';
                 } else {
-                    $this->filename = $filename;
+                    $this->filename = $filename . "." . $ext;
                 }
             }
             else {

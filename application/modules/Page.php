@@ -24,13 +24,13 @@ class Page extends X3_Module_Table {
         'title'=>array('string[255]','language'),
         'name'=>array('string[255]','unique'),
         'text'=>array('text','language'),
-        'status'=>array('boolean','default'=>'1'),
-        'onmain'=>array('boolean','default'=>'0'),
-        'weight'=>array('integer[10]','default'=>'0'),
+        //'status'=>array('boolean','default'=>'1'),
+        //'onmain'=>array('boolean','default'=>'0'),
+        //'weight'=>array('integer[10]','default'=>'0'),
         'created_at'=>array('integer[10]','unsigned','default'=>'0'),
-        'metatitle'=>array('string','default'=>'','language'),
-        'metakeywords'=>array('string','default'=>'','language'),
-        'metadescription'=>array('string', 'default'=>'','language'),
+        //'metatitle'=>array('string','default'=>'','language'),
+        //'metakeywords'=>array('string','default'=>'','language'),
+        //'metadescription'=>array('string', 'default'=>'','language'),
     );
 
     public static function newInstance($class=__CLASS__) {
@@ -51,12 +51,12 @@ class Page extends X3_Module_Table {
             'title'=>'Заголовок',
             'name'=>'Имя в URL',
             'text'=>'Содержание',
-            'weight'=>'Порядок',
-            'status'=>'Видимость',
-            'onmain'=>'На главную',
-            'metatitle'=>'Metatitle',
-            'metakeywords'=>'Metakeywords',
-            'metadescription'=>'Metadescription',
+            //'weight'=>'Порядок',
+            //'status'=>'Видимость',
+            //'onmain'=>'На главную',
+            //'metatitle'=>'Metatitle',
+            //'metakeywords'=>'Metakeywords',
+            //'metadescription'=>'Metadescription',
         );
     }
     
@@ -79,8 +79,6 @@ class Page extends X3_Module_Table {
         $name = mysql_real_escape_string($_GET['name']);
         $model = $this->table->select('*')->where("`name`='$name'")->asObject(true);
         if($model==null) throw new X3_404();
-        if($model->metatitle == '') $model->metatitle = $model->title;
-        SeoHelper::setMeta($model->metatitle, $model->metakeywords, $model->metadescription);
         $this->template->render('show',array('model'=>$model));
     }
     
@@ -109,14 +107,7 @@ class Page extends X3_Module_Table {
     }
     
     public function getDefaultScope() {
-        $query = array('@order'=>'weight, title, created_at DESC');
-        if(isset($_GET['parent_id'])){
-            $p = (int)$_GET['parent_id'];
-            if($p == 0)
-                $query['@condition'] = array('parent_id'=>'NULL');
-            else
-                $query['@condition'] = array('parent_id'=>$p);
-        }
+        $query = array('@order'=>'title, created_at DESC');
         return $query;
     }
     

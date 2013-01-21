@@ -9,19 +9,20 @@
  *
  * @author Soul_man
  */
-class Region extends X3_Module_Table {
+class City_Region extends X3_Module_Table {
 
     public $encoding = 'UTF-8';
     /*
      * uncomment if want new model functional
      */
-    public $tableName = 'data_region';
+    public $tableName = 'city_region';
 
     public $_fields = array(
         'id'=>array('integer[10]','unsigned','primary','auto_increment'),
-        'parent_id'=>array('integer[10]','unsigned','index','default'=>'NULL','ref'=>array('Region','id','default'=>'title')),
+        'city_id'=>array('integer[10]','unsigned','index','ref'=>array('City','id','default'=>'title')),
         'title'=>array('string[255]','language'),
-        'name'=>array('string[255]','unique'),
+        'houses'=>array('content','default'=>''),
+        'weight'=>array('integer','default'=>'0'),
         'status'=>array('boolean','default'=>'1'),
     );
 
@@ -39,14 +40,16 @@ class Region extends X3_Module_Table {
     }
     public function fieldNames() {
         return array(
-            'parent_id'=>'Находится в:',
+            'city_id'=>'Находится в:',
             'title'=>'Название',
+            'houses'=>'Дома<br/><em>(в новой строке)</em>',
+            'weight'=>'Порядок',
             'status'=>'Видимость',
         );
     }
     
     public function moduleTitle() {
-        return 'Регионы';
+        return 'Улицы';
     }
 
     public function cache() {
@@ -55,13 +58,17 @@ class Region extends X3_Module_Table {
             'nocache'=>array('actions'=>'*','role'=>'admin')
         );
     }
+    
+    public function getDefaultScope() {
+        return array('@order'=>'weight');
+    }
 
     public function beforeValidate() {
-        if($this->name == '')
-            $this->name = $this->title;
-        $name = new X3_String($this->name);
-        $this->name = strtolower($name->translit(0,"'"));
-        if(empty($this->parent_id) || $this->parent_id=="0") $this->parent_id = NULL;
+        //if($this->name == '')
+            //$this->name = $this->title;
+        //$name = new X3_String($this->name);
+        //$this->name = strtolower($name->translit(0,"'"));
+        //if(empty($this->parent_id) || $this->parent_id=="0") $this->parent_id = NULL;
     }
 
 }

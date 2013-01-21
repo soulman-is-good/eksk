@@ -231,7 +231,7 @@ function wnd(content,modal,width,height,closeOnTap){
             'width':400,
             'height':300,
             'title':false,
-            'template':'<div class="show_wnd"><div class="wnd_content" style="padding-right:0px;"><div class="wnd_title" logic="title"></div><div logic="content" style="height:100%"></div><div class="wnd_footer" logic="footer"></div></div></div>',
+            'template':'<div class="eksk-wnd" style="margin:0"><div class="head" logic="title"></div><div class="content" logic="content"></div><div class="dialog_footer" logic="footer"></div><div class="shadow">&nbsp;</div></div>',
             'position':'center',
             'footer':false
         };
@@ -277,7 +277,7 @@ function wnd(content,modal,width,height,closeOnTap){
             content = '';
         ops.title = $('<h1 />').append(title);
         var div = $('<div />');
-        var footer = $('<div />').css({'padding':'5px 5px 5px 15px'});
+        var footer = $('<div />').css({'padding':'5px 5px 5px 15px','margin-left':'46px'});
         div.append(content);
         ops.footer = footer;
         var zindex = 1*parseInt($('.blackscreen:last').css('z-index')) + 10;

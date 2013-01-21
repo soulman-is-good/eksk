@@ -15,8 +15,8 @@
     $.fn.fcselect = function(useroptions){
         
         if($(this).data('fcselect')!=null)
-            $(this).data('fcselect');
-        
+            return $(this).data('fcselect');
+        var data = $(this).data();
         var ops = {
             emulateChangeAction:true, //emulate original select onchane event behavior. The event isn't called on same value selection
             multiselect:false, //rebulids one's group checkboxes into multiselect dropdown
@@ -26,7 +26,7 @@
             fcclass:'select'
         }
         var temp_css = {};
-        ops = $.extend({},ops,useroptions);
+        ops = $.extend(ops,useroptions,data);
         var self = this;
         
         var container = $('<div />').addClass(ops.fcclass);
@@ -58,7 +58,6 @@
         this.destroy = function(){
             self.removeAttr('style');
             container.remove();
-            console.log(container);
         }
         this.hideOptions = function(e){
             if(typeof e != 'undefined' && (
@@ -73,6 +72,9 @@
         }
         this.redraw = function(){
             container.html('');
+            container.unbind('click');
+            options.html('');
+            selected.html('');
             this.draw();
         }
         /**
@@ -99,7 +101,7 @@
                                 return false;
                             });
                             selected.find('i').remove();
-                            $(inp).attr('checked',true)
+                            $(inp).attr('checked',true).click();
                             $(this).data('fcs-link',link).addClass('active');
                             selected.append($('<span />').data('fcs-input',$(inp)).append(title).append(link).fadeIn(function(){
                                 options.css('top',(container.outerHeight())+'px');
@@ -112,7 +114,7 @@
                         option.addClass('active')
                         var link = $('<a href="#remove" />').html('<img alt="X" src="/static/css/cross.png" />').click(function(){
                             var p = $(this).parent()
-                            p.data('fcs-input').attr('checked',false).data('fcs-option').removeClass('active').data('fcs-link',null);
+                            p.data('fcs-input').attr('checked',false).click().data('fcs-option').removeClass('active').data('fcs-link',null);
                             p.fadeOut('fast',function(){
                                 $(this).unbind('click').remove();
                                 if(selected.children().length == 0){
@@ -169,6 +171,7 @@
             options.css('top',(container.outerHeight())+'px');
             if(!ops.selectableText)
                 container.bind('click',function(e){
+                    if(self.is(':disabled')) return false;
                     if(options.is(':visible')){
                         options.toggle();
                         $(document).unbind('click',self.hideOptions)
@@ -207,17 +210,7 @@
     }
     $(function(){
         $('select[fcselect]').each(function(){
-            var data = $(this).data();
-            var ops = {
-                emulateChangeAction:true, 
-                multiselect:false,
-                selectableText:false,
-                editableText:false,
-                width:false,
-                fcclass:'select'
-            }
-            ops = $.extend({}, ops, data);
-            $(this).fcselect(ops);
+            $(this).fcselect();
         })
         $('span[fcselect], div[fcselect]').each(function(){
             $(this).fcselect({multiselect:true});

@@ -20,16 +20,23 @@ class Paginator extends X3_Renderer {
     public $url = '';
     public $radius = 10;
 
-    public function __construct($model, $count) {
+    public function __construct($model, $count, $modelTitle=null,$generateSettings = true) {
         $this->model = $model;
         $this->count = $count;
         $lim = $model."Limit";
         $slim = $model.".Limit";
         $pag = $model."Page";
-        $modelTitle = X3_Module_Table::getInstance($model)->moduleTitle();
+        if($modelTitle == null)
+            if(class_exists($model))
+                $modelTitle = X3_Module_Table::getInstance($model)->moduleTitle();
+            else
+                $modelTitle = $model;
         $limit = X3::app()->user->$lim;
         if($limit == null) 
-            $limit = (int)SysSettings::getValue($slim, 'integer', "Количество `$modelTitle` на страницу", 'Навигация',10);
+            if($generateSettings)
+                $limit = (int)SysSettings::getValue($slim, 'integer', "Количество `$modelTitle` на страницу", 'Навигация',10);
+            else
+                $limit = 20;
         $this->limit = $limit;
         $this->pages = ceil($this->count / $limit);
         if(isset($_GET['page'])){

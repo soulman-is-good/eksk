@@ -15,8 +15,8 @@ $form = new Form($user);
         <?=$form->start()?>
         <table class="eksk-form login-form">
         <?
-        echo $form->renderPartial(array('email'=>X3::translate('Ваш E-mail'),'password'=>X3::translate('Пароль')));
-        //echo $form->renderPartial(array('email'=>X3::translate('Ваш E-mail или мобильный телефон'),'password'=>X3::translate('Пароль')));
+        //echo $form->renderPartial(array('email'=>X3::translate('Ваш E-mail'),'password'=>X3::translate('Пароль')));
+        echo $form->renderPartial(array('email'=>X3::translate('Ваш E-mail или мобильный телефон'),'password'=>X3::translate('Пароль')));
         ?>
             <tr><td align="center" colspan="3"><div class="wrapper inline-block"><button type="submit"><?=X3::translate('Войти');?></button></div></td></tr>
         </table>
@@ -24,3 +24,8 @@ $form = new Form($user);
     </div>
     <div class="shadow"><i></i><b></b><em></em></div>
 </div>
+<script>
+    $(function(){
+        $('#User_email').attr({'placeholder':'например +7 777 123 45 67 или 777 123 45 67'})
+    })
+</script>

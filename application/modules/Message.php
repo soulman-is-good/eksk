@@ -18,7 +18,7 @@ class Message extends X3_Module_Table {
         'id' => array('integer[10]', 'unsigned', 'primary', 'auto_increment'),
         'user_to' => array('integer[10]', 'unsigned', 'index', 'ref' => array('User', 'id', 'default' => 'email')),
         'user_from' => array('integer[10]', 'unsigned', 'index', 'ref' => array('User', 'id', 'default' => 'email')),
-        'content' => array('content', 'language'),
+        'content' => array('content'),
         'status' => array('boolean', 'default' => '0'),
         'created_at' => array('datetime', 'default' => '0'),
     );
@@ -47,42 +47,21 @@ class Message extends X3_Module_Table {
         );
     }
 
-    public function err401() {
-        header("HTTP/1.0 401 Authorization Required");
-        echo '<h1>Доступ запрещен.</h1>';
-        exit(0);
-    }
-
-    public function cache() {
-        return array(
-                //'cache'=>array('actions'=>'map','role'=>'*','expire'=>'+1 day','filename'=>'sitemap.xml','directory'=>X3::app()->basePath),
-                //'nocache'=>array('actions'=>'*','role'=>'admin')
-        );
-    }
-
-    public function route() { //Using X3_Request $url propery to parse
-        return array(
-            '/^sitemap\.xml$/' => 'actionMap',
-            '/^download\/(.+?).html/' => array(
-                'class' => 'Download',
-                'argument' => '$1'
-            )
-        );
+    public static function getUserList() {
+        $uq = X3::db()->query("SELECT id, CONCAT(name,' ',surname) AS username, role FROM data_user WHERE status>0 AND id<>".X3::user()->id);
+        $users = array();
+        while($u = mysql_fetch_assoc($uq))
+            $users[$u['id']] = $u['role']=='admin'?X3::translate('Администратор').'#'.$u['id']:$u['username'];
+        return $users;
     }
 
     public function actionIndex() {
-        $query = array();
-        $query = array(array('m.user_to' => X3::user()->id),array('m2.user_from' => X3::user()->id));
-        $query = array('@condition' => $query, 
-            '@group' => 'data_user.id', 
-            '@join'  => 'LEFT JOIN data_message m ON m.user_from=data_user.id LEFT JOIN data_message m2 ON m2.user_to=data_user.id',
-            '@order' => 'm.status, m2.status, m.created_at DESC, m2.created_at DESC');
-        $count = User::num_rows($query);
+        $id = X3::user()->id;
+        $q = "FROM data_message m, data_user u WHERE (m.user_from=$id AND m.user_to=u.id) OR (m.user_to=$id AND m.user_from=u.id) GROUP BY u.id";
+        $count = X3::db()->count("SELECT MAX(m.created_at) latest ".$q);
         $paginator = new Paginator(__CLASS__, $count);
-        $query['@limit'] = $paginator->limit;
-        $query['@offset'] = $paginator->offset;
-        $models = User::get($query);
-
+        $q = "SELECT u.id, CONCAT(u.name,' ',u.surname) name,u.image, u.role, MAX(m.created_at) latest " . $q . " ORDER BY latest DESC LIMIT $paginator->offset,$paginator->limit";
+        $models = X3::db()->query($q);
         $this->template->render('index', array('models' => $models, 'count' => $count, 'paginator' => $paginator));
     }
     
@@ -97,9 +76,13 @@ class Message extends X3_Module_Table {
             $query['@offset'] = $paginator->offset;
             $models = self::get($query);
             $users = array();
-            $uq = X3::db()->query("SELECT id,CONCAT(name,' ',surname) name FROM data_user WHERE id=$id OR id=".X3::user()->id);
+            $uq = X3::db()->query("SELECT id,CONCAT(name,' ',surname) name, image FROM data_user WHERE id=$id OR id=".X3::user()->id);
             while($u = mysql_fetch_assoc($uq)){
-                $users[$u['id']] = $u['name'];
+                if($u['image']=='' || $u['image']==null || !is_file('uploads/User/'.$u['image']))
+                    $image = '/images/default.png';
+                else
+                    $image = '/uploads/User/100x100/'.$u['image'];
+                $users[$u['id']] = array('title'=>$u['name'],'avatar'=>$image);
             }
             $this->template->render('show', array('models' => $models, 'count' => $count, 'paginator' => $paginator,'users'=>$users,'with'=>$id));
         }else
@@ -162,7 +145,7 @@ class Message extends X3_Module_Table {
                 $mes = new self;
                 $mes->user_to = $user_to;
                 $mes->user_from = X3::user()->id;
-                $mes->content = $message['content'];
+                $mes->content = trim(preg_replace("/[\r\n]+/","\r\n",$message['content']));
                 $mes->created_at = time();
                 if($mes->save()){
                     foreach($files as $file){
@@ -174,15 +157,35 @@ class Message extends X3_Module_Table {
                         $F->created_at = time();
                         $F->save();
                     }
+                    $userto = X3::db()->fetch("SELECT email FROM data_user WHERE id='$user_to'");
+                    Notify::sendMail('NewMessage',array('name'=>X3::user()->fullname,'message'=>nl2br($mes->content)),$userto['email']);
                     echo json_encode (array('status'=>'ok','message'=>X3::translate('Сообщение успешно отправлено')));
-                }else
-                    echo json_encode (array('status'=>'error','message'=>X3::translate('Ошибка при заполнении формы')));
+                }else{
+                    $errors = $mes->getTable()->getErrors();
+                    $html = array();
+                    foreach($errors as $err){
+                        $html []= $err[0];
+                    }
+                    echo json_encode (array('status'=>'error','message'=>implode('<br />',$html)));
+                }
             }
         }else
             echo json_encode (array('status'=>'error','message'=>X3::translate('Ошибка при заполнении формы')));
         exit;
     }
-
+    
+    public function beforeValidate() {
+        if($this->created_at == 0)
+            $this->created_at = time();
+    }
+    
+    public function onDelete($tables, $condition) {
+        if (strpos($tables, $this->tableName) !== false) {
+            $model = $this->table->select('*')->where($condition)->asObject(true);
+            Message_Uploads::delete(array('message_id'=>$model->id));
+        }
+        parent::onDelete($tables, $condition);
+    }
 }
 
 ?>

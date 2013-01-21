@@ -6,7 +6,7 @@ class Admin extends X3_Module {
         return array(
             'allow'=>array(
                 '*'=>array('add'),
-                'admin'=>array('add','send')
+                'admin'=>array('add','send','links','list','edit')
             ),
             'deny'=>array(
                 '*'
@@ -82,4 +82,94 @@ class Admin extends X3_Module {
         $this->template->render('@views:user:addadmin.php',array('user'=>$user));
     }
     
+    
+    /**
+     * Admin tools
+     */
+    
+    public function actionLinks() {
+        if(!IS_AJAX) throw new X3_404();
+        if(X3::user()->superAdmin){
+            echo json_encode(array(
+                '/admin/list/module/Menu'=>'Меню',
+                '/admin/list/module/Page'=>'Тестовые страницы',
+                '/admin/list/module/Notify'=>'Письма',
+                '/admin/list/module/City'=>'Города',
+                '/admin/list/module/City_Region'=>'Улицы',
+                '/admin/list/module/SysSettings'=>'Настройки',
+            ));
+        }
+        exit;
+    }
+    
+    public function actionList() {
+        if(!X3::user()->superAdmin)
+            throw new X3_404();
+        $action = strtolower($_GET['module']);
+        $path = X3::app()->getPathFromAlias("@views:admin:sudo:$action.php");
+        if(is_file($path)){
+            $this->template->render("sudo/$action",array('class'=>$class));
+        }
+        $class = ucfirst($_GET['module']);
+        $module = X3_Module::getInstance($class);
+        $scope = $module->getDefaultScope();
+        $count = X3_Module_Table::num_rows($scope,$class);
+        $paginator = new Paginator($class."-Admin", $count,null,false);
+        $scope['@limit'] = $paginator->limit;
+        $scope['@offset'] = $paginator->offset;
+        $models = X3_Module_Table::get($scope,0,$class,1);
+        $this->template->render('sudo/list',array('models'=>$models,'module'=>$module,'paginator'=>$paginator,'count'=>$count,'class'=>$class));
+    }
+    
+    public function actionEdit() {
+        if(!X3::user()->superAdmin)
+            throw new X3_404();
+        $action = strtolower($_GET['module']);
+        $path = X3::app()->getPathFromAlias("@views:admin:sudo:form:$action.php");
+        $class = ucfirst($_GET['module']);
+        $id = X3::db()->validateSQL($_GET['id']);
+        $pk = X3_Module::getInstance($class)->getTable()->getPK();
+        $scope = array("$pk" => $id);
+        $model = X3_Module_Table::get($scope,1,$class);
+        if(isset($_POST[$class])){
+            $data = $_POST[$class];
+            $model->getTable()->acquire($data);
+            if($model->save())
+                $this->redirect("/admin/list/module/$class.html");
+        }
+        if(is_file($path)){
+            $this->template->render("sudo/form/$action",array('model'=>$model,'class'=>$class));
+        }else
+            $this->template->render('sudo/form',array('model'=>$model,'class'=>$class));
+    }
+    
+    public function actionCreate() {
+        if(!X3::user()->superAdmin)
+            throw new X3_404();
+        $action = strtolower($_GET['module']);
+        $path = X3::app()->getPathFromAlias("@views:admin:sudo:form:$action.php");
+        $class = ucfirst($_GET['module']);
+        $model = new $class();
+        if(isset($_POST[$class])){
+            $data = $_POST[$class];
+            $model->getTable()->acquire($data);
+            if($model->save())
+                $this->redirect("/admin/list/module/$class.html");
+        }
+        if(is_file($path)){
+            $this->template->render("sudo/form/$action",array('model'=>$model,'class'=>$class));
+        }
+        $this->template->render('sudo/form',array('model'=>$model,'class'=>$class));
+    }
+    
+    public function actionDelete() {
+        if(!X3::user()->superAdmin)
+            throw new X3_404();
+        $class = ucfirst($_GET['module']);
+        $id = X3::db()->validateSQL($_GET['id']);
+        $pk = X3_Module::getInstance($class)->getTable()->getPK();
+        $scope = array("$pk" => $id);
+        X3_Module_Table::delete($scope,$class);
+        $this->redirect("/admin/list/module/$class.html");
+    }
 }

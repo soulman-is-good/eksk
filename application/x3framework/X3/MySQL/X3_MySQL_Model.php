@@ -406,7 +406,7 @@ class X3_MySQL_Model extends X3_Model implements ArrayAccess {
                 continue;
             $isset = isset($this[$name]);
             if (!in_array('null', $field) && !isset($field['default']) && (!$isset || ($isset && empty($this[$name])))) {
-                $this->addError($name, (isset($field['errors']['notnull'])) ? $field['errors']['notnull'] : X3::translate('Поле {attribute} не должно быть пустым', array('attribute' => $this->module->fieldName($name))));
+                $this->addError($name, (isset($field['errors']['notnull'])) ? $field['errors']['notnull'] : X3::translate('Поле `{attribute}` не должно быть пустым', array('{attribute}' => $this->module->fieldName($name))));
                 continue;
 //                if(isset($field['default']) && ((isset($this[$name]) && $this[$name]=='')||(!isset($this[$name]))))
 //                    $this[$name] = $field['default'];
@@ -427,6 +427,12 @@ class X3_MySQL_Model extends X3_Model implements ArrayAccess {
             if (strpos($dataType, '*') !== false) {
                 $dataType = str_replace('*', '', $dataType);
             }
+            $default = false;
+            if (isset($field['default']))
+                $default = $field['default'];
+            if (in_array('null', $field)) {
+                $default = 'NULL';
+            }
             if ($dataType == 'datetime')
                 $arg = 11;
             if ($dataType == 'email')
@@ -445,16 +451,10 @@ class X3_MySQL_Model extends X3_Model implements ArrayAccess {
                     $max = $arg;
                     $min = 0;
                 }
-                if ($isset && mb_strlen($this[$name], X3::app()->encoding) > $max)
-                    $this->addError($name, (isset($field['errors']['length-max'])) ? $field['errors']['length-max'] : X3::translate('Поле {attribute} не должно превышать {length} символов', array('attribute' => $this->module->fieldName($name), 'length' => $max)));
-                if ($isset && isset($min) && mb_strlen($this[$name], X3::app()->encoding) < $min)
-                    $this->addError($name, (isset($field['errors']['length-min'])) ? $field['errors']['length-min'] : X3::translate('Поле {attribute} должно быть более {length} символов', array('attribute' => $this->module->fieldName($name), 'length' => $min)));
-            }
-            $default = false;
-            if (isset($field['default']))
-                $default = $field['default'];
-            if (in_array('null', $field)) {
-                $default = 'NULL';
+                if ($isset && mb_strlen($this[$name], X3::app()->encoding) > $max && ($default != $this[$name]))
+                    $this->addError($name, (isset($field['errors']['length-max'])) ? $field['errors']['length-max'] : X3::translate('Поле `{attribute}` не должно превышать {length} символов', array('{attribute}' => $this->module->fieldName($name), '{length}' => $max)));
+                if ($isset && isset($min) && mb_strlen($this[$name], X3::app()->encoding) < $min && $default != $this[$name])
+                    $this->addError($name, (isset($field['errors']['length-min'])) ? $field['errors']['length-min'] : X3::translate('Поле `{attribute}` должно быть более {length} символов', array('{attribute}' => $this->module->fieldName($name), '{length}' => $min)));
             }
             switch ($dataType) {
                 case 'file':
@@ -465,9 +465,9 @@ class X3_MySQL_Model extends X3_Model implements ArrayAccess {
                         unset($this[$src]);
                     break;
                 case 'email':
-                    if ($isset)
+                    if ($isset && $default!=$this[$name])
                         if (preg_match("/^(?!(?:(?:\\x22?\\x5C[\\x00-\\x7E]\\x22?)|(?:\\x22?[^\\x5C\\x22]\\x22?)){255,})(?!(?:(?:\\x22?\\x5C[\\x00-\\x7E]\\x22?)|(?:\\x22?[^\\x5C\\x22]\\x22?)){65,}@)(?:(?:[\\x21\\x23-\\x27\\x2A\\x2B\\x2D\\x2F-\\x39\\x3D\\x3F\\x5E-\\x7E]+)|(?:\\x22(?:[\\x01-\\x08\\x0B\\x0C\\x0E-\\x1F\\x21\\x23-\\x5B\\x5D-\\x7F]|(?:\\x5C[\\x00-\\x7F]))*\\x22))(?:\\.(?:(?:[\\x21\\x23-\\x27\\x2A\\x2B\\x2D\\x2F-\\x39\\x3D\\x3F\\x5E-\\x7E]+)|(?:\\x22(?:[\\x01-\\x08\\x0B\\x0C\\x0E-\\x1F\\x21\\x23-\\x5B\\x5D-\\x7F]|(?:\\x5C[\\x00-\\x7F]))*\\x22)))*@(?:(?:(?!.*[^.]{64,})(?:(?:(?:xn--)?[a-z0-9]+(?:-[a-z0-9]+)*\\.){1,126}){1,}(?:(?:[a-z][a-z0-9]*)|(?:(?:xn--)[a-z0-9]+))(?:-[a-z0-9]+)*)|(?:\\[(?:(?:IPv6:(?:(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){7})|(?:(?!(?:.*[a-f0-9][:\\]]){7,})(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){0,5})?::(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){0,5})?)))|(?:(?:IPv6:(?:(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){5}:)|(?:(?!(?:.*[a-f0-9]:){5,})(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){0,3})?::(?:[a-f0-9]{1,4}(?::[a-f0-9]{1,4}){0,3}:)?)))?(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9]{2})|(?:[1-9]?[0-9]))(?:\\.(?:(?:25[0-5])|(?:2[0-4][0-9])|(?:1[0-9]{2})|(?:[1-9]?[0-9]))){3}))\\]))$/iD", $this[$name]) == 0)
-                            $this->addError($name, (isset($field['errors']['email'])) ? $field['errors']['email'] : X3::translate('Поле {attribute} не является верным e-mail адресом', array('attribute' => $this->module->fieldName($name))));
+                            $this->addError($name, (isset($field['errors']['email'])) ? $field['errors']['email'] : X3::translate('Поле `{attribute}` не является верным e-mail адресом', array('{attribute}' => $this->module->fieldName($name))));
                     break;
                 case 'string':
                     if ($isset && $this[$name] !== null){
@@ -488,8 +488,10 @@ class X3_MySQL_Model extends X3_Model implements ArrayAccess {
                     break;
                 case 'datetime':
                 case 'integer':
-                    if ($default != 'NULL' && preg_match('/[^0-9]/', $this[$name]) > 0)
-                        $this->addError($name, (isset($field['errors']['integer'])) ? $field['errors']['integer'] : X3::translate('Поле {attribute} должно быть целым числом', array('attribute' => $this->module->fieldName($name))));
+                    if ($default != 'NULL' && preg_match('/^-[^0-9]+$|^[^0-9]+$/', $this[$name]) > 0)
+                        $this->addError($name, (isset($field['errors']['integer'])) ? $field['errors']['integer'] : X3::translate('Поле `{attribute}` должно быть целым числом', array('{attribute}' => $this->module->fieldName($name))));
+                    elseif(in_array('unsigned',$field) && $this[$name]<0)
+                        $this->addError($name, (isset($field['errors']['unsigned'])) ? $field['errors']['unsigned'] : X3::translate('Поле `{attribute}` должно быть положительным числом', array('{attribute}' => $this->module->fieldName($name))));
                     break;
                 case 'decimal':
                 case 'real':
@@ -497,11 +499,11 @@ class X3_MySQL_Model extends X3_Model implements ArrayAccess {
                 case 'float':
                     $this[$name] = str_replace(",", ".", $this[$name]);
                     if ($default != 'NULL' && preg_match('/(^[-0-9]+?[.][0-9]+$)|(^[0-9]+$)/', $this[$name]) == 0)
-                        $this->addError($name, (isset($field['errors'][$dataType])) ? $field['errors'][$dataType] : X3::translate('Поле {attribute} должно быть вещественным числом', array('attribute' => $this->module->fieldName($name))));
+                        $this->addError($name, (isset($field['errors'][$dataType])) ? $field['errors'][$dataType] : X3::translate('Поле `{attribute}` должно быть вещественным числом', array('{attribute}' => $this->module->fieldName($name))));
                     break;
                 case 'enum':
                     if((is_numeric($this[$name]) && !isset($arg[$this[$name]])) || !in_array($this[$name],$arg)){
-                        $this->addError($name, (isset($field['errors']['enum'])) ? $field['errors']['enum'] : X3::translate('Полю {attribute} задан не верный параметр', array('attribute' => $this->module->fieldName($name))));
+                        $this->addError($name, (isset($field['errors']['enum'])) ? $field['errors']['enum'] : X3::translate('Полю `{attribute}` задан не верный параметр', array('{attribute}' => $this->module->fieldName($name))));
                     }
                     break;
                 default:
@@ -517,7 +519,7 @@ class X3_MySQL_Model extends X3_Model implements ArrayAccess {
                 }
                 $count = self::$db->fetch("SELECT COUNT(0) AS `cnt` FROM `$this->tableName` WHERE `$name`='$value' $q");
                 if ($count['cnt'] > 0) {
-                    $this->addError($name, (isset($field['errors']['unique'])) ? $field['errors']['unique'] : X3::translate('Поле "{attribute}" уже используется с таким значением', array('attribute' => $this->module->fieldName($name))));
+                    $this->addError($name, (isset($field['errors']['unique'])) ? $field['errors']['unique'] : X3::translate('Поле `{attribute}` уже используется с таким значением', array('{attribute}' => $this->module->fieldName($name))));
                 }
             }
         }

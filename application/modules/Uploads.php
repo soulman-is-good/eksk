@@ -104,7 +104,7 @@ class Uploads extends X3_Module_Table {
         return true;
     }
     
-    public function cleanUp($model,$file) {
+    public static function cleanUp($model,$file) {
         if(is_object($model))
             $class = get_class ($model);
         elseif(is_string($model))
