@@ -81,10 +81,10 @@ if(($acnt = $addreses->count())==0){
                             <label><?=$user->fieldName('surname')?></label>
                         </td>
                         <td class="field">
-                            <div class="wrapper inline-block"><?=$form->input('ksksurname')?></div>
+                            <div class="wrapper inline-block"><?=$form->input('surname')?></div>
                         </td>
                         <td class="error">
-                            <?=$form->error('ksksurname')?>
+                            <?=$form->error('surname')?>
                         </td>
                     </tr>
                     <?endif;?>
@@ -227,9 +227,15 @@ if(($acnt = $addreses->count())==0){
                             <?=$form2->error('site')?>
                         </td>
                     </tr>
-                    <?foreach($addreses as $i=>$address):
+                    <?$i=0;foreach($addreses as $address):
                         $aform = new Form($address);
                         ?>
+                    <?if($user->role == 'ksk' && $i==0):?>
+                    <tr><td></td><td colspan="2"><h3><?=X3::translate('Адрес офиса');?></h3></td></tr>
+                    <?endif;?>
+                    <?if($user->role == 'ksk' && $i==1):?>
+                    <tr><td></td><td colspan="2"><h3><?=X3::translate('Мои дома');?></h3></td></tr>
+                    <?endif;?>
                     <tr class="address" link="L_<?=$i?>">
                         <td colspan="2">
                             <table class="eksk-form">
@@ -240,6 +246,7 @@ if(($acnt = $addreses->count())==0){
                                     <td class="field">
                                         <?if(!$address->getTable()->getIsNewRecord()):?>
                                         <?=$aform->hidden('id',array('name'=>"Address[$i][id]",'id'=>"Address_id_$i"))?>
+                                        <?=($user->role == 'ksk' && $i==0)?$aform->hidden('status',array('name'=>"Address[$i][status]",'id'=>"Address_status_$i",'value'=>'0')):''?>
                                         <?=$i>0?X3_Html::form_tag('input', array('type'=>'checkbox','class'=>'delete_address','style'=>'display:none','name'=>"Address[$i][delete]")):''?>
                                         <?endif;?>
                                         <div class="wrapper inline-block"><?=$aform->select('city_id',array('name'=>"Address[$i][city_id]",'id'=>"Address_city_id_$i",'class'=>'city_id','fcselect'=>'1','data-width'=>'345'))?></div>
@@ -264,10 +271,20 @@ if(($acnt = $addreses->count())==0){
                                         <label><?=$address->fieldName('house')?></label>
                                     </td>
                                     <td class="field">
-                                        <div class="wrapper inline-block">
-                                            <select fcselect data-width="47" name="Address[<?=$i?>][house]" id="Address_house_<?=$i?>" hid="<?=addslashes($address->house)?>"></select></div>
-                                        <label><?=$address->fieldName('flat')?></label>
-                                        <div class="wrapper inline-block"><?=$aform->input('flat',array('name'=>"Address[$i][flat]",'id'=>"Address_flat_$i",'style'=>"width:47px"))?></div>
+                                        <?if($user->role == 'user'):?>
+                                            <div class="wrapper inline-block"><select fcselect data-width="47" name="Address[<?=$i?>][house]" id="Address_house_<?=$i?>" hid="<?=addslashes($address->house)?>"></select></div>
+                                            <label><?=$address->fieldName('flat')?></label>
+                                            <div class="wrapper inline-block"><?=$aform->input('flat',array('name'=>"Address[$i][flat]",'id'=>"Address_flat_$i",'style'=>"width:47px"))?></div>
+                                            <?else:?>
+                                            <?if($i==0):?>
+                                            <div class="wrapper inline-block"><?=$aform->input('house',array('name'=>"Address[$i][house]",'id'=>"Address_house_$i",'style'=>"width:47px"))?></div>
+                                            <label><?=$address->fieldName('flat')?></label>
+                                            <div class="wrapper inline-block"><?=$aform->input('flat',array('name'=>"Address[$i][flat]",'id'=>"Address_flat_$i",'style'=>"width:47px"))?></div>
+                                            <?else:?>
+                                            <div class="wrapper inline-block"><?=$aform->input('house',array('name'=>"Address[$i][house]",'id'=>"Address_house_$i"))?></div>
+                                            <?=$aform->hidden('flat',array('name'=>"Address[$i][flat]",'id'=>"Address_flat_$i",'value'=>"0"))?>
+                                            <?endif;?>
+                                        <?endif;?>
                                     </td>
                                     <td class="error">
                                         <?=$aform->error('house')?>
@@ -276,9 +293,6 @@ if(($acnt = $addreses->count())==0){
                             </table>
                         </td>
                         <td style="vertical-align: middle;text-align: center">
-                            <?if($user->role == 'ksk' && $address->status==0):?>
-                            <span><?=X3::translate('Адрес офиса');?></span>
-                            <?endif;?>
                             <?if($i>0):?>
                             <a href="#remove" class="map_link remove"><span><?=X3::translate('Удалить');?></span></a>
                             <?endif;?>
@@ -293,7 +307,10 @@ if(($acnt = $addreses->count())==0){
                             </div>
                         </td>
                     </tr>
-                    <?endforeach;$i++;$address = new User_Address;$aform = new Form($address);?>
+                    <?$i++;endforeach;$i++;$address = new User_Address;$aform = new Form($address);?>
+                    <?if($user->role == 'ksk' && $i==2):?>
+                    <tr><td></td><td colspan="2"><h3><?=X3::translate('Мои дома');?></h3></td></tr>
+                    <?endif;?>                    
                     <tr class="address new" link="L_<?=$i?>">
                         <td colspan="2">
                             <table class="eksk-form">
@@ -324,10 +341,14 @@ if(($acnt = $addreses->count())==0){
                                         <label><?=$address->fieldName('house')?></label>
                                     </td>
                                     <td class="field">
-                                        <div class="wrapper inline-block">
-                                            <select fcselect data-width="47" name="Address[<?=$i?>][house]" id="Address_house_<?=$i?>" hid="<?=addslashes($address->house)?>"></select></div>
-                                        <label><?=$address->fieldName('flat')?></label>
-                                        <div class="wrapper inline-block"><?=$aform->input('flat',array('name'=>"Address[$i][flat]",'id'=>"Address_flat_$i",'style'=>"width:47px"))?></div>
+                                            <?if($user->role == 'user'):?>
+                                            <div class="wrapper inline-block"><select fcselect data-width="47" name="Address[<?=$i?>][house]" id="Address_house_<?=$i?>" hid="<?=addslashes($address->house)?>"></select></div>
+                                            <label><?=$address->fieldName('flat')?></label>
+                                            <div class="wrapper inline-block"><?=$aform->input('flat',array('name'=>"Address[$i][flat]",'id'=>"Address_flat_$i",'style'=>"width:47px"))?></div>
+                                            <?else:?>
+                                            <div class="wrapper inline-block"><?=$aform->input('house',array('name'=>"Address[$i][house]",'id'=>"Address_house_$i"))?></div>
+                                            <?=$aform->hidden('flat',array('name'=>"Address[$i][flat]",'id'=>"Address_flat_$i",'value'=>"0"))?>
+                                            <?endif;?>
                                     </td>
                                     <td class="error">
                                         <?=$aform->error('house')?>
@@ -548,7 +569,7 @@ if(($acnt = $addreses->count())==0){
 <script type="text/javascript">
     var addrtmpl = '';
     var maptmpl = '';
-    var acnt = <?=$acnt;?>;
+    var acnt = <?=++$acnt;?>;
     addrtmpl = $('.address:last').html();
     maptmpl = $('.map_tpl:last').html();
     $(function(){
@@ -605,6 +626,7 @@ if(($acnt = $addreses->count())==0){
                 var R = $('#Address_region_id_'+id);
                 var rid = R.attr('rid');
                 R.html('');
+                console.log(m,R[0]);
                 //R.data('fcselect').destroy();
                 for(i in m){
                     var o = $('<option />').attr({'value':m[i].id}).data('houses',m[i].houses).html(m[i].title);
@@ -616,6 +638,7 @@ if(($acnt = $addreses->count())==0){
                 $(C).parent().parent().parent().parent().find('.region_id').change();
             },'json')
         })
+        <?if($user->role == 'user'):?>
         $('.region_id').live('change',function(){
             var id = $(this).attr('id').split('_').pop();
             var H = $('#Address_house_'+id);
@@ -630,6 +653,7 @@ if(($acnt = $addreses->count())==0){
             }
             H.data('fcselect').redraw();
         })
+        <?endif;?>
         $('.city_id').change();
         
         <?if($hash):?>
@@ -682,7 +706,11 @@ if(($acnt = $addreses->count())==0){
                         var id = $(this).attr('id').split('_').pop();
                         var text = '';
                         text += $('#Address_city_id_'+id).children(':selected').text();
+                        <?if($user->role == 'user'):?>
                         text += ', ' + $('#Address_house_'+id).children(':selected').text();
+                        <?else:?>
+                        text += ', ' + $('#Address_house_'+id).val();
+                        <?endif;?>
                         text += ', ' + $('#Address_region_id_'+id).children(':selected').text();
                         ymaps.geocode(text).then(function(res){
                             coords = res.geoObjects.get(0).geometry.getCoordinates();
@@ -711,7 +739,11 @@ if(($acnt = $addreses->count())==0){
                 $(this).fcselect();
             });
             b.find('[id^="Address_id_"], .delete_address').remove();
+            <?if($user->role == 'user'):?>
             b.find('[id^="Address_flat_"]').val('');
+            <?else:?>
+            b.find('[id^="Address_house_"]').val('');
+            <?endif;?>
             //a.find('.remove').removeClass('remove').addClass('add_address').children('span').html('<?=X3::translate('Добавить еще адрес');?>')
             $('.address:last').find('.add_address').removeClass('add_address').addClass('remove').children('span').html('<?=X3::translate('Удалить');?>')
             $('<tr class="address new" link="L_'+acnt+'"></tr>').append(b).insertAfter($('.map_tpl:last'))

@@ -48,7 +48,13 @@ class Message extends X3_Module_Table {
     }
 
     public static function getUserList() {
-        $uq = X3::db()->query("SELECT id, CONCAT(name,' ',surname) AS username, role FROM data_user WHERE status>0 AND id<>".X3::user()->id);
+        if(X3::user()->isAdmin()){
+            $uq = X3::db()->query("SELECT id, CONCAT(name,' ',surname) AS username, role FROM data_user WHERE status>0 AND id<>".X3::user()->id);
+        }else{
+            $uq = X3::db()->query("SELECT id, CONCAT(name,' ',surname) AS username, role FROM data_user WHERE status>0 AND (role='user' OR role='ksk') AND id IN 
+                (SELECT a1.user_id FROM user_address a1, user_address a2 
+WHERE a2.user_id=".X3::user()->id." AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id AND `a2`.`region_id` = a1.region_id AND `a2`.`house` = a1.house)");
+        }
         $users = array();
         while($u = mysql_fetch_assoc($uq))
             $users[$u['id']] = $u['role']=='admin'?X3::translate('Администратор').'#'.$u['id']:$u['username'];

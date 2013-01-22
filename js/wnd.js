@@ -131,8 +131,8 @@ function wnd(content,modal,width,height,closeOnTap){
 			tp=0;
 		}
 		if(this.relDest=='center'){
-			this.posX=(lft)+(this.relObj.width() / 2)-($(this.object).outerWidth() / 2)+(this.relObj.scrollLeft() || 0)+this.shiftX;
-			this.posY=(tp)+(this.relObj.height() / 2)-($(this.object).height() / 2)+(this.relObj.scrollTop() || 0)+this.shiftY;
+			this.posX=(lft)+(this.relObj.width() / 2)-($(this.object).outerWidth() / 2)//+(this.relObj.scrollLeft() || 0)+this.shiftX;
+			this.posY=(tp)+(this.relObj.height() / 2)-($(this.object).outerHeight() / 2)-150//+(this.relObj.scrollTop() || 0)+this.shiftY;
 		}
 		if(this.relDest=='bottom'){
 			this.posX=(lft)+(this.relObj.width() / 2)-($(this.object).outerWidth() / 2)+(this.relObj.scrollLeft() || 0)+this.shiftX;

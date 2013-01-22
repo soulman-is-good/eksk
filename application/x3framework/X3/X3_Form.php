@@ -46,7 +46,7 @@ class X3_Form extends X3_Renderer {
         if((($this->module instanceof X3_Model) && isset($this->module[$value])) || (($this->module instanceof X3_Module_Table) && isset($this->module->table[$value]))){
             $attributes['name'] = !isset($attributes['name'])?get_class($this->module) . '[' . $value . ']':$attributes['name'];
             $attributes['id'] = !isset($attributes['id'])?get_class($this->module) . '_' . $value:$attributes['id'];
-            $attributes['value'] = $this->module->$value;
+            $attributes['value'] = !isset($attributes['value'])?$this->module->$value:$attributes['value'];
         }else {
             $attributes['value'] = $value;
         }
@@ -97,6 +97,7 @@ class X3_Form extends X3_Renderer {
             $attributes['name'] = !isset($attributes['name'])?get_class($this->module) . '[' . $text . ']':$attributes['name'];
             $attributes['id'] = !isset($attributes['id'])?get_class($this->module) . '_' . $text:$attributes['id'];
             $attributes['%content'] = $this->module->$text;
+            $attributes['%content'] = !isset($attributes['%content'])?$this->module->$value:$attributes['%content'];
         }
         else
             $attributes['%content'] = $text;

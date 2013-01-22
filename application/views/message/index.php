@@ -17,6 +17,9 @@ if(is_file('uploads/User/'.$me->image))
     <div class="content">
         <div class="admin-list">
             <?while($model = mysql_fetch_object($models)):
+                if(!isset($users[$model->id])){
+                    $users[$model->id] = $model->name;
+                }
                 //$user = (object)X3::db()->fetch("SELECT id, CONCAT(name,' ',surname) name, image FROM data_user WHERE id = ".$model->user_to);
                 $model->name = $model->role=='admin'?X3::translate('Администратор').' #'.$model->id:$model->name;
                 $m = X3::db()->fetch("SELECT status, user_from, content, created_at FROM data_message WHERE (user_to=$id AND user_from=$model->id)
@@ -41,9 +44,10 @@ if(is_file('uploads/User/'.$me->image))
                                 <i><?=I18n::date($m['created_at'])?>, <?=date("H:i",$m['created_at'])?></i>
                         </div>
                         <div class="right_side">
-                            <p><?=$m!=false && $m['user_from'] == $id?'<img src="'.$me->avatar.'" class="miniava" width="50" alt="" title="'.addslashes($me->name).'" />':''?><?=nl2br(X3_String::create($m['content'])->carefullCut(512));?>
-                                <?=$m!=false && $m['user_from'] == $id?'<div class="clear">&nbsp;</div>':''?>
+                            <p>
+                            <?=$m!=false && $m['user_from'] == $id?'<img src="'.$me->avatar.'" class="miniava" width="50" alt="" title="'.addslashes($me->name).'" />':''?><?=nl2br(X3_String::create($m['content'])->carefullCut(512));?>
                             </p>
+                            <?//$m!=false && $m['user_from'] == $id?'<div class="clear">&nbsp;</div>':''?>
                             <div style="clear:left" class="wrapper"><a href="/message/with/<?=$model->id?>.html" class="button answerme"><?=X3::translate('Ответить')?></a></div>
                         </div>
                     </div>

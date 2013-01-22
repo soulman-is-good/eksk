@@ -33,6 +33,7 @@ class User extends X3_Module_Table {
         'role'=>array('string[255]','default'=>'user'),
         'akey'=>array('string[255]','default'=>''),
         'date_of_birth'=>array('integer[11]','default'=>'0'),
+        'rank'=>array('integer[11]','default'=>'0'),
         'lastbeen_at'=>array('datetime','default'=>'0'),
         'status'=>array('integer[1]','unsigned','default'=>'0'),
         //unused
@@ -81,7 +82,7 @@ class User extends X3_Module_Table {
     public function filter() {
         return array(
             'allow'=>array(
-                '*'=>array('login','logout','deny','add'),
+                '*'=>array('login','logout','deny','add','rank'),
                 'user'=>array('index','edit','logout','password','list'),
                 'ksk'=>array('index','edit','logout','password','list','send','block','unblock'),
                 'admin'=>array('index','edit','admins','logout','password','delete','list','block','send','block','unblock')
@@ -98,6 +99,20 @@ class User extends X3_Module_Table {
             return '/images/default.png';
         if($size)
             return '/uploads/User/'.$size.'/'.$this->image;
+    }
+    
+    public static function isMyNeibor($id) {
+        $i = X3::user()->id;
+        $i = X3::db()->fetch("SELECT ($i IN (SELECT a1.user_id FROM user_address a1, user_address a2 
+WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id AND `a2`.`region_id` = a1.region_id AND `a2`.`house` = a1.house) AND (SELECT role FROM data_user WHERE id=$id)='user') AS `ismyksk`");
+        return $i['ismyksk'] == '1';
+    }
+    
+    public static function isMyKsk($id) {
+        $i = X3::user()->id;
+        $i = X3::db()->fetch("SELECT ($i IN (SELECT a1.user_id FROM user_address a1, user_address a2 
+WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id AND `a2`.`region_id` = a1.region_id AND `a2`.`house` = a1.house) AND (SELECT role FROM data_user WHERE id=$id)='ksk') AS `ismyksk`");
+        return $i['ismyksk'] == '1';
     }
     
     public function isOnline() {
@@ -207,11 +222,14 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             foreach($data as $adr){
                 if(isset($adr['delete'])){
                     User_Address::deleteByPk($adr['id']);
-                }else if(trim($adr['flat'])!=''){
+                }else if(trim($adr['flat'])!='' && trim($adr['house'])!=''){
                     if($adr['id']>0){
                         $address = User_Address::get(array('user_id'=>$id,'id'=>$adr['id']),1);
-                    }else
+                    }else{
                         $address = new User_Address;
+                        if(X3::user()->isKsk() && X3::db()->count("SELECT id FROM user_address WHERE user_id=$id AND house='".trim($adr['house'])."'")>0)
+                            continue;
+                    }
                     $address->user_id = $id;
                     $address->getTable()->acquire($adr);
                     if(!$address->save()){
@@ -251,7 +269,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
     }
     
     public function actionBlock() {
-        if(!X3::user()->isAdmin() || !isset($_GET['id']))
+        if(X3::user()->isUser() || !isset($_GET['id']))
             $this->redirect('/');
         $id = (int)$_GET['id'];
         $q = array('id'=>$id);
@@ -262,7 +280,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
     }
     
     public function actionUnblock() {
-        if(!X3::user()->isAdmin() || !isset($_GET['id']))
+        if(X3::user()->isUser() || !isset($_GET['id']))
             $this->redirect('/');
         $id = (int)$_GET['id'];
         $q = array('id'=>$id);
@@ -270,6 +288,15 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             $q['role'] = 'user';
         User::update(array('status'=>'1'),$q);
         $this->redirect($_SERVER['HTTP_REFERER']);
+    }
+    
+    public function actionRank(){
+        if(X3::user()->isUser() && isset($_GET['id']) && ($id = (int)$_GET['id'])>0 && User::isMyKsk($id)){
+            $rank = (int)$_GET['mark'];
+            echo User_Rank::add($id,$rank);
+            exit;
+        }
+        throw new X3_404();
     }
     
     public function actionAdmins() {

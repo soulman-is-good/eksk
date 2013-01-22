@@ -24,14 +24,12 @@ $addreses = User_Address::get(array('user_id'=>$user->id));
             <?endif;?>
             <?if($user->role == 'ksk'):?>
             <div class="with_stars">
-                    <i><?=X3::translate('Рейтинг');?>:</i>
-                    <?/*<img src="/images/zeropic.png" class="full" width="12" height="11">
-                    <img src="/images/zeropic.png" class="half" width="12" height="11">*/?>
-                    <img src="/images/zeropic.png" class="hollow" width="12" height="11">
-                    <img src="/images/zeropic.png" class="hollow" width="12" height="11">
-                    <img src="/images/zeropic.png" class="hollow" width="12" height="11">
-                    <img src="/images/zeropic.png" class="hollow" width="12" height="11">
-                    <img src="/images/zeropic.png" class="hollow" width="12" height="11">
+                <i><?=X3::translate('Рейтинг');?>:</i>
+                <div class="blank" data-width="<?=User_Rank::add($user->id)?>">
+                    <div class="starz"></div>
+                    <div class="hollow"></div>
+                    <div class="full" style="width:<?=User_Rank::add($user->id)?>%"></div>
+                </div>
             </div>
             <?endif;?>
         </div>
@@ -78,6 +76,16 @@ $addreses = User_Address::get(array('user_id'=>$user->id));
                         </td>
                 </tr>
                 <?endif;?>
+                <?if($profile->email != ''):?>
+                <tr>
+                        <td class="one">
+                                <em>E-Mail:</em>
+                        </td>
+                        <td>
+                                <span><?=$profile->email?></span>
+                        </td>
+                </tr>
+                <?endif;?>
                 <?if($profile->skype != ''):?>
                 <tr>
                         <td class="one">
@@ -103,12 +111,14 @@ $addreses = User_Address::get(array('user_id'=>$user->id));
                         <td class="one">
                             <?if($user->role == 'ksk' && $address->status==0):?>
                                 <em><?=X3::translate('Адрес офиса')?>:</em>
+                            <?elseif($user->role == 'ksk' && $address->status==1):?>
+                                <em><?=X3::translate('Дом')?> <?=$i++?>:</em>
                             <?else:?>
                                 <em><?=X3::translate('Адрес')?> <?=$i++?>:</em>
                             <?endif;?>
                         </td>
                         <td id="address<?=$address->id?>">
-                                <span><?=$address->city->title?>, <?=$address->street->title?>, <?=$address->house?>, <?=X3::translate('квартира')?> <?=$address->flat?></span>
+                                <span><?=$address->city->title?>, <?=$address->street->title?>, <?=$address->house?><?if($address->flat>0):?>, <?=X3::translate('квартира')?> <?=$address->flat?><?endif;?></span>
                                 <?if(count($coord)==4):?>
                                 <a data-aid="<?=$address->id?>" data-coord="<?=$address->coord?>" class="map_link map-link" href="#"><span><?=X3::translate('Показать на карте')?></span><i>&nbsp;</i></a>
                                 <?endif;?>
@@ -297,7 +307,8 @@ $addreses = User_Address::get(array('user_id'=>$user->id));
                 modal:true,
                 height:h,
                 width:w,
-                position:'center'
+                position:'center',
+                template:'<div class="show_wnd"><div class="wnd_content" style="padding-right:0px;"><div class="wnd_title" logic="title"></div><div logic="content" style="height:100%"></div><div class="wnd_footer" logic="footer"></div></div></div>'
             });
             var x = new ymaps.Map(map[0],{center:coords,zoom:zoom,type:type});
             var zc = new ymaps.control.ZoomControl();
@@ -308,5 +319,30 @@ $addreses = User_Address::get(array('user_id'=>$user->id));
             $(wnd.getContent()).css({'position':'fixed','top':'20px','left':'20px'})
             return false;
         })
+        
+        <?if(X3::user()->isUser()):?>
+            $('.with_stars .blank').css('cursor','pointer').hover(function(e){
+                $(this).bind('mousemove',function(e){
+                    var w = ((e.pageX - 294)/80)*100;
+                    if(w<=100){
+                        $(this).data('rate',w);
+                        $(this).children('.full').css('width',w+'%');
+                    }
+                })
+            },function(){
+                $(this).children('.full').css('width',$(this).data('width')+'%')
+                $(this).data('rate',0);
+                $(this).unbind('mousemove');
+            }).click(function(){
+                if(!$(this).data('loading') && $(this).data('rate')>0){
+                    $(this).data('loading','1');
+                    $.get('/user/rank.html',{'mark':$(this).data('rate'),id:'<?=$user->id?>'},function(m){
+                        $('.blank').data('width',m).children('.full').css('width',m+'%')
+                        $(this).data('loading',null);
+                    })
+                }
+                return false;
+            });
+        <?endif;?>
     })
 </script>

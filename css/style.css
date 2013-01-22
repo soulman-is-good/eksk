@@ -333,8 +333,12 @@ html, body {height:100%;font:14px Arial, sans-serif;background: #bed9e6;}
 div.with_stars img.full {background:url(../images/pic5.jpg) no-repeat;}
 div.with_stars img.half {background:url(../images/pic6.jpg) no-repeat;}
 div.with_stars img.hollow {background:url(../images/pic7.jpg) no-repeat;}
-div.with_stars i {color:#666666;font-size:13px;position:relative;top:-6px;padding-right:4px;}
+div.with_stars i {color:#666666;font-size:13px;position:relative;padding-right:4px;}
 div.with_stars {margin-top:18px;}
+div.with_stars .blank {height:11px;width:80px;display: inline-block;position:relative;}
+div.with_stars .blank .starz {background: url(../images/star3.png) no-repeat 0 0;position:absolute;left:0;top:0;z-index:3;height:11px;width:100%}
+div.with_stars .blank .hollow {background: url(../images/star2.png) repeat-x 0 0;position:absolute;left:0;top:0;z-index:1;height:11px;width:100%}
+div.with_stars .blank .full {background: url(../images/star1.png) repeat-x 0 0;position:absolute;left:0;top:0;z-index:2;height:11px;width:0%}
 /*********
 Active/Passive buttons
 *********/
@@ -404,6 +408,49 @@ Active/Passive buttons
 }
 .user.login .eksk-wnd, .eksk-wnd.login {
     margin:0 auto;
+}
+
+.user.login .head {
+    position:relative;
+}
+#login .head a {
+    border-bottom-style: dashed;
+    position: absolute;
+    top:18px;
+    right:20px;
+}
+#recover .head a {
+    border-bottom-style: dashed;
+    position: absolute;
+    top:18px;
+    left:20px;
+}
+#recover{ z-index:1; opacity:0; filter: alpha(opacity=0); -moz-transform:rotateY(180deg); -webkit-transform:rotateY(180deg); transform:rotateY(180deg); }
+.flipped #login{ opacity:0; filter: alpha(opacity=0); -moz-transform:rotateY(-180deg); -webkit-transform:rotateY(-180deg); transform:rotateY(-180deg); }
+.body.flipped #recover{ opacity:1; filter: alpha(opacity=100); -moz-transform:rotateY(0deg); -webkit-transform:rotateY(0deg); transform:rotateY(0deg); }
+.user.login .body {-moz-perspective: 900px; -webkit-perspective: 800px; perspective: 800px;}
+.user.login .eksk-wnd { width:100%; height:220px; position:absolute; top:0; left:50%;margin-left:-390px;
+
+/* Enabling 3d space for the transforms */
+-moz-transform-style: preserve-3d;
+-webkit-transform-style: preserve-3d;
+transform-style: preserve-3d;
+
+/* When the forms are flipped, they will be hidden */
+-moz-backface-visibility: hidden;
+-webkit-backface-visibility: hidden;
+backface-visibility: hidden;
+
+/* Enabling a smooth animated transition */
+-moz-transition:0.8s;
+-webkit-transition:0.8s;
+transition:0.8s;
+
+/* Configure a keyframe animation for Firefox */
+-moz-animation: pulse 2s infinite;
+
+/* Configure it for Chrome and Safari */
+-webkit-animation: pulse 2s infinite;
 }
 
 .eksk-wnd .head em {
@@ -519,6 +566,23 @@ Messages
 .message_block div.right_side {display:inline-block;margin-top:2px;vertical-align: top;width:495px;} 
 .message_block div.right_side img.miniava {float:left;margin:0 5px 5px 0;border-radius:3px;} 
 .message_block div.right_side p {margin-top:0px;font-size:16px;color:#000000;word-break: break-all;word-wrap:break-word;} 
+.message.index .message_block div.right_side p {margin:0px;font-size:16px;color:#000000;word-break: break-all;word-wrap:break-word;height:80px;overflow: hidden;position:relative;} 
+.message.index .message_block div.right_side p:after {
+    content:" ";
+    display:block;
+    position:absolute;
+    bottom:0px;
+    left:0px;
+    width:100%;
+    height: 16px;
+    background: -moz-linear-gradient(top, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 86%, rgba(255,255,255,1) 100%);
+background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,0)), color-stop(86%,rgba(255,255,255,1)), color-stop(100%,rgba(255,255,255,1)));
+background: -webkit-linear-gradient(top, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 86%,rgba(255,255,255,1) 100%);
+background: -o-linear-gradient(top, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 86%,rgba(255,255,255,1) 100%);
+background: -ms-linear-gradient(top, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 86%,rgba(255,255,255,1) 100%);
+background: linear-gradient(to bottom, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 86%,rgba(255,255,255,1) 100%);
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00ffffff', endColorstr='#ffffff',GradientType=0 );
+} 
 .message_block div.middle_side a {font-size:16px;font-family:Arial,sans-serif;text-decoration:none;}
 /*.message_block div.middle_side a:hover {border-bottom-color:#f0b2b2;}*/
 .message_block div.middle_side i {color:#666666;font-size:13px;display:inline-block;margin-top:7px;}
@@ -528,7 +592,7 @@ Messages
 .message_block.unread {background:#ddeaf1;border-bottom:1px solid #c5d1d8;}  
 .message_block.unread div.inside_block {border:none;}
 .message_block  {padding:0px 20px;margin-top:1px;min-height:118px;background:#fff;transition: background 1s;-webkit-transition: background 1s;display:block;text-decoration: none;}
-.message_block  div.inside_block {border-bottom:1px dotted #cccccc;padding:8px 0px;}
+.message_block  div.inside_block {border-bottom:1px dotted #cccccc;padding:8px 0px;height: 118px;overflow: hidden}
 
 span#user_to {position:relative;top:-5px;font-size: 16px;}
 div.att_files i {color:#666666;font-size:13px;} 
