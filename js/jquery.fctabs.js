@@ -6,8 +6,12 @@
 $.fn.fctabs = function(){
     var hash = false;
     var self = this;
-    if(typeof location.hash != 'undefined')
+    if(typeof location.hash != 'undefined'){
         hash = location.hash;
+        setTimeout(function(){  
+            $('body').scrollTop(0);
+        },140)
+    }
     if(!hash)
         hash = $(this).find('ul a:first-child').attr('href');
     $(this).find('.tab').css('display','none');
@@ -24,6 +28,8 @@ $.fn.fctabs = function(){
             $(hash).css('display','none');
             $(href).css('display','block');
             hash = href;
+            location.href = hash;
+            $(document).scrollTop(0);
             return false;
         })
     });

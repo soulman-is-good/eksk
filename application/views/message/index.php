@@ -48,7 +48,8 @@ if(is_file('uploads/User/'.$me->image))
                             <?=$m!=false && $m['user_from'] == $id?'<img src="'.$me->avatar.'" class="miniava" width="50" alt="" title="'.addslashes($me->name).'" />':''?><?=nl2br(X3_String::create($m['content'])->carefullCut(512));?>
                             </p>
                             <?//$m!=false && $m['user_from'] == $id?'<div class="clear">&nbsp;</div>':''?>
-                            <div style="clear:left" class="wrapper"><a href="/message/with/<?=$model->id?>.html" class="button answerme"><?=X3::translate('Ответить')?></a></div>
+                            <div style="clear:left" class="wrapper inline-block"><a href="/message/with/<?=$model->id?>.html" class="button answerme"><?=X3::translate('Ответить')?></a></div>
+                            <a href="/message/with/<?=$model->id?>.html" class="ml-10"><?=X3::translate('Посмотреть историю переписки')?></a>
                         </div>
                     </div>
                 </div>
@@ -139,7 +140,8 @@ if(is_file('uploads/User/'.$me->image))
                         eform.find('.errors').css('display','block').html(m.message);
                     }else{
                         self.close()
-                        $.dialog(m.message,'<?=X3::translate('Новое сообщение');?>',{callback:function(){this.close()},caption:'Закрыть'});
+                        location.reload();
+                        //$.dialog(m.message,'<?=X3::translate('Новое сообщение');?>',{callback:function(){this.close()},caption:'Закрыть'});
                     }
                 },'json').error(function(){
                     $.loader();

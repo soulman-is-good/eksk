@@ -3,7 +3,7 @@ $user = new User;
 $form = new Form($user);
 ?>
 <div class="eksk-wnd login" id="login">
-    <div class="head"><a href="#" onclick="$('.body').addClass('flipped')"><?=X3::translate('Зарегистрироваться');?></a><h1 class="center"><?=X3::translate('Авторизация');?></h1></div>
+    <div class="head"><a href="#" onclick="$('.body').addClass('flipped');return false;"><?=X3::translate('Зарегистрироваться');?></a><h1 class="center"><?=X3::translate('Авторизация');?></h1></div>
     <div class="content">
         <?if($error!=''):?>
         <div class="errors">

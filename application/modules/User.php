@@ -150,7 +150,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
         }elseif(X3::user()->isKsk()){
             $query = array(
                 '@condition'=>array('role'=>'user','id'=>array('IN'=>"(SELECT a1.user_id FROM user_address a1, user_address a2 
-WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id AND `a2`.`region_id` = a1.region_id AND `a2`.`house` = a1.house)")),
+WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id AND `a2`.`region_id` = a1.region_id AND `a2`.`house` = a1.house AND a2.status=1)")),
                 '@group'=>'id'
             );
             $count = User::num_rows($query);
@@ -217,6 +217,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             if(!$profile->save()){
             }
         }
+        $address_errors = array();
         if(isset($_POST['Address'])){
             $data = $_POST['Address'];
             foreach($data as $adr){
@@ -229,6 +230,10 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
                         $address = new User_Address;
                         if(X3::user()->isKsk() && X3::db()->count("SELECT id FROM user_address WHERE user_id=$id AND house='".trim($adr['house'])."'")>0)
                             continue;
+                        if(X3::user()->isKsk() && (FALSE!=($e = X3::db()->fetch("SELECT u.name AS `name` FROM user_address a INNER JOIN data_user u ON u.id=a.user_id WHERE role='ksk' AND user_id<>$id AND house='".trim($adr['house'])."'")))){
+                            $address_errors[] = strtr(X3::translate("Дом номер {number} зарегистрирован за '{ksk}'"),array('{number}'=>$adr['house'],'{ksk}'=>$e['name']));
+                            continue;
+                        }
                     }
                     $address->user_id = $id;
                     $address->getTable()->acquire($adr);
@@ -265,7 +270,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             }
         }
         
-        $this->template->render('edit',array('user'=>$user,'profile'=>$profile,'hash'=>$hash));
+        $this->template->render('edit',array('user'=>$user,'profile'=>$profile,'hash'=>$hash,'adrerrors'=>$address_errors));
     }
     
     public function actionBlock() {

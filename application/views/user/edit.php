@@ -6,7 +6,8 @@ if(($acnt = $addreses->count())==0){
     //$acnt = 1;    
     //$addreses = array(new User_Address);
 }
-
+$uerr = $user->getTable()->getErrors();
+$perr = $profile->getTable()->getErrors();
 ?>
 <div class="eksk-wnd">
     <div class="head">
@@ -160,6 +161,15 @@ if(($acnt = $addreses->count())==0){
                 </table>
             </div>
             <div class="tab" id="contact-info">
+                <?if(!empty($adrerrors)):?>
+                <div class="errors">
+                    <ul>
+                        <?foreach($adrerrors as $adrer):?>
+                        <li style="background: none"><?=$adrer?></li>
+                        <?endforeach;?>
+                    </ul>
+                </div>
+                <?endif;?>
                 <table class="eksk-form">
                     <tr>
                         <td class="label">
@@ -378,7 +388,7 @@ if(($acnt = $addreses->count())==0){
             </div>
         <?=$form->end();$acnt++;?>
             <div class="tab" id="login-settings">
-            <form action="/user/edit.html" method="post">
+            <form method="post">
                 <table class="eksk-form">
                     <tr>
                         <td class="label">
@@ -432,7 +442,7 @@ if(($acnt = $addreses->count())==0){
                 </table>
             </form>
                 <div class="hr">&nbsp;</div>
-            <form action="/user/edit.html" method="post">
+            <form method="post">
                 <table class="eksk-form">
                     <tr>
                         <td class="label">
@@ -481,7 +491,7 @@ if(($acnt = $addreses->count())==0){
                 <?=SysSettings::getValue('User_Settings.Notify', 'text', 'Текст в настройках уведомлений', null, '<p>Внимание! Укажите номер телефона чтобы получить уведомления о событиях на сайте.</p>
                 <p>Отметьте события о которых вы хотите получать уведомления по эл. почте или в SMS (для абонентов Билайн, KCell, Active, TELE2, Pathword, Дос в Казахстане)</p>')?>
                 <br/>
-                <form action="/user/edit.html" method="post">
+                <form method="post">
                     <table class="eksk-form" width="50%">
                         <tr>
                             <td class="label">
@@ -569,6 +579,7 @@ if(($acnt = $addreses->count())==0){
 <script type="text/javascript">
     var addrtmpl = '';
     var maptmpl = '';
+    var success = '<div class="success"><?=X3::translate('Сохранено');?></div>';
     var acnt = <?=++$acnt;?>;
     addrtmpl = $('.address:last').html();
     maptmpl = $('.map_tpl:last').html();
@@ -626,7 +637,6 @@ if(($acnt = $addreses->count())==0){
                 var R = $('#Address_region_id_'+id);
                 var rid = R.attr('rid');
                 R.html('');
-                console.log(m,R[0]);
                 //R.data('fcselect').destroy();
                 for(i in m){
                     var o = $('<option />').attr({'value':m[i].id}).data('houses',m[i].houses).html(m[i].title);
@@ -764,6 +774,12 @@ if(($acnt = $addreses->count())==0){
             }
             return false;
         })
+        <?//IF THER IS NO ERRORS
+        if(empty($uerr) && empty($perr) && empty($adrerrors) && (isset($_POST['User']) || isset($_POST['Address']) || isset($_POST['User_Settings']))):?>
+            var h = location.hash;
+            if(h=='') h = '#main-info';
+            $(h).prepend($(success).css('cursor','pointer').click(function(){$(this).fadeOut(function(){$(this).remove()})}))
+        <?endif;?>
     })
     function setCoords(coords, id){
         if(typeof coords.join != 'function')
