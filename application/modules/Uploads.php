@@ -42,7 +42,7 @@ class Uploads extends X3_Module_Table {
 
     public function actionCaptcha() {
         header('Content-type: image/gif');
-        if (is_array(X3::app()->user->captcha) && X3::app()->user->captcha['times'] > 0 && is_file('uploads/' . X3::app()->user->captcha['file']) && !isset($_GET['f5'])) {
+        if (!isset($_GET['F5']) && is_array(X3::app()->user->captcha) && X3::app()->user->captcha['times'] > 0 && is_file('uploads/' . X3::app()->user->captcha['file']) && !isset($_GET['f5'])) {
             $arr = X3::app()->user->captcha;
             if (time() - $arr['lasttime'] > 3) {
                 $arr['times'] = $arr['times'] - 1;
@@ -58,9 +58,9 @@ class Uploads extends X3_Module_Table {
             X3::log('Error reading uploads/ dir. Just wanted to clean up captchas');
         }
         $name = 'Captcha_' . time() . rand(0, 10) . rand(100, 10000) . '.gif';
-        $text = substr(str_shuffle(str_repeat('0123456789', 5)), 0, 5);
-        X3::app()->user->captcha = array('text' => md5($text), 'file' => $name, 'times' => 3, 'lasttime' => time());
-        $cap = new Gifcaptcha($text, 'css/fonts/myriadpro-boldcond-webfont.ttf', 'ffffff');
+        $text = substr(str_shuffle(str_repeat('0123456789ABCDEFGHKLMPRSTXYZ', 5)), 0, rand(3, 6));
+        X3::app()->user->captcha = array('text' => md5(strtolower($text)), 'file' => $name, 'times' => 3, 'lasttime' => time());
+        $cap = new Gifcaptcha($text, 'css/ALoveofThunder.ttf', 'ffffff');
         $gif = $cap->AnimatedOut();
         file_put_contents('uploads/' . $name, $gif);
         echo $gif;

@@ -8,6 +8,7 @@
     <div class="content">
         <div class="admin-list">
             <?foreach($models as $model):
+                if($model->hidden_id == X3::user()->id) continue;
                 $user = $users[$model->user_from];
                 $files = X3::db()->query("SELECT f.id id, f.name name FROM data_uploads f INNER JOIN message_uploads mu ON mu.file_id=f.id WHERE mu.message_id = ".$model->id);
                 ?>
@@ -28,7 +29,7 @@
                                 <span class="file_link"><a href="/uploads/get/file/<?=$file['id']?>"><?=$file['name']?></a></span>
                                 <?endwhile;?>
                                 <?endif;?>
-                                <?/*<div class="wrapper"><a href="/message/with/<?=$user->id?>.html" class="button"><?=X3::translate('Ответить')?></a></div>*/?>
+                                <div class="del"><a href="/message/delete/id/<?=$model->id?>.html" class="map_link remove"><img src="/images/cross.png" alt="<?=X3::translate('Удалить')?>" title="<?=X3::translate('Удалить')?>" /></a></div>
                         </div>
                         </div>
                 </div>
@@ -99,12 +100,12 @@
     var file_tpl = '<span class="file_link"><a filetitle href="#">Скриншот ошибки</a><a fileremove class="red_cross" href="#"><img width="7" height="" src="/images/zeropic.png" /></a></span>';
     $(function(){
         $('.unread').each(function(){
-            $(this).one('mouseover',function(){
+            //$(this).one('mouseover',function(){
                 var self=this;
                 $.get('/message/read/id/'+$(this).attr('pid'),function(){  
                     $(self).removeClass('unread');
                 })
-            })
+            //})
         })
         $('#send_message').click(function(){
             var eform = $($('#form_tmpl').html());
@@ -162,6 +163,22 @@
                 }
             })
             return false;
+        })
+        $('.map_link.remove').each(function(){
+            $(this).click(function(){
+                if(confirm('<?=X3::translate('Вы уверены?');?>')){
+                    var href = $(this).attr('href');
+                    var self = this;
+                    $.get(href,function(m){
+                        if(m=='OK'){
+                            $(self).parent().parent().parent().parent().fadeOut(function(){
+                                $(this).remove();
+                            })
+                        }
+                    })
+                }
+                return false;
+            })
         })
     })
 </script>

@@ -532,6 +532,8 @@ class X3_MySQL_Model extends X3_Model implements ArrayAccess {
             return false;
         }
         $this->module->beforeSave();
+        if(!empty($this->_errors))
+            return false;
         $attributes = array();
         foreach($this->attributes as $attr=>$v)
             if(!in_array('unused',$this->module->_fields[$attr]))

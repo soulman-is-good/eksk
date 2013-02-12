@@ -128,7 +128,7 @@ $form = new Form($model);
                 </td>
                 <td class="field" colspan="2">
                     <div class="wrapper inline-block"><button type="submit"><?=X3::translate('Создать');?></button></div>
-                    <div class="wrapper inline-block"><button type="submit"><?=X3::translate('Создать и опубликовать');?></button></div>
+                    <div class="wrapper inline-block"><button type="submit" name="public" value="1"><?=X3::translate('Создать и опубликовать');?></button></div>
                 </td>
             </tr>
         </table>

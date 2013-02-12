@@ -1,5 +1,4 @@
 <?php
-$users = Message::getUserList();
 $id = X3::user()->id;
 $me = (object)X3::db()->fetch("SELECT id, CONCAT(name,' ',surname) name, image, role FROM data_user WHERE id = ".$id);
 $me->name = $me->role=='admin'?X3::translate('Администратор').'#'.$me->id:$me->name;
@@ -10,13 +9,15 @@ if(is_file('uploads/User/'.$me->image)){
 ?>
 <div class="eksk-wnd">
     <div class="head">
+        <?if(X3::user()->isKsk() || X3::user()->isAdmin()):?>
         <div class="buttons">
             <div class="wrapper inline-block"><a class="button inline-block" id="create_forum" href="/forum/create.html"><?=X3::translate('Создать тему')?></a></div>
         </div>
+        <?endif;?>
         <h1><?=X3::translate('Список тем');?></h1>
     </div>
     <div class="content">
-        <div class="admin-list">
+        <table class="admin-list">
             <?while($model = mysql_fetch_object($models)):
                 $user = (object)X3::db()->fetch("SELECT id, CONCAT(name,' ',surname) name, image, role FROM data_user WHERE id = ".$model->user_id);
                 $user->name = $user->role=='admin'?X3::translate('Администратор').' #'.$user->id:$user->name;
@@ -24,24 +25,33 @@ if(is_file('uploads/User/'.$me->image)){
                 if(is_file('uploads/User/'.$user->image))
                     $model->avatar = '/uploads/User/100x100/' . $user->image;
                 ?>
-                <div href="/forum/<?=$model->id?>/" class="message_block">
-                    <div class="inside_block">
-                        <div class="left_side">
-                            <a href="/forum/<?=$model->id?>/">
-                                <img width="100" src="<?=$model->avatar?>" />
-                            </a>
-                        </div>
-                        <div class="middle_side">
-                                <a href="/user/<?=$model->user_id?>.html"><?=$user->name?></a>
-                                <i><?=I18n::date($model->latest)?>, <?=date("H:i",$model->latest)?></i>
-                        </div>
-                        <div class="right_side">
-                            <p><?=nl2br($model->title);?></p>
-                        </div>
-                    </div>
-                </div>
+                <tr>
+                    <td class="ava">
+                        <a href="/user/<?=$user->id?>/">
+                            <img width="100" src="<?=$model->avatar?>" />
+                        </a>
+                    </td>
+                    <td class="name">
+                        <a href="/user/<?=$user->id?>.html"><?=$user->name?></a><br/>
+                        <em><?=I18n::date($model->latest)?>, <?=date("H:i",$model->latest)?></em>
+                    </td>
+                    <td class="text">
+                        <p><a href="/forum/<?=$model->id?>.html"><?=nl2br($model->title);?></a></p>
+                    </td>
+                    <td class="ops">
+                        <a href="/forum/<?=$model->id?>.html"><span><?=X3::translate('Перейти к теме')?></span></a>
+                        <?if(X3::user()->id == $user->id):?>
+                            <?if($model->status=='0'):?>
+                                <a href="/forum/public/id/<?=$model->id?>.html"><span><?=X3::translate('Опубликовать')?></span></a>
+                            <?else:?>
+                                <em style="display:block;margin-bottom:15px"><?=X3::translate('Опубликовано')?></em>
+                            <?endif;?>
+                        <a href="/forum/create/id/<?=$model->id?>.html"><span><?=X3::translate('Редактировать')?></span></a>
+                        <?endif;?>
+                    </td>
+                </tr>
             <?endwhile;?>
-        </div>
+        </table>
     </div>
     <div id="navi">
             <?=$paginator?>

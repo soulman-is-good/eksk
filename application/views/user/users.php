@@ -27,7 +27,7 @@ if($type == 'ksk'){
             <?foreach($models as $model):?>
             <tr>
                 <td class="ava"><img src="<?=$model->avatar?>" width="100" alt="" /></td>
-                <td class="name"><a href="/user/<?=$model->id?>.html"><?=$model->fullname?></a></td>
+                <td class="name"><a href="/user/<?=$model->id?>.html"><?=$model->fullname?><?=$model->status==0?'<em>'.X3::translate('Не активирован').'</em>':''?></a></td>
                 <td class="ops">
                     <a class="send_message" href="/message/with/<?=$model->id?>.html"><span><?=X3::translate('Написать сообщение')?></span></a>
                     <?if(X3::user()->isAdmin() || X3::user()->isKsk()):?>

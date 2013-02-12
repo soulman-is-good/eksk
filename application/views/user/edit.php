@@ -170,7 +170,7 @@ $perr = $profile->getTable()->getErrors();
                     </ul>
                 </div>
                 <?endif;?>
-                <table class="eksk-form">
+                <table class="eksk-form" width="100%">
                     <tr>
                         <td class="label">
                             <label><?=$profile->fieldName('mobile')?> +7</label>
@@ -247,7 +247,7 @@ $perr = $profile->getTable()->getErrors();
                     <tr><td></td><td colspan="2"><h3><?=X3::translate('Мои дома');?></h3></td></tr>
                     <?endif;?>
                     <tr class="address" link="L_<?=$i?>">
-                        <td colspan="2">
+                        <td colspan="2" width="551">
                             <table class="eksk-form">
                                 <tr>
                                     <td class="label">
@@ -281,11 +281,11 @@ $perr = $profile->getTable()->getErrors();
                                         <label><?=$address->fieldName('house')?></label>
                                     </td>
                                     <td class="field">
-                                        <?if($user->role == 'user'):?>
+                                        <?if($user->role != 'ksk'):?>
                                             <div class="wrapper inline-block"><select fcselect data-width="47" name="Address[<?=$i?>][house]" id="Address_house_<?=$i?>" hid="<?=addslashes($address->house)?>"></select></div>
                                             <label><?=$address->fieldName('flat')?></label>
                                             <div class="wrapper inline-block"><?=$aform->input('flat',array('name'=>"Address[$i][flat]",'id'=>"Address_flat_$i",'style'=>"width:47px"))?></div>
-                                            <?else:?>
+                                        <?else:?>
                                             <?if($i==0):?>
                                             <div class="wrapper inline-block"><?=$aform->input('house',array('name'=>"Address[$i][house]",'id'=>"Address_house_$i",'style'=>"width:47px"))?></div>
                                             <label><?=$address->fieldName('flat')?></label>
@@ -302,7 +302,7 @@ $perr = $profile->getTable()->getErrors();
                                 </tr>
                             </table>
                         </td>
-                        <td style="vertical-align: middle;text-align: center">
+                        <td style="vertical-align: middle;text-align: center" width="189">
                             <?if($i>0):?>
                             <a href="#remove" class="map_link remove"><span><?=X3::translate('Удалить');?></span></a>
                             <?endif;?>
@@ -311,6 +311,7 @@ $perr = $profile->getTable()->getErrors();
                     <tr class="map_tpl" link="L_<?=$i?>">
                         <td><input type="hidden" id="coord_<?=$i?>" name="Address[<?=$i?>][coord]" value="<?=$address->coord?>" /></td>
                         <td colspan="2">
+                            <?if($i==$acnt-1):?><a href="#fake" class="map_link fakeadd" style="float:right;margin-right:60px"><span><?=X3::translate('Добавить еще адрес');?></span></a><?endif;?>
                             <a class="map_link inline-block mb-10 map-link" href="#coord_<?=$i?>"><span><?=X3::translate('Указать на карте');?></span><span style="display:none"><?=X3::translate('Спрятать карту');?></span></a>
                             <div class="map" style="display:none">
                                 <div></div>
@@ -321,8 +322,8 @@ $perr = $profile->getTable()->getErrors();
                     <?if($user->role == 'ksk' && $i==2):?>
                     <tr><td></td><td colspan="2"><h3><?=X3::translate('Мои дома');?></h3></td></tr>
                     <?endif;?>                    
-                    <tr class="address new" link="L_<?=$i?>">
-                        <td colspan="2">
+                    <tr <?if($acnt>0):?>style="display:none"<?endif;?> class="address new" link="L_<?=$i?>">
+                        <td colspan="2" width="551">
                             <table class="eksk-form">
                                 <tr>
                                     <td class="label">
@@ -351,7 +352,7 @@ $perr = $profile->getTable()->getErrors();
                                         <label><?=$address->fieldName('house')?></label>
                                     </td>
                                     <td class="field">
-                                            <?if($user->role == 'user'):?>
+                                            <?if($user->role != 'ksk'):?>
                                             <div class="wrapper inline-block"><select fcselect data-width="47" name="Address[<?=$i?>][house]" id="Address_house_<?=$i?>" hid="<?=addslashes($address->house)?>"></select></div>
                                             <label><?=$address->fieldName('flat')?></label>
                                             <div class="wrapper inline-block"><?=$aform->input('flat',array('name'=>"Address[$i][flat]",'id'=>"Address_flat_$i",'style'=>"width:47px"))?></div>
@@ -366,11 +367,11 @@ $perr = $profile->getTable()->getErrors();
                                 </tr>
                             </table>
                         </td>
-                        <td class="additional" width="185">
+                        <td class="additional" width="189">
                             <a href="#add" class="map_link add_address"><span><?=X3::translate('Добавить еще адрес');?></span></a>
                         </td>
                     </tr>
-                    <tr class="map_tpl" link="L_<?=$i?>">
+                    <tr <?if($acnt>0):?>style="display:none"<?endif;?> class="map_tpl" link="L_<?=$i?>">
                         <td><input type="hidden" id="coord_<?=$i?>" name="Address[<?=$i?>][coord]" value="<?=$address->coord?>" /></td>
                         <td colspan="2">
                             <a class="map_link inline-block mb-10 map-link" href="#coord_<?=$i?>"><span><?=X3::translate('Указать на карте');?></span><span style="display:none"><?=X3::translate('Спрятать карту');?></span></a>
@@ -648,7 +649,7 @@ $perr = $profile->getTable()->getErrors();
                 $(C).parent().parent().parent().parent().find('.region_id').change();
             },'json')
         })
-        <?if($user->role == 'user'):?>
+        <?if($user->role != 'ksk'):?>
         $('.region_id').live('change',function(){
             var id = $(this).attr('id').split('_').pop();
             var H = $('#Address_house_'+id);
@@ -716,7 +717,7 @@ $perr = $profile->getTable()->getErrors();
                         var id = $(this).attr('id').split('_').pop();
                         var text = '';
                         text += $('#Address_city_id_'+id).children(':selected').text();
-                        <?if($user->role == 'user'):?>
+                        <?if($user->role != 'ksk'):?>
                         text += ', ' + $('#Address_house_'+id).children(':selected').text();
                         <?else:?>
                         text += ', ' + $('#Address_house_'+id).val();
@@ -749,7 +750,7 @@ $perr = $profile->getTable()->getErrors();
                 $(this).fcselect();
             });
             b.find('[id^="Address_id_"], .delete_address').remove();
-            <?if($user->role == 'user'):?>
+            <?if($user->role != 'ksk'):?>
             b.find('[id^="Address_flat_"]').val('');
             <?else:?>
             b.find('[id^="Address_house_"]').val('');
@@ -772,6 +773,12 @@ $perr = $profile->getTable()->getErrors();
                 m.toggle();
                 $('[link="'+link+'"]').eq(1).remove();
             }
+            return false;
+        })
+        $('.fakeadd').click(function(){
+            $(this).remove();
+            var q = $('.address.new').eq(0).attr('link');
+            $('tr[link="'+q+'"]').toggle();
             return false;
         })
         <?//IF THER IS NO ERRORS

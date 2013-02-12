@@ -29,21 +29,27 @@ class User extends X3_Module_Table {
         'gender'=>array('enum["Мужской","Женский"]','default'=>'Мужской'),
         'email'=>array('email','unique'), //as login
         'phone'=>array('string','default'=>''), //as login
-        'password'=>array('string[255]','password'),
+        'password'=>array('string[5|50]','password'),
         'role'=>array('string[255]','default'=>'user'),
         'akey'=>array('string[255]','default'=>''),
         'date_of_birth'=>array('integer[11]','default'=>'0'),
         'rank'=>array('integer[11]','default'=>'0'),
         'lastbeen_at'=>array('datetime','default'=>'0'),
+        'created_at'=>array('datetime','default'=>'0'),
         'status'=>array('integer[1]','unsigned','default'=>'0'),
         //unused
         'password_old'=>array('string[6|50]','password','default'=>'','unused'),
         'password_new'=>array('string[6|50]','password','default'=>'','unused'),
-        'password_repeat'=>array('string[6|50]','password','default'=>'','unused'),
+        'password_repeat'=>array('string[50]','password','default'=>'','unused'),
+        'captcha'=>array('string[255]','default'=>'','unused'),
+        'iagree'=>array('boolean','default'=>'0','unused'),
     );
     
     public function onValidate($attr,$pass) {
         $pass = false;
+        if(isset($this->_fields[$attr]) && in_array('xss',$this->_fields[$attr]) && trim($this->$name)!=''){
+            
+        }
         if($attr == 'phone' && trim($this->$attr) != '') {
             //TODO: phone validation
             $id = $this->id;
@@ -60,7 +66,12 @@ class User extends X3_Module_Table {
     }
     
     public function fieldNames() {
+        $known = X3::translate('Я ознакомлен(а) и соглас(ен/на) с [правилами] сайта');
+        if(preg_match("/\[(.+)\]/", $known,$m)>0){
+            $known = str_replace($m[0], '<a href="/page/rules.html" target="_blank">'.$m[1].'</a>', $known);
+        }
         return array(
+            'iagree'=>$known,
             'image'=>X3::translate('Аватарка'),
             'name'=>X3::translate('Имя'),
             'kskname'=>X3::translate('Название КСК'),
@@ -111,7 +122,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
     public static function isMyKsk($id) {
         $i = X3::user()->id;
         $i = X3::db()->fetch("SELECT ($i IN (SELECT a1.user_id FROM user_address a1, user_address a2 
-WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id AND `a2`.`region_id` = a1.region_id AND `a2`.`house` = a1.house) AND (SELECT role FROM data_user WHERE id=$id)='ksk') AS `ismyksk`");
+WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id AND `a2`.`region_id` = a1.region_id AND `a2`.`house` = a1.house AND a2.status=1) AND (SELECT role FROM data_user WHERE id=$id)='ksk') AS `ismyksk`");
         return $i['ismyksk'] == '1';
     }
     
@@ -129,7 +140,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
         else
             $id = X3::user()->id;
         $user = User::getByPk($id);
-        if($user == null || ($user->role == 'admin' && !X3::user()->isAdmin()))
+        if($user == null || ($user->role == 'admin' && !X3::user()->isAdmin()) || (X3::user()->isUser() && $user->role=='ksk' && !self::isMyKsk($id)) || (X3::user()->isUser() && $user->role=='user' && !self::isMyNeibor($id)))
             throw new X3_404();
         $this->template->render('@views:site:index.php',array('user'=>$user));
     }
@@ -323,17 +334,60 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             $this->redirect('/');
         $error = false;
         $u = array('email'=>'','password'=>'');
-        if(isset($_POST['User'])){
+        $user = new User;
+        $address = new User_Address;
+        if(isset($_POST['captcha'])){
+            $pass = true;
+            if(md5(strtolower($_POST['captcha'])) != X3::user()->captcha['text']){
+                $user->addError('captcha', X3::translate('Неверный код с картинки'));
+                $pass = false;
+            }
+            $user->getTable()->acquire($_POST['User']);
+            $address->getTable()->acquire($_POST['User_Address']);
+            $user->role = 'user';
+            $user->status = 0;
+            $address->user_id = 1;
+            if(!$user->iagree){
+                $user->addError('iagree', X3::translate('Вы должны быть согласны с правилами сайта'));
+            }
+            if($user->password != $user->password_repeat){
+                $user->addError('password_repeat', X3::translate('Пароли не совпадают'));
+            }
+            if(trim($address->flat)=='' || preg_match("/^[0-9A-Za-z]+$/", $address->flat)==0){
+                $address->addError('flat', X3::translate('Нужно ввести номер квартиры'));
+                $pass = false;
+            }
+            if(NULL == City_Region::getByPk($address->region_id)){
+                $address->addError('region_id', X3::translate('Нужно выбрать улицу'));
+                $pass = false;
+            }
+            if(($a = array_pop(X3::db()->fetch("SELECT '$address->house' IN (SELECT house FROM user_address WHERE region_id='$address->region_id')")))==0){
+                var_dump("SELECT '$address->house' IN (SELECT id FROM user_address WHERE region_id='$address->region_id')",$a);exit;
+                $address->addError('house', X3::translate('Нужно выбрать дом'));
+                $pass = false;
+            }
+            if($user->validate() && $pass && $address->getTable()->validate()){
+                if($user->save()){
+                    $address->user_id = $user->id;
+                    if($address->save()){
+                        $link = base64_encode($user->akey . "|" . X3::user()->id);
+                        Notify::sendMail('welcomeUser',array('link'=>$link),$user->email);
+                        $this->redirect('/page/success.html');
+                    }
+                }
+            }
+        }
+        if(!isset($_POST['captcha']) && isset($_POST['User'])){
             $u = array_extend($u,$_POST['User']);
             $u['email'] = mysql_real_escape_string($u['email']);
             $u['password'] = mysql_real_escape_string($u['password']);
-            $user = new UserIdentity($u['email'], $u['password']);
-            $error = $user->login();
+            $userI = new UserIdentity($u['email'], $u['password']);
+            $error = $userI->login();
             if(!is_string($error)){
                 $this->refresh();
             }
         }
-        $this->template->render('login',array('error'=>$error,'user'=>$u));
+        $this->template->render('login',array('error'=>$error,'user'=>$user,'address'=>$address));
     }
     
     public function actionLogout() {
@@ -410,7 +464,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             }
             if($user->surname == '' && $user->role != 'ksk'){
                 $user->addError('surname', X3::translate('Введите Вашу фамилию'));
-            }
+            }            
             $user->status = 1;
             $errors = $user->getTable()->getErrors();
             if($user->role == 'ksk'){
@@ -443,8 +497,10 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             $this->password = $user['password'];
             $_POST['notouch']=true;
         }
-        if($this->getTable()->getIsNewRecord())
+        if($this->getTable()->getIsNewRecord()){
+            $this->created_at = time();
             $this->akey = md5(time().rand(10,99)).rand(10,99);
+        }
     }
 
     public function afterValidate() {

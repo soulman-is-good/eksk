@@ -15,7 +15,7 @@
 */
 
 define ( 'VERSION', '2.00' );
-define ( ANIM_FRAMES, 70 );
+define ( ANIM_FRAMES, 20 );
 define ( ANIM_DELAYS, 10 );
 
 Class Gifcaptcha {
@@ -49,6 +49,7 @@ Class Gifcaptcha {
 	var $var16;
 	var $var17;
 	var $var18;
+        public $font_size = 18;
 	/*
 	:::::::::::::::::::::::::::::::::::::::::::::
 	::                                         ::
@@ -68,10 +69,11 @@ Class Gifcaptcha {
     $this->image = imageCreateTrueColor($this->width, $this->height);
     imageFill($this->image, 0, 0, ImageColorAllocate($this->image, 243, 250, 253));
     //$this->ttf = imageTTFBbox(26, 0, $font, $text);
-    $this->textcolor = ImageColorAllocate($this->image, 30, 107, 131);
+    $this->textcolor = ImageColorAllocate($this->image, 0, 0, 0);
 	$this->font = $font;
 	$this->text = $text;
-	imagettftext($this->image, 18, 0, 13, 33, $this->textcolor, $this->font, $this->text);
+        $this->font_size = ($this->height - 8);
+        $this->font_color = 13;
     for ($x = 0; $x < $this->width; $x++) {
 		$xoffset = $x * $this->height;
         for ($y = 0; $y < $this->height; $y++) {
@@ -164,30 +166,41 @@ Class Gifcaptcha {
 	::                                         ::
 	:::::::::::::::::::::::::::::::::::::::::::::
 	*/
-	function Frame ( $Lx, $Ly ) {
+	function Frame ( $Lx, $Ly, $frame=1 ) {
 		$this->var16 = $this->var06 - 1;
 		$image = imageCreateTrueColor($this->width, $this->height);
 		imagecopy($this->image, $this->bg, 0, 0, 0, 0, $this->width, $this->height);
-		for ( $x = 0; $x < $this->width; $x++ ) {
+                if($frame >0){
+                    $x = $this->width/2 - strlen($this->text) * $this->font_size/2;
+                    $y = $this->height - 4;
+                    for($k = 0;$k<strlen($this->text);$k++){
+                        $r = rand(-15,15);
+                        imagettftext($this->image, $this->font_size, $r, ($x + $k * $this->font_size), $y, $this->textcolor, $this->font, $this->text[$k]);
+                    }
+                }
+		/*for ( $x = 0; $x < $this->width; $x++ ) {
 			$xoffset = $x * $this->height;
-			$off = sin(($x+$Lx)*3.14/35)*5+cos(($y+$Lx)*3.14/35)*5;
 			for ( $y = 0; $y < $this->width; $y++ ) {
 				//if($this->var17 [ $x + $yoffset ]  [ 0 ]+$this->var17 [ $x + $yoffset ]  [ 1 ]+$this->var17 [ $x + $yoffset ]  [ 2 ] > 0)
 				if($this->var17 [ $y + $xoffset ]  [ 3 ] == 0)
-					imageSetPixel ( $this->image, $x, $y+$off,
+					imageSetPixel ( $this->image, $x, $y,
 									imageColorAllocateAlpha ( $this->image,
 										$this->var17 [ $y + $xoffset ]  [ 0 ],
 										$this->var17 [ $y + $xoffset ]  [ 1 ],
 										$this->var17 [ $y + $xoffset ]  [ 2 ],
 										$this->var17 [ $y + $xoffset ]  [ 3 ]
 									)
-					);					
+					);
 			}
-		}
+		}*/
 		imagecopy($image, $this->image, 0, 0, 0, 0, $this->width, $this->height);
 		imageDestroy($this->image);
 		$this->image = imageCreateTrueColor($this->width, $this->height);		
-		ob_start ( ); imageGif ( $image ); $var2 = ob_get_contents ( ); ob_end_clean ( ); return $var2;
+		ob_start ( ); 
+                imageGif ( $image ); 
+                $var2 = ob_get_contents ( ); 
+                ob_end_clean ( ); 
+                return $var2;
 	}
 	/*
 	:::::::::::::::::::::::::::::::::::::::::::::
@@ -199,7 +212,7 @@ Class Gifcaptcha {
 	function AnimatedOut ( ) {
 		for ( $i = 0; $i < ANIM_FRAMES; $i++ ) {
 			$j = 0;
-			$f_arr [ ] = $this->Frame ( $i, 16 );
+			$f_arr [ ] = $this->Frame ( $i, 16 ,$i );
 			$d_arr [ ] = ANIM_DELAYS;
 		}
 		$GIF = new Gifencoder ( $f_arr, $d_arr, 0, 0, 255, 255, 255, "bin" );

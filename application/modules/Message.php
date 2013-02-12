@@ -20,6 +20,7 @@ class Message extends X3_Module_Table {
         'user_from' => array('integer[10]', 'unsigned', 'index', 'ref' => array('User', 'id', 'default' => 'email')),
         'content' => array('content'),
         'status' => array('boolean', 'default' => '0'),
+        'hidden_id' => array('integer[10]','unsigned', 'default' => '0'),
         'created_at' => array('datetime', 'default' => '0'),
     );
 
@@ -36,9 +37,9 @@ class Message extends X3_Module_Table {
     public function filter() {
         return array(
             'allow' => array(
-                'user' => array('index', 'show', 'send', 'file','with','read','count'),
-                'ksk' => array('index', 'show', 'send', 'file','with','read','count'),
-                'admin' => array('index', 'show', 'send', 'file','with','read','count')
+                'user' => array('index', 'show', 'send', 'file','with','read','count','deleteall','delete'),
+                'ksk' => array('index', 'show', 'send', 'file','with','read','count','delete','deleteall'),
+                'admin' => array('index', 'show', 'send', 'file','with','read','count','delete','deleteall')
             ),
             'deny' => array(
                 '*' => array('*'),
@@ -63,7 +64,7 @@ WHERE a2.user_id=".X3::user()->id." AND a1.user_id<>a2.user_id AND `a2`.`city_id
 
     public function actionIndex() {
         $id = X3::user()->id;
-        $q = "FROM data_message m, data_user u WHERE (m.user_from=$id AND m.user_to=u.id) OR (m.user_to=$id AND m.user_from=u.id) GROUP BY u.id";
+        $q = "FROM data_message m, data_user u WHERE ((m.user_from=$id AND m.user_to=u.id) OR (m.user_to=$id AND m.user_from=u.id)) AND m.hidden_id<>$id GROUP BY u.id";
         $count = X3::db()->count("SELECT MAX(m.created_at) latest ".$q);
         $paginator = new Paginator(__CLASS__, $count);
         $q = "SELECT u.id, CONCAT(u.name,' ',u.surname) name,u.image, u.role, MAX(m.created_at) latest " . $q . " ORDER BY latest DESC LIMIT $paginator->offset,$paginator->limit";
@@ -97,7 +98,35 @@ WHERE a2.user_id=".X3::user()->id." AND a1.user_id<>a2.user_id AND `a2`.`city_id
     
     public function actionCount() {
         if(!IS_AJAX) throw new X3_404();
-        echo Message::num_rows(array('status'=>'0','user_to'=>X3::user()->id));
+        $id = X3::user()->id;
+        $msg = Message::num_rows(array('status'=>'0','user_to'=>$id));        
+        $date = X3::db()->fetch("SELECT created_at FROM data_user WHERE id=$id");
+        $type = X3::user()->isUser()?"(f.type='user' OR f.type='*')":(X3::user()->isKsk()?"(f.type='ksk' OR f.type='*')":"(f.type='admin' OR f.type='*')");
+        $q = "SELECT f.id FROM data_warning f INNER JOIN data_user u ON u.id=f.user_id LEFT JOIN user_address a ON a.user_id=$id WHERE
+            f.end_at>{$date['created_at']} AND f.user_id<>$id AND (
+            (f.city_id IS NULL AND $type AND u.role='admin' AND
+                (
+                    (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                    (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                    (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL) OR 
+                    (f.city_id=a.city_id AND f.region_id IS NULL) OR
+                    (f.city_id IS NULL)
+                )
+            )
+                OR
+            ($type AND u.role='ksk' AND
+             (
+                (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR 
+                (f.city_id=a.city_id AND f.region_id IS NULL AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR
+                (f.city_id IS NULL AND a.city_id IN (SELECT city_id FROM user_address WHERE user_id=u.id AND status=1) AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1))
+             )
+             )
+            ) AND f.id NOT IN (SELECT warning_id FROM warning_stat WHERE user_id=$id) GROUP BY f.id
+             ";
+        $count = X3::db()->count($q);
+        echo json_encode(array('msg'=>$msg,'notify'=>$count,'q'=>$q));
         exit;
     }
     
@@ -180,6 +209,41 @@ WHERE a2.user_id=".X3::user()->id." AND a1.user_id<>a2.user_id AND `a2`.`city_id
         exit;
     }
     
+    public function actionDelete(){
+        if(isset($_GET['id']) && ($id = (int)$_GET['id'])>0){
+            $msg = Message::get(array(array(array('user_to'=>X3::user()->id),array('user_from'=>X3::user()->id)),'id'=>$id),1);
+            if($msg != null && $msg->hidden_id>0 && $msg->hidden_id != X3::user()->id){
+                Message::deleteByPk($id);
+                if(IS_AJAX)
+                    die('OK');
+            }else if($msg != null && $msg->hidden_id != X3::user()->id){
+                $msg->hidden_id = X3::user()->id;
+                if($msg->save() && IS_AJAX){
+                    die('OK');
+                }
+            }
+            $this->redirect($_SERVER['HTTP_REFERER']);
+        }
+        if(IS_AJAX)
+            exit;
+        throw new X3_404();
+    }
+    
+    public function actionDeleteall(){
+        if(isset($_GET['id']) && ($id = (int)$_GET['id'])>0){
+            $uid = X3::user()->id;
+            $q = new X3_MySQL_Query('data_message');
+            Message::delete(array('hidden_id'=>array('@@'=>"hidden_id>0 AND hidden_id<>$uid"),array(array('user_from'=>$uid,'user_to'=>$id),array('user_to'=>$uid,'user_from'=>$id))));
+            Message::update(array('hidden_id'=>$uid),array(array('user_from'=>$uid,'user_to'=>$id),array('user_to'=>$uid,'user_from'=>$id)));
+            if(IS_AJAX)
+                die('OK');
+            $this->redirect($_SERVER['HTTP_REFERER']);
+        }
+        if(IS_AJAX)
+            exit;
+        throw new X3_404();
+    }
+    
     public function beforeValidate() {
         if($this->created_at == 0)
             $this->created_at = time();
@@ -188,7 +252,9 @@ WHERE a2.user_id=".X3::user()->id." AND a1.user_id<>a2.user_id AND `a2`.`city_id
     public function onDelete($tables, $condition) {
         if (strpos($tables, $this->tableName) !== false) {
             $model = $this->table->select('*')->where($condition)->asObject(true);
-            Message_Uploads::delete(array('message_id'=>$model->id));
+            if($model){   
+                Message_Uploads::delete(array('message_id'=>$model->id));
+            }
         }
         parent::onDelete($tables, $condition);
     }

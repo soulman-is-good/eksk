@@ -1,68 +1,66 @@
 <?php
-$users = Message::getUserList();
 $id = X3::user()->id;
-$me = (object)X3::db()->fetch("SELECT id, CONCAT(name,' ',surname) name, image,role FROM data_user WHERE id = ".$id);
+$me = (object)X3::db()->fetch("SELECT id, CONCAT(name,' ',surname) name, image, role FROM data_user WHERE id = ".$id);
 $me->name = $me->role=='admin'?X3::translate('Администратор').'#'.$me->id:$me->name;
 $me->avatar = '/images/default.png';
-if(is_file('uploads/User/'.$me->image))
+if(is_file('uploads/User/'.$me->image)){
         $me->avatar = '/uploads/User/50x50/' . $me->image;
+}
 ?>
 <div class="eksk-wnd">
     <div class="head">
         <div class="buttons">
-            <div class="wrapper inline-block"><a class="button inline-block" id="send_message" href="#message/send.html"><?=X3::translate('Написать сообщение')?></a></div>
+            <?if(X3::user()->isKsk() || X3::user()->isAdmin()):?>
+            <div class="wrapper inline-block"><a class="button inline-block" id="create_forum" href="/warning/create.html"><?=X3::translate('Создать')?></a></div>
+            <?endif;?>
         </div>
-        <h1><?=X3::translate('Мои сообщения');?></h1>
+        <h1><?=X3::translate('Оповещения');?></h1>
     </div>
     <div class="content">
-        <div class="admin-list">
+        <table class="admin-list">
             <?while($model = mysql_fetch_object($models)):
-                if(!isset($users[$model->id])){
-                    $users[$model->id] = $model->name;
-                }
-                //$user = (object)X3::db()->fetch("SELECT id, CONCAT(name,' ',surname) name, image FROM data_user WHERE id = ".$model->user_to);
-                $model->name = $model->role=='admin'?X3::translate('Администратор').' #'.$model->id:$model->name;
-                $m = X3::db()->fetch("SELECT status, user_from, content, created_at FROM data_message WHERE (user_to=$id AND user_from=$model->id)
-                        OR (user_from=$id AND user_to=$model->id) AND hidden_id<>$id
-                        ORDER BY status, created_at DESC LIMIT 1
-                        ");
-                //var_dump($m, X3::db()->getErrors());
+                $user = (object)X3::db()->fetch("SELECT id, CONCAT(name,' ',surname) name, image, role FROM data_user WHERE id = ".$model->user_id);
+                $user->name = $user->role=='admin'?X3::translate('Администратор').' #'.$user->id:$user->name;
                 $model->avatar = '/images/default.png';
-                if(is_file('uploads/User/'.$model->image))
-                    $model->avatar = '/uploads/User/100x100/' . $model->image;
-                //$model = Message::get(array('@condition'=>array(array('user_from'=>$user->id,'user_to'=>X3::user()->id),array('user_to'=>$user->id,'user_from'=>X3::user()->id)),'@order'=>'created_at DESC','@limit'=>'1'),1);
+                if(is_file('uploads/User/'.$user->image))
+                    $model->avatar = '/uploads/User/100x100/' . $user->image;
                 ?>
-                <div href="/message/with/<?=$model->id?>.html" class="message_block<?=$m==false || $m['status']==1 || $m['user_from'] == $id?'':' unread'?>">
-                    <div class="inside_block">
-                        <div class="left_side">
-                            <a href="/message/with/<?=$model->id?>.html">
+                <tr>
+                    <td class="ava">
+                            <a href="/user/<?=$model->user_id?>.html">
                                 <img width="100" src="<?=$model->avatar?>" />
                             </a>
-                        </div>
-                        <div class="middle_side">
-                                <a href="/user/<?=$model->id?>.html"><?=$model->name?></a>
-                                <i><?=I18n::date($m['created_at'])?>, <?=date("H:i",$m['created_at'])?></i>
-                        </div>
-                        <div class="right_side">
-                            <p>
-                            <?=$m!=false && $m['user_from'] == $id?'<img src="'.$me->avatar.'" class="miniava" width="50" alt="" title="'.addslashes($me->name).'" />':''?><?=nl2br(X3_String::create($m['content'])->carefullCut(128));?>
-                            </p>
-                            <?//$m!=false && $m['user_from'] == $id?'<div class="clear">&nbsp;</div>':''?>
-                            <div style="clear:left" class="wrapper inline-block"><a href="/message/with/<?=$model->id?>.html" class="button answerme"><?=X3::translate('Ответить')?></a></div>
-                            <a href="/message/with/<?=$model->id?>.html" class="ml-10"><?=X3::translate('Посмотреть историю переписки')?></a>
-                            <div class="del"><a href="/message/deleteall/id/<?=$model->id?>.html" class="map_link remove"><img src="/images/cross.png" alt="<?=X3::translate('Удалить')?>" title="<?=X3::translate('Удалить')?>" /></a></div>
-                        </div>
-                    </div>
-                </div>
+                    </td>
+                    <td class="name">
+                            <a href="/user/<?=$model->user_id?>.html"><?=$user->name?></a><br/>
+                            <em><?=I18n::date($model->latest)?>, <?=date("H:i",$model->latest)?></em>
+                    </td>
+                    <td class="text">
+                            <p><?=nl2br($model->title);?></p>
+                    </td>
+                    <td class="ops">
+                        <?if(X3::user()->id == $user->id):?>
+                            <?if($model->status=='0'):?>
+                                <a href="/warning/create/id/<?=$model->id?>.html"><span><?=X3::translate('Редактировать')?></span></a>
+                                <a href="/warning/send/id/<?=$model->id?>.html"><span><?=X3::translate('Опубликовать')?></span></a>
+                                <a href="/warning/delete/id/<?=$model->id?>.html"><span><?=X3::translate('Удалить')?></span></a>
+                            <?else:?>
+                                <em style="display:block;margin-bottom:15px"><?=X3::translate('Опубликовано')?></em>
+                            <?endif;?>
+                        <?elseif(!Warning::isKnown($model->id)):?>
+                                <div class="wrapper"><a class="button" href="/warning/read/id/<?=$model->id?>.html"><?=X3::translate('Ознакомлен')?></a></div>
+                        <?endif;?>
+                    </td>
+                </tr>
             <?endwhile;?>
-        </div>
+        </table>
     </div>
     <div id="navi">
             <?=$paginator?>
     </div>
     <div class="shadow"><i></i><b></b><em></em></div>
 </div>
-<script type="text/html" id="form_tmpl">
+<?/*<script type="text/html" id="form_tmpl">
     <form method="post" action="/message/send.html">
         <div class="errors" style="display:none"></div>
         <table class="eksk-form" width="100%">
@@ -141,8 +139,7 @@ if(is_file('uploads/User/'.$me->image))
                         eform.find('.errors').css('display','block').html(m.message);
                     }else{
                         self.close()
-                        location.reload();
-                        //$.dialog(m.message,'<?=X3::translate('Новое сообщение');?>',{callback:function(){this.close()},caption:'Закрыть'});
+                        $.dialog(m.message,'<?=X3::translate('Новое сообщение');?>',{callback:function(){this.close()},caption:'Закрыть'});
                     }
                 },'json').error(function(){
                     $.loader();
@@ -191,24 +188,8 @@ if(is_file('uploads/User/'.$me->image))
             })
             return false;
         })
-        $('.map_link.remove').each(function(){
-            $(this).click(function(){
-                if(confirm('<?=X3::translate('Вы уверены?');?>')){
-                    var href = $(this).attr('href');
-                    var self = this;
-                    $.get(href,function(m){
-                        if(m=='OK'){
-                            $(self).parent().parent().parent().parent().fadeOut(function(){
-                                $(this).remove();
-                            })
-                        }
-                    })
-                }
-                return false;
-            })
-        })        
         $('.message_block').css('cursor','pointer').click(function(){
             location.href = $(this).attr('href');
         });
     })
-</script>
+</script>*/?>

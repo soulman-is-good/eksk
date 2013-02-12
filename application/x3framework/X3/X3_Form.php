@@ -175,8 +175,11 @@ class X3_Form extends X3_Renderer {
                 //make it possible to define high level if ther is one
                 if(isset($this->module->_fields[$options]['default']) && ($this->module->_fields[$options]['default'] == 'NULL'||is_null($this->module->_fields[$options]['default'])) 
                         ||
-                   in_array('null',$this->module->_fields[$options]))
-                        $ops .= X3_Html::form_tag('option',array('%content'=>'<Не выбран>','value'=>''));
+                   in_array('null',$this->module->_fields[$options])){
+                        $notsel = isset($this->module->_fields[$options]['ref']['null'])?$this->module->_fields[$options]['ref']['null']:'<Не выбран>';
+                        $notsel = X3::translate($notsel);
+                        $ops .= X3_Html::form_tag('option',array('%content'=>$notsel,'value'=>''));
+                   }
                 foreach($class as $m){
                     //TODO: OPTIMIZE references
                     //$module = $m->$options();

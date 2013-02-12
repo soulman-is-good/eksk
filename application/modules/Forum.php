@@ -36,12 +36,21 @@ class Forum extends X3_Module_Table {
         );
     }
     
+    public function __construct($action = null) {
+        if(X3::user()->isKsk())
+            $this->_fields['city_id']['ref']['query'] = array(
+                '@join'=>"INNER JOIN user_address a ON a.city_id=data_city.id",
+                '@condition'=>array('a.user_id'=>X3::user()->id)
+                );
+        parent::__construct($action);
+    }    
+    
     public function filter() {
         return array(
             'allow' => array(
                 'user' => array('index', 'show', 'send', 'file','with','read','count'),
-                'ksk' => array('index', 'show', 'send', 'file','with','read','count','create','flats'),
-                'admin' => array('index', 'show', 'send', 'file','with','read','count','create','flats')
+                'ksk' => array('index', 'show', 'send', 'file','with','read','count','create','flats','public'),
+                'admin' => array('index', 'show', 'send', 'file','with','read','count','create','flats','public')
             ),
             'deny' => array(
                 '*' => array('*'),
@@ -50,6 +59,18 @@ class Forum extends X3_Module_Table {
         );
     }
     
+    public static function isMyTheme($id) {
+        $uid = X3::user()->id;
+        $q = "SELECT f.id FROM data_forum f, user_address a WHERE 
+            a.user_id='$uid' AND f.id='$id' AND (
+            (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+            (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+            (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL) OR 
+            (f.city_id=a.city_id AND f.region_id IS NULL)) LIMIT 1";
+        return X3::db()->count($q) > 0;
+    }
+
+
     public function actionIndex() {
         $id = X3::user()->id;
         $q = "FROM data_forum f, user_address a WHERE 
@@ -66,9 +87,9 @@ class Forum extends X3_Module_Table {
     }
     
     public function actionShow() {
-        if (isset($_GET['id']) && $_GET['id'] > 0) {
-            $id = (int) $_GET['id'];
-            $query = array(array('user_from' => $id,'user_to'=>X3::user()->id),array('user_to' => $id,'user_from'=>X3::user()->id));
+        if (isset($_GET['id']) && ($id = (int)$_GET['id'] > 0) && Forum::isMyTheme($id)) {
+            $theme = Forum::getByPk($id);
+            $query = array('forum_id'=>$id);
             $query = array('@condition' => $query, '@order' => 'created_at DESC');
             $count = self::num_rows($query);
             $paginator = new Paginator(__CLASS__, $count);
@@ -76,7 +97,7 @@ class Forum extends X3_Module_Table {
             $query['@offset'] = $paginator->offset;
             $models = self::get($query);
             $users = array();
-            $uq = X3::db()->query("SELECT id,CONCAT(name,' ',surname) name, image, role FROM data_user WHERE id=$id OR id=".X3::user()->id);
+            $uq = X3::db()->query("SELECT id,CONCAT(name,' ',surname) name, image, role FROM data_user WHERE id=".X3::user()->id);
             while($u = mysql_fetch_assoc($uq)){
                 if($u['image']=='' || $u['image']==null || !is_file('uploads/User/'.$u['image']))
                     $image = '/images/default.png';
@@ -84,7 +105,7 @@ class Forum extends X3_Module_Table {
                     $image = '/uploads/User/100x100/'.$u['image'];
                 $users[$u['id']] = array('title'=>$u['role']=='admin'?X3::translate('Администратор').'#'.$u['id']:$u['name'],'avatar'=>$image);
             }
-            $this->template->render('show', array('models' => $models, 'count' => $count, 'paginator' => $paginator,'users'=>$users,'with'=>$id));
+            $this->template->render('show', array('models' => $models,'theme'=>$theme, 'count' => $count, 'paginator' => $paginator,'users'=>$users,'with'=>$id));
         }else
             throw new X3_404();
     }
@@ -112,14 +133,17 @@ class Forum extends X3_Module_Table {
             $msg = $_POST['Message'];
             $model->getTable()->acquire($data);
             $model->user_id = $id;
-            if($model->save()){
+            if($model->validate()){
                 if(trim($msg['content'])!='' && trim($msg['files'],', ')!=''){
                     if($message->getTable()->getIsNewRecord())
                         $message->id = $msg['id'];
-                    $message->forum_id = $model->id;
+                    $message->forum_id = 1;
                     $message->user_to = NULL;
                     $message->content = $msg['content'];
-                    if($message->save()){
+                    if($message->validate()){
+                        $model->save();
+                        $message->forum_id = $model->id;
+                        $message->save();
                         $files = explode(',',$msg['files']);
                         foreach($files as $file){
                             $file = trim($file);
@@ -131,7 +155,8 @@ class Forum extends X3_Module_Table {
                             $F->save();
                         }
                     }
-                }
+                }else 
+                    $model->save();
                 $this->redirect('/forum/');
             }
         }
@@ -223,13 +248,28 @@ class Forum extends X3_Module_Table {
         exit;
     }
     
+    public function actionPublic() {
+        if (isset($_GET['id']) && ($id = (int)$_GET['id'])>0) {
+            $a = Forum::update(array('status'=>'1'),array('user_id'=>X3::user()->id,'id'=>$id));
+            if(IS_AJAX)
+                exit;
+            $this->redirect($_SERVER['HTTP_REFERER']);
+        }
+        throw new X3_404();        
+    }
+    
     public function actionFlats() {
         if(!IS_AJAX)
             throw new X3_404();
         $cid = (int)$_GET['cid'];
         $rid = (int)$_GET['rid'];
         $house = $_GET['house'];
-        $fq = X3::db()->query("SELECT flat FROM user_address WHERE city_id='$cid' AND region_id='$rid' AND house LIKE '$house' GROUP BY flat ORDER BY flat");
+        $uid = X3::user()->id;
+        if(X3::user()->isKsk())
+            $q = "SELECT flat FROM user_address WHERE user_id=$uid AND flat>0 AND city_id='$cid' AND region_id='$rid' AND house LIKE '$house' GROUP BY flat ORDER BY flat";
+        else
+            $q = "SELECT flat FROM user_address WHERE flat>0 AND city_id='$cid' AND region_id='$rid' AND house LIKE '$house' GROUP BY flat ORDER BY flat";
+        $fq = X3::db()->query($q);
         $flats = array();
         while($f = mysql_fetch_assoc($fq)){
             $flats[] = $f['flat'];

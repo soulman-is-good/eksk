@@ -46,6 +46,8 @@ class UserIdentity extends X3_User{
         }
         if($user->status == 2)
             return X3::translate(X3::translate('Ваш аккаунт заблокирован'));
+        if($user->status == 0)
+            return X3::translate(X3::translate('Ваш аккаунт не активирован'));
         $this->id = $user->id;
         $this->fullname = $user->name." ".$user->surname;
         if($user->role == 'root'){

@@ -8,10 +8,11 @@ $menus = Menu::get(array('@condition'=>array('status','type'=>'Нижнее'),'@
 <?elseif(!X3::user()->isGuest()):
     ?>
     <div class="left_menu">
-        <a href="#notify" class="menu_item notify">
-            <span><?=X3::translate('Мои оповещения');?></span>
-            <!--b>500</b-->
-        </a>
+        <?if(X3::app()->request->isActive('/warning')):?>
+        <span class="menu_item notify"><span><?=X3::translate('Мои оповещения');?></span></span>
+        <?else:?>
+        <a href="/warning/" class="menu_item notify"><span><?=X3::translate('Мои оповещения');?></span></a>
+        <?endif;?>
         <?if(X3::app()->request->isActive('/message')):?>
         <span class="menu_item message"><span><?=X3::translate('Мои сообщения');?></span></span>
         <?else:?>
@@ -33,6 +34,11 @@ $menus = Menu::get(array('@condition'=>array('status','type'=>'Нижнее'),'@
         <span class="menu_item users"><span><?=X3::translate('Жильцы');?></span></span>
         <?else:?>
         <a href="/users/" class="menu_item users"><span><?=X3::translate('Жильцы');?></span></a>
+        <?endif;?>
+        <?if(X3::app()->request->isActive('/vote')):?>
+        <span class="menu_item questions"><span><?=X3::translate('Мои опросы');?></span></span>
+        <?else:?>
+        <a href="/vote/" class="menu_item questions"><span><?=X3::translate('Мои опросы');?></span></a>
         <?endif;?>
         <?if(X3::user()->isAdmin()):?>
             <?if(X3::app()->request->isActive('/admins')):?>

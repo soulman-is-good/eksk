@@ -54,13 +54,30 @@ class City extends X3_Module_Table {
     
     public function actionRegion() {
         if(IS_AJAX && isset($_GET['id']) && ($id = (int)$_GET['id'])>0){
-            $regions = City_Region::get(array(
-                    '@condition'=>array('city_id'=>$id),
-                    '@order'=>'weight'
-                ),0,'City_Region',1);
+            $query = array(
+                    '@condition'=>array('city_region.city_id'=>$id),
+                    '@order'=>'city_region.weight'
+                );
+            if(X3::user()->isKsk()){
+                $query['@join'] = "INNER JOIN user_address a ON a.region_id=city_region.id";
+                $query['@condition']['a.user_id'] = X3::user()->id;
+                $query['@group'] = "city_region.id";
+            }
+            $regions = City_Region::get($query,0,'City_Region',1);
             $result = array();
-            foreach($regions as $reg)
-                $result[] = array('id'=>$reg['id'],'title'=>$reg['title'],'houses'=>explode("\r\n",$reg['houses']));
+            foreach($regions as $reg){
+                if(X3::user()->isKsk()){
+                    $f = "SELECT DISTINCT house FROM user_address WHERE region_id={$reg['id']} AND user_id=".X3::user()->id." AND status=1";
+                }else
+                    $f = "SELECT DISTINCT house FROM user_address WHERE region_id={$reg['id']}";
+                $houses = array();
+                $q = X3::db()->query($f);
+                if(is_resource($q))
+                while($a = mysql_fetch_assoc($q)){
+                    $houses[] = $a['house'];
+                }
+                $result[] = array('id'=>$reg['id'],'title'=>$reg['title'],'houses'=>$houses);
+            }
             echo json_encode($result);
             exit;
         }

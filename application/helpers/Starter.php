@@ -18,6 +18,7 @@ class Starter extends X3_Component {
         'admin/deny',
         'user/deny',
         'user/add',
+        'uploads/captcha',
         'page/*',
         'city/*',
     );
