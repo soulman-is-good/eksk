@@ -79,7 +79,16 @@ class Warning extends X3_Module_Table {
             f.end_at>={$date['created_at']} AND (
             (f.user_id=$id)
                 OR
-            (f.city_id IS NULL AND $type AND u.role='admin')
+            (
+                $type AND u.role='admin' AND 
+                (
+                   (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                   (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                   (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL) OR 
+                   (f.city_id=a.city_id AND f.region_id IS NULL) OR
+                   (f.city_id IS NULL)
+                )
+            )
                 OR
             ($type AND u.role='ksk' AND
              (
