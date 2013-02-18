@@ -121,6 +121,22 @@ class Admin extends X3_Module {
         $this->template->render('sudo/list',array('models'=>$models,'module'=>$module,'paginator'=>$paginator,'count'=>$count,'class'=>$class));
     }
     
+    public function actionView() {
+        if(!X3::user()->superAdmin)
+            throw new X3_404();
+        $action = strtolower($_GET['module']);
+        $path = X3::app()->getPathFromAlias("@views:admin:sudo:view:$action.php");
+        $class = ucfirst($_GET['module']);
+        $id = X3::db()->validateSQL($_GET['id']);
+        $pk = X3_Module::getInstance($class)->getTable()->getPK();
+        $scope = array("$pk" => $id);
+        $model = X3_Module_Table::get($scope,1,$class);
+        if(is_file($path)){
+            $this->template->render("sudo/view/$action",array('model'=>$model,'class'=>$class));
+        }else
+            $this->template->render('sudo/view',array('model'=>$model,'class'=>$class));
+    }
+    
     public function actionEdit() {
         if(!X3::user()->superAdmin)
             throw new X3_404();

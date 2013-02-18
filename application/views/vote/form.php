@@ -234,5 +234,6 @@ $form = new Form($model);
             acnt++;
             return false;
         })
+        $('#Vote_end_at').datepicker('option','minDate',0);
     })
 </script>

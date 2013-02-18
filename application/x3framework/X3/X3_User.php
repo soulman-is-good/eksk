@@ -42,7 +42,7 @@ class X3_User extends X3_Component {
     public function __call($name, $parameters) {
         if(strpos($name,'is')===0){
             $name = strtolower(substr($name,2));
-            return ($this->group==='root') || ($this->group===$name);
+            return ($this->group==='root' && $name == 'admin') || ($this->group===$name);
         }
         parent::__call($name, $parameters);
     }

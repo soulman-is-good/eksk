@@ -148,6 +148,11 @@ class Warning extends X3_Module_Table {
             if(isset($_POST['public']))
                 $model->status = '1';
             if($model->save()){
+                $role = $model->type == '*'?'':"$model->type AND ";
+//                $users = X3::db()->query("SELECT * FROM data_user u INNER JOIN user_address ua ON ua.user_id=u.id WHERE 
+//                    $role
+//                    
+//                    ");
                 $this->redirect('/warning/');
             }
         }

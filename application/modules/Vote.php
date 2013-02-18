@@ -142,6 +142,9 @@ class Vote extends X3_Module_Table {
             $data = $_POST['Vote'];
             $model->getTable()->acquire($data);
             $model->user_id = $id;
+            if(!array_reduce(explode('||',$model->answer), create_function('$v,$w', 'return $w && trim($v)=="";'),true)){
+                $model->addError('answer',X3::translate('Заполните все вопросы'));
+            }
             if(X3::user()->isKsk())
                 $model->type = 'user';
             if(isset($_POST['public']))
@@ -308,6 +311,9 @@ class Vote extends X3_Module_Table {
             $this->end_at = mktime(23,59,59,date('n',$time), date('j',$time), date('Y',$time));
         }elseif($this->end_at == 0)
             $this->end_at = time() + 84600;
+        $today = mktime(0,0,0,date('n'),date('j'),date('Y'));
+        if($this->end_at < $today)
+            $this->addError('end_at',X3::translate("Нельзя создать опрос с прошедшей датой"));
     }
     
     public function onDelete($tables, $condition) {
