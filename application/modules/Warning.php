@@ -147,12 +147,56 @@ class Warning extends X3_Module_Table {
                 $model->type = 'user';
             if(isset($_POST['public']))
                 $model->status = '1';
-            if($model->save()){
-                $role = $model->type == '*'?'':"$model->type AND ";
-//                $users = X3::db()->query("SELECT * FROM data_user u INNER JOIN user_address ua ON ua.user_id=u.id WHERE 
-//                    $role
-//                    
-//                    ");
+            if($model->validate()){
+                if(isset($_POST['public'])){
+                    $role = $model->type == '*'?'':"role='$model->type' AND ";
+                    if($model->type == 'ksk'){
+                        $b = X3::db()->query("SELECT city_id, region_id, house FROM user_address WHERE user_id='$model->user_id' AND status=1");
+                        $o = array();
+                        while($bb = mysql_fetch_assoc($b)){
+                            $o['city_id'][] = $bb['city_id'];
+                            $o['region_id'][] = $bb['region_id'];
+                            $o['house'][] = $bb['house'];
+                        }
+                        $o['city_id'] = implode(', ', $o['city_id']);
+                        $o['region_id'] = implode(', ', $o['region_id']);
+                        $o['house'] = implode(', ', $o['house']);
+                        if($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat != null){
+                            $c = "a1.city_id=$model->city_id AND a1.region_id=$model->region_id AND a1.house='$model->house' AND a1.flat='$model->flat'";
+                        }
+                        elseif($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat == null){
+                            $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house'";
+                        }
+                        elseif($model->city_id > 0 && $model->region_id > 0 && $model->house == null && $model->flat == null){
+                            $c = "a1.house IN ({$o['house']}) AND a1.city_id='$model->city_id' AND a1.region_id='$model->region_id'";
+                        }
+                        elseif($model->city_id > 0 && $model->region_id == 0 && $model->house == null && $model->flat == null){
+                            $c = "a1.region_id IN ({$o['region_id']}) AND a1.house IN ({$o['house']}) AND a1.city_id='$model->city_id'";
+                        }else
+                            $c = "a1.city_id IN ({$o['city_id']}) AND a1.region_id IN ({$o['region_id']}) AND a1.house IN ({$o['house']})";
+                    }else{
+                        if($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat != null){
+                            $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house' AND a1.flat='$model->flat'";
+                        }
+                        elseif($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat == null){
+                            $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house'";
+                        }
+                        elseif($model->city_id > 0 && $model->region_id > 0 && $model->house == null && $model->flat == null){
+                            $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id'";
+                        }
+                        elseif($model->city_id > 0 && $model->region_id == 0 && $model->house == null && $model->flat == null){
+                            $c = "a1.city_id='$model->city_id'";
+                        }else
+                            $c = "1";
+                    }
+                    $users = X3::db()->query("SELECT CONCAT(name,' ',surname) username, email FROM data_user u INNER JOIN user_address a1 ON a1.user_id=u.id WHERE 
+                        $role $c
+                        ");
+                    while($user = mysql_fetch_assoc($users)){
+//                        var_dump($user);
+                        Notify::sendMail('newNotify', array('text'=>$model->title,'name'=>$user['username'],'from'=>X3::user()->fullname), $user['email']);
+                    }
+                }
                 $this->redirect('/warning/');
             }
         }
