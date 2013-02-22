@@ -61,6 +61,7 @@ String.prototype.repeat = function( num ){return new Array( num + 1 ).join( this
     $ads = array(0);
     $qa = X3::db()->query("SELECT id FROM user_address WHERE user_id='$uid'");
     while($a = mysql_fetch_array($qa,MYSQL_NUM)) $ads[] = $a[0];
+    if(count($ads)>1):
     $ads = implode(', ', $ads);
     //die("(SELECT w.id, w.user_id, w.created_at, w.title, NULL AS answer FROM data_warning w INNER JOIN data_user u ON u.id=w.user_id $where AND w.id NOT IN (SELECT warning_id FROM warning_stat WHERE user_id=$uid)) 
         //UNION (SELECT w.id, w.user_id, w.created_at, w.title, w.answer FROM data_vote w INNER JOIN data_user u ON u.id=w.user_id $where AND w.id NOT IN (SELECT vote_id FROM vote_stat WHERE address_id IN ($ads) GROUP BY vote_id))");
@@ -122,6 +123,7 @@ String.prototype.repeat = function( num ){return new Array( num + 1 ).join( this
         })
     </script>
     <?endif;?>
+    <?endif;//if empty $ads?>
     <div class="main-block <?=X3::app()->module->controller->id." ".X3::app()->module->controller->action?>">
         <div class="header"><header>
                 <?=X3_Widget::run('@layouts:header.php',array('main'=>isset($main)))?>
@@ -145,7 +147,7 @@ String.prototype.repeat = function( num ){return new Array( num + 1 ).join( this
                 $('.menu_item.message b').remove();
                 $('.menu_item.notify b').remove();
                 if(!isNaN(msg) && msg>0){
-                    $('.menu_item.message').append('<b>'+m+'</b>');
+                    $('.menu_item.message').append('<b>'+msg+'</b>');
                     message_timeout = setTimeout(function(){message_count()}, 3000);
                 }
                 if(!isNaN(notify) && notify>0){

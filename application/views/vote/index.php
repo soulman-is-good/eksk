@@ -3,6 +3,12 @@ $id = X3::user()->id;
 $me = (object)X3::db()->fetch("SELECT id, CONCAT(name,' ',surname) name, image, role FROM data_user WHERE id = ".$id);
 $me->name = $me->role=='admin'?X3::translate('Администратор').'#'.$me->id:$me->name;
 $me->avatar = '/images/default.png';
+$types = array(
+    '*'=>'',
+    'user'=>'пользователям',
+    'admin'=>'администраторам',
+    'ksk'=>'КСК',
+);
 if(is_file('uploads/User/'.$me->image)){
         $me->avatar = '/uploads/User/50x50/' . $me->image;
 }
@@ -37,16 +43,28 @@ if(is_file('uploads/User/'.$me->image)){
                     </td>*/?>
                     <td class="text">
                             <p><a href="/vote/show/id/<?=$model->id?>.html"><?=nl2br($model->title);?></a></p>
-                            <em><?=I18n::date($model->created_at)?></em>
+                            <em><?=I18n::date($model->latest)?></em>
+                            <?if(!X3::user()->isUser()):?>
+                            <em>
+                            , <?=X3::translate('Всем '.$types[strtolower($model->type)])?>
+                                <?=$model->city_id>0?X3::translate(strtr('в {city}',array('{city}'=>City::getByPk($model->city_id)->title))):''?>
+                                <?=$model->region_id>0?', '.City_Region::getByPk($model->region_id)->title:''?>
+                                <?=$model->house>0?', '.X3::translate(strtr('дом {house}',array('{house}'=>$model->house))):''?>
+                                <?=$model->flat>0?', '.X3::translate(strtr('кв. {flat}',array('{flat}'=>$model->flat))):''?>
+                            </em>
+                            <?endif;?>
                     </td>
                     <td class="ops">
-                        <?if(X3::user()->id == $model->user_id):?>
+                        <?if(X3::user()->id == $model->user_id || X3::user()->isAdmin()):?>
                             <?if($model->status=='0'):?>
                                 <a href="/vote/create/id/<?=$model->id?>.html"><span><?=X3::translate('Редактировать')?></span></a>
                                 <a href="/vote/send/id/<?=$model->id?>.html"><span><?=X3::translate('Опубликовать')?></span></a>
                                 <a href="/vote/delete/id/<?=$model->id?>.html"><span><?=X3::translate('Удалить')?></span></a>
                             <?else:?>
                                 <em style="display:block;margin-bottom:15px"><?=X3::translate('Опубликовано')?></em>
+                                <?if(X3::user()->isAdmin()):?>
+                                <a href="/vote/delete/id/<?=$model->id?>.html"><span><?=X3::translate('Удалить')?></span></a>
+                                <?endif;?>
                             <?endif;?>
                         <?endif;?>
                     </td>

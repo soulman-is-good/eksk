@@ -126,7 +126,7 @@ WHERE a2.user_id=".X3::user()->id." AND a1.user_id<>a2.user_id AND `a2`.`city_id
             ) AND f.id NOT IN (SELECT warning_id FROM warning_stat WHERE user_id=$id) GROUP BY f.id
              ";
         $count = X3::db()->count($q);
-        echo json_encode(array('msg'=>$msg,'notify'=>$count,'q'=>$q));
+        echo json_encode(array('msg'=>(int)$msg,'notify'=>(int)$count));
         exit;
     }
     

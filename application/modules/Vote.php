@@ -89,36 +89,40 @@ class Vote extends X3_Module_Table {
     public function actionIndex() {
         $id = X3::user()->id;
         $date = X3::db()->fetch("SELECT created_at FROM data_user WHERE id=$id");
-        $type = X3::user()->isUser()?"(f.type='user' OR f.type='*')":(X3::user()->isKsk()?"(f.type='ksk' OR f.type='*')":"(f.type='admin' OR f.type='*')");
-        $q = "FROM data_vote f INNER JOIN data_user u ON u.id=f.user_id LEFT JOIN user_address a ON a.user_id=$id WHERE
-            f.end_at>={$date['created_at']} AND (
-            (f.user_id=$id)
-                OR
-            (
-                $type AND u.role='admin' AND 
+        $type = X3::user()->isUser()?"(f.type='user' OR f.type='*')":(X3::user()->isKsk()?"(f.type='ksk' OR f.type='*')":"");
+        if(X3::user()->isAdmin()){
+            $q = "FROM data_vote f WHERE 1";
+        }else
+            $q = "FROM data_vote f INNER JOIN data_user u ON u.id=f.user_id LEFT JOIN user_address a ON a.user_id=$id WHERE
+                f.end_at>={$date['created_at']} AND (
+                (f.user_id=$id)
+                    OR
                 (
-                   (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
-                   (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
-                   (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL) OR 
-                   (f.city_id=a.city_id AND f.region_id IS NULL) OR
-                   (f.city_id IS NULL)
-                )                
-            )
-                OR
-            ($type AND u.role='ksk' AND
-             (
-                (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
-                (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
-                (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR 
-                (f.city_id=a.city_id AND f.region_id IS NULL AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR
-                (f.city_id IS NULL AND a.city_id IN (SELECT city_id FROM user_address WHERE user_id=u.id AND status=1) AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1))
-             )
-             )
-            )
-             ";
-        $count = X3::db()->count("SELECT f.id, MAX(f.created_at) latest ".$q);
+                    f.status AND 
+                    $type AND u.role='admin' AND 
+                    (
+                       (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                       (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                       (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL) OR 
+                       (f.city_id=a.city_id AND f.region_id IS NULL) OR
+                       (f.city_id IS NULL)
+                    )                
+                )
+                    OR
+                (f.status AND $type AND u.role='ksk' AND
+                 (
+                    (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                    (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                    (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR 
+                    (f.city_id=a.city_id AND f.region_id IS NULL AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR
+                    (f.city_id IS NULL AND a.city_id IN (SELECT city_id FROM user_address WHERE user_id=u.id AND status=1) AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1))
+                 )
+                 )
+                )
+                 ";
+        $count = X3::db()->count("SELECT f.id, MAX(f.created_at) latest ".$q." GROUP BY f.id");
         $paginator = new Paginator(__CLASS__, $count);
-        $q = "SELECT f.id, f.title, f.user_id, MAX(f.created_at) latest, f.status " . $q . " GROUP BY f.id ORDER BY latest DESC LIMIT $paginator->offset,$paginator->limit";
+        $q = "SELECT f.id, f.title, f.user_id, MAX(f.created_at) latest, f.status, f.type, f.city_id, f.region_id, f.house, f.flat " . $q . " GROUP BY f.id ORDER BY latest DESC LIMIT $paginator->offset,$paginator->limit";
         $models = X3::db()->query($q);
         $this->template->render('index', array('models' => $models, 'count' => $count, 'paginator' => $paginator));
     }
@@ -141,15 +145,68 @@ class Vote extends X3_Module_Table {
         if(isset($_POST['Vote'])){
             $data = $_POST['Vote'];
             $model->getTable()->acquire($data);
-            $model->user_id = $id;
-            if(!array_reduce(explode('||',$model->answer), create_function('$v,$w', 'return $w && trim($v)=="";'),true)){
-                $model->addError('answer',X3::translate('Заполните все вопросы'));
+            if($model->getTable()->getIsNewRecord())
+                $model->user_id = $id;
+            if(!array_reduce($ans = explode('||',$model->answer), create_function('$v,$w', 'return $w && trim($v)!="";'),true)){
+                $model->addError('answer',X3::translate('Заполните все ответы'));
+            }elseif(count(array_unique($ans))<count($ans)){
+                $model->addError('answer',X3::translate('Ответы не должны повторяться'));
             }
             if(X3::user()->isKsk())
                 $model->type = 'user';
             if(isset($_POST['public']))
                 $model->status = '1';
             if($model->save()){
+                if(isset($_POST['public'])){
+                    $role = $model->type == '*'?'':"role='$model->type' AND ";
+                    if($model->type == 'ksk'){
+                        $b = X3::db()->query("SELECT city_id, region_id, house FROM user_address WHERE user_id='$model->user_id' AND status=1");
+                        $o = array();
+                        while($bb = mysql_fetch_assoc($b)){
+                            $o['city_id'][] = $bb['city_id'];
+                            $o['region_id'][] = $bb['region_id'];
+                            $o['house'][] = $bb['house'];
+                        }
+                        $o['city_id'] = implode(', ', $o['city_id']);
+                        $o['region_id'] = implode(', ', $o['region_id']);
+                        $o['house'] = implode(', ', $o['house']);
+                        if($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat != null){
+                            $c = "a1.city_id=$model->city_id AND a1.region_id=$model->region_id AND a1.house='$model->house' AND a1.flat='$model->flat'";
+                        }
+                        elseif($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat == null){
+                            $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house'";
+                        }
+                        elseif($model->city_id > 0 && $model->region_id > 0 && $model->house == null && $model->flat == null){
+                            $c = "a1.house IN ({$o['house']}) AND a1.city_id='$model->city_id' AND a1.region_id='$model->region_id'";
+                        }
+                        elseif($model->city_id > 0 && $model->region_id == 0 && $model->house == null && $model->flat == null){
+                            $c = "a1.region_id IN ({$o['region_id']}) AND a1.house IN ({$o['house']}) AND a1.city_id='$model->city_id'";
+                        }else
+                            $c = "a1.city_id IN ({$o['city_id']}) AND a1.region_id IN ({$o['region_id']}) AND a1.house IN ({$o['house']})";
+                    }else{
+                        if($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat != null){
+                            $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house' AND a1.flat='$model->flat'";
+                        }
+                        elseif($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat == null){
+                            $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house'";
+                        }
+                        elseif($model->city_id > 0 && $model->region_id > 0 && $model->house == null && $model->flat == null){
+                            $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id'";
+                        }
+                        elseif($model->city_id > 0 && $model->region_id == 0 && $model->house == null && $model->flat == null){
+                            $c = "a1.city_id='$model->city_id'";
+                        }else
+                            $c = "1";
+                    }
+                    $users = X3::db()->query("SELECT CONCAT(name,' ',surname) username, email FROM data_user u INNER JOIN user_address a1 ON a1.user_id=u.id WHERE 
+                        u.id<>$id AND ($role $c)
+                        GROUP BY u.id
+                        ");
+                    while($user = mysql_fetch_assoc($users)){
+//                        var_dump($user);
+                        Notify::sendMail('newVote', array('text'=>$model->title,'name'=>$user['username'],'from'=>X3::user()->fullname), $user['email']);
+                    }
+                }
                 $this->redirect('/vote/');
             }
         }
@@ -164,11 +221,16 @@ class Vote extends X3_Module_Table {
     }
     
     public function actionDelete(){
-        $id = X3::user()->id;
-        if(isset($_GET['id']) && (int)$_GET['id']>0){
-            Warning::delete(array('user_id'=>$id,'id'=>$_GET['id']));
+        if(!X3::user()->isAdmin()){
+            $id = X3::user()->id;
+            if(isset($_GET['id']) && (int)$_GET['id']>0){
+                Vote::delete(array('user_id'=>$id,'id'=>$_GET['id']));
+            }
+        }else {
+            if(isset($_GET['id']) && (int)$_GET['id']>0)
+                Vote::delete(array('id'=>$_GET['id']));
         }
-        $this->redirect('/warning/');
+        $this->redirect('/vote/');
     }
 
 
@@ -267,12 +329,20 @@ class Vote extends X3_Module_Table {
     }
 
     public function actionSend() {
-        if (isset($_GET['id']) && ($id = (int)$_GET['id'])>0) {
-            $a = Vote::update(array('status'=>'1'),array('user_id'=>X3::user()->id,'id'=>$id));
-            if(IS_AJAX)
-                exit;
-            $this->redirect($_SERVER['HTTP_REFERER']);
-        }
+        if(!X3::user()->isAdmin()){
+            if (isset($_GET['id']) && ($id = (int)$_GET['id'])>0) {
+                $a = Vote::update(array('status'=>'1'),array('user_id'=>X3::user()->id,'id'=>$id));
+                if(IS_AJAX)
+                    exit;
+                $this->redirect($_SERVER['HTTP_REFERER']);
+            }
+        }else
+            if (isset($_GET['id']) && ($id = (int)$_GET['id'])>0) {
+                $a = Vote::update(array('status'=>'1'),array('id'=>$id));
+                if(IS_AJAX)
+                    exit;
+                $this->redirect($_SERVER['HTTP_REFERER']);
+            }
         throw new X3_404();
     }
     

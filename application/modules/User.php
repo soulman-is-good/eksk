@@ -481,12 +481,13 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             }
             if(empty($errors) && $user->save()){
                 Notify::sendMessage("Пользователь $user->name $user->surname ($user->email) зарегистрировался на сайте.");
+                Notify::sendMail('userActivated',array('name'=>$user->fullname,'email'=>$user->email,'password'=>$post['password']),$user->email);
                 if(X3::user()->isGuest()){
                     $u = new UserIdentity($user->email, $post['password']);
                     if($u->login())
                         $this->redirect('/');
                 }
-                $this->redirect('/');
+                $this->redirect($_SERVER['HTTP_REFERER']);
             }
         }
         $this->template->render('@views:user:adduser.php',array('user'=>$user,'address'=>$address));

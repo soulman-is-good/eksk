@@ -33,7 +33,7 @@ if(is_file('uploads/User/'.$me->image)){
                     </td>
                     <td class="name">
                             <a href="/user/<?=$model->user_id?>.html"><?=$user->name?></a><br/>
-                            <em><?=I18n::date($model->latest)?>, <?=date("H:i",$model->latest)?></em>
+                            <em><?=I18n::date($model->latest)?>, <?=date("H:i",$model->latest)?></em> 
                     </td>
                     <td class="text">
                             <p><?=nl2br($model->title);?></p>

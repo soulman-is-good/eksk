@@ -26,6 +26,8 @@ array(
     '/^\/user\/([0-9]+)(.*)$/' => array('/user/index/id/$1$2', true),
     '/^\/message\/with\/([0-9]+)(.*)$/' => array('/message/with/id/$1$2', true),
     '/^\/message\/page\/(.*)$/' => array('/message/index/page/$1', true),
+    '/^\/vote\/page\/(.*)$/' => array('/vote/index/page/$1', true),
+    '/^\/warning\/page\/(.*)$/' => array('/warning/index/page/$1', true),
     '/^\/forum\/([0-9]+)(.*)$/' => array('/forum/show/id/$1$2', true),
     '/^\/forum\/edit\/id\/([0-9]+)$/' => array('/forum/create/id/$1', true),
     '/^\/forum\/page\/(.*)$/' => array('/forum/index/page/$1', true),

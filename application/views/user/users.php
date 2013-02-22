@@ -33,8 +33,11 @@ if($type == 'ksk'){
                     <?if(X3::user()->isAdmin() || X3::user()->isKsk()):?>
                         <?if($model->status == 2):?>
                             <a href="/user/unblock/id/<?=$model->id?>.html"><span><?=X3::translate('Разблокировать')?></span></a>
-                        <?else:?>
+                        <?elseif($model->status == 1):?>
                             <a href="/user/block/id/<?=$model->id?>.html"><span><?=X3::translate('Блокировать')?></span></a>
+                        <?endif;?>
+                        <?if($model->status == 0):?>
+                            <a href="/user/add/key/<?=base64_encode($model->akey . "|" . X3::user()->id)?>.html"><span><?=X3::translate('Активировать')?></span></a>
                         <?endif;?>
                     <?endif;?>
                     <?if(X3::user()->isAdmin()):?>

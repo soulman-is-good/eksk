@@ -60,7 +60,7 @@ class I18n extends X3_Component {
         }
     }
     
-    public static function months($number=null,$type=self::FULL_MONTH) {
+    public static function months($number=null,$type=self::FULL_MONTH,$lang = false) {
         static $fullMonths = array(
             'ru'=>array(
                 'Январь',
@@ -149,23 +149,25 @@ class I18n extends X3_Component {
                 'декабря',
             )
         );
+        if($lang == false)
+            $lang = X3::user()->lang;
         $number = ($number<0?$number*-1:$number)%12;
         switch ($type){
             case self::FULL_MONTH:
-                return (is_null($number)||$number>11?$fullMonths[X3::user()->lang]:$fullMonths[X3::user()->lang][$number]);
+                return (is_null($number)||$number>11?$fullMonths[$lang]:$fullMonths[$lang][$number]);
             break;
             case self::DATE_MONTH:
-                return (is_null($number)||$number>11?$dateMonths[X3::user()->lang]:$dateMonths[X3::user()->lang][$number]);
+                return (is_null($number)||$number>11?$dateMonths[$lang]:$dateMonths[$lang][$number]);
             break;
             default:
-                return (is_null($number)||$number>11?$fullMonths[X3::user()->lang]:$fullMonths[X3::user()->lang][$number]);
+                return (is_null($number)||$number>11?$fullMonths[$lang]:$fullMonths[$lang][$number]);
         }
     }
     
-    public static function date($time = 0) {
+    public static function date($time = 0,$lang = false) {
         if($time == 0)
             $time = time();
-        return date('d', $time) . " " . I18n::months((int) date('m', $time)-1, I18n::DATE_MONTH) . " " . date('Y', $time);
+        return date('d', $time) . " " . I18n::months((int) date('m', $time)-1, I18n::DATE_MONTH, $lang) . " " . date('Y', $time);
     }
 
 }

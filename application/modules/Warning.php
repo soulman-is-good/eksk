@@ -79,7 +79,7 @@ class Warning extends X3_Module_Table {
             f.end_at>={$date['created_at']} AND (
             (f.user_id=$id)
                 OR
-            (
+            (f.status AND 
                 $type AND u.role='admin' AND 
                 (
                    (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
@@ -90,7 +90,7 @@ class Warning extends X3_Module_Table {
                 )
             )
                 OR
-            ($type AND u.role='ksk' AND
+            (f.status AND $type AND u.role='ksk' AND
              (
                 (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
                 (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
@@ -101,7 +101,7 @@ class Warning extends X3_Module_Table {
              )
             )
              ";
-        $count = X3::db()->count("SELECT f.id, MAX(f.created_at) latest ".$q);
+        $count = X3::db()->count("SELECT f.id, MAX(f.created_at) latest ".$q. " GROUP BY f.id");
         $paginator = new Paginator(__CLASS__, $count);
         $q = "SELECT f.id, f.title, f.user_id, MAX(f.created_at) latest, f.status " . $q . " GROUP BY f.id ORDER BY latest DESC LIMIT $paginator->offset,$paginator->limit";
         $models = X3::db()->query($q);
@@ -190,7 +190,8 @@ class Warning extends X3_Module_Table {
                             $c = "1";
                     }
                     $users = X3::db()->query("SELECT CONCAT(name,' ',surname) username, email FROM data_user u INNER JOIN user_address a1 ON a1.user_id=u.id WHERE 
-                        $role $c
+                        u.id<>$model->user_id AND $role $c
+                        GROUP BY u.id
                         ");
                     while($user = mysql_fetch_assoc($users)){
 //                        var_dump($user);

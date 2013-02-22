@@ -123,21 +123,25 @@ class Notify extends X3_Module_Table{
             $text = $this->text;
         if(empty($data)) return $this->text;
         $ms = array();
+        $data = array_extend($data, array(
+            'host'=>X3::app()->baseUrl,
+            'date'=>I18n::date()
+        ));
         foreach($data as $k=>$val){
             if(is_array($val)){
                 $m = array();
                 $z = strtoupper($k);
                 if(preg_match("/\[@$z\]([^@]+)\[$z@\]/", $text,$m)>0){
-                    $data = '';
+                    $html = '';
                     foreach($val as $vdata){
                         $tmp = $m[1];
                         foreach($vdata as $kk=>$vas){
                             $j = strtoupper($kk);
                             $tmp = str_replace("[$j]", $vas, $tmp);
                         }
-                        $data .= $tmp;
+                        $html .= $tmp;
                     }
-                    $text = str_replace($m[0], $data, $text);
+                    $text = str_replace($m[0], $html, $text);
                 }
             }elseif(is_string($val)){
                 $j = strtoupper($k);

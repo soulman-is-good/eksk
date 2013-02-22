@@ -141,11 +141,11 @@ $form = new Form($model);
             var C = this;
             var R = $('#Warning_region_id');
             var rid = R.attr('rid');
-            R.html('');
-            var o = $('<option />').attr({'value':'0'}).data('houses',[]).html('<?=X3::translate('Все');?>');
-            R.append(o);
             if(city_id>0)
             $.get('/city/region.html',{id:city_id},function(m){
+                R.html('');
+                var o = $('<option />').attr({'value':'0'}).data('houses',[]).html('<?=X3::translate('Все');?>');
+                R.append(o);
                 for(i in m){
                     var o = $('<option />').attr({'value':m[i].id}).data('houses',m[i].houses).html(m[i].title);
                     if(m[i].id == rid)
@@ -156,6 +156,9 @@ $form = new Form($model);
                 $(C).parent().parent().parent().parent().find('.region_id').change();
             },'json')
             else {
+                R.html('');
+                var o = $('<option />').attr({'value':'0'}).data('houses',[]).html('<?=X3::translate('Все');?>');
+                R.append(o);
                 R.data('fcselect').redraw()
                 $(C).parent().parent().parent().parent().find('.region_id').change();
             }
@@ -180,6 +183,7 @@ $form = new Form($model);
             var H = $('#Warning_flat');
             var flat = H.attr('hid');
             H.html('');
+            $('[fcselect]').attr('disabled',true);
             $.get('/warning/flats',{rid:$('#Warning_region_id').val(),house:$('#Warning_house').val(),cid:$('#Warning_city_id').val()},function(m){
                 var o = $('<option />').attr({'value':'0'}).html('<?=X3::translate('Все');?>');
                 H.append(o);
@@ -191,6 +195,7 @@ $form = new Form($model);
                     H.append(o);
                 }
                 H.data('fcselect').redraw();
+                $('[fcselect]').attr('disabled',false);
             },'json')
         });
         $('.city_id').change();

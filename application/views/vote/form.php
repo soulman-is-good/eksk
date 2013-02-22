@@ -2,7 +2,13 @@
 $title = X3::translate('Создание опроса');
 $pk = 'id';
 $errors = $model->getTable()->getErrors();
+$user = User::getByPk($model->user_id);
 $form = new Form($model);
+$options2 = array(
+    'admin'=>X3::translate('Администратор'),
+    'ksk'=>X3::translate('КСК'),
+    'user'=>X3::translate('Жилец'),
+);
 ?>
 <div class="eksk-wnd">
     <div class="head"><h1><?=$title?></h1></div>
@@ -23,6 +29,16 @@ $form = new Form($model);
         <?=$form->hidden($pk)?>
         <?endif;?>
         <table class="eksk-form login-form">
+            <?if(X3::user()->isAdmin() && X3::user()->id != $model->user_id && !$model->getTable()->getIsNewRecord()):?>
+            <tr>
+                <td class="label">
+                    <label><?=X3::translate('Создатель');?></label>
+                </td>
+                <td class="field" colspan="2">
+                    <?=$user->fullname?> (<?=$options2[$user->role]?>)
+                </td>
+            </tr>
+            <?endif;?>
             <tr>
                 <td class="label">
                     <label><?=$model->fieldName('title')?></label>
@@ -147,16 +163,17 @@ $form = new Form($model);
 <script>
     $(function(){
         //Address
+        //TODO: CACHING
         $('.city_id').live('change',function(){
             var city_id = $(this).val();
             var C = this;
             var R = $('#Vote_region_id');
             var rid = R.attr('rid');
-            R.html('');
-            var o = $('<option />').attr({'value':'0'}).data('houses',[]).html('<?=X3::translate('Все');?>');
-            R.append(o);
             if(city_id>0)
             $.get('/city/region.html',{id:city_id},function(m){
+                R.html('');
+                var o = $('<option />').attr({'value':'0'}).data('houses',[]).html('<?=X3::translate('Все');?>');
+                R.append(o);
                 for(i in m){
                     var o = $('<option />').attr({'value':m[i].id}).data('houses',m[i].houses).html(m[i].title);
                     if(m[i].id == rid)
@@ -167,6 +184,9 @@ $form = new Form($model);
                 $(C).parent().parent().parent().parent().find('.region_id').change();
             },'json')
             else {
+                R.html('');
+                var o = $('<option />').attr({'value':'0'}).data('houses',[]).html('<?=X3::translate('Все');?>');
+                R.append(o);
                 R.data('fcselect').redraw()
                 $(C).parent().parent().parent().parent().find('.region_id').change();
             }
@@ -190,6 +210,7 @@ $form = new Form($model);
         $('#Vote_house').change(function(){
             var H = $('#Vote_flat');
             var flat = H.attr('hid');
+            $('[fcselect]').attr('disabled',true);
             H.html('');
             $.get('/warning/flats',{rid:$('#Vote_region_id').val(),house:$('#Vote_house').val(),cid:$('#Vote_city_id').val()},function(m){
                 var o = $('<option />').attr({'value':'0'}).html('<?=X3::translate('Все');?>');
@@ -202,6 +223,7 @@ $form = new Form($model);
                     H.append(o);
                 }
                 H.data('fcselect').redraw();
+                $('[fcselect]').attr('disabled',false);
             },'json')
         });
         $('.city_id').change();
