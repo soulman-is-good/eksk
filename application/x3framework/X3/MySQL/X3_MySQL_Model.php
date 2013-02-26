@@ -405,17 +405,6 @@ class X3_MySQL_Model extends X3_Model implements ArrayAccess {
             if ($pass || in_array('auto_increment', $field))
                 continue;
             $isset = isset($this[$name]);
-            if (!in_array('null', $field) && !isset($field['default']) && (!$isset || ($isset && empty($this[$name])))) {
-                $this->addError($name, (isset($field['errors']['notnull'])) ? $field['errors']['notnull'] : X3::translate('Поле `{attribute}` не должно быть пустым', array('{attribute}' => $this->module->fieldName($name))));
-                continue;
-//                if(isset($field['default']) && ((isset($this[$name]) && $this[$name]=='')||(!isset($this[$name]))))
-//                    $this[$name] = $field['default'];
-//                elseif(!isset($this[$name]) || (isset($this[$name]) && $this[$name]=='')){
-//                    $this->addError($name,(isset($field['errors']['notnull']))?$field['errors']['notnull']:X3::translate('Поле {attribute} не должно быть пустым', array('attribute'=>$this->fieldName($name))));
-//                    continue;
-//                }
-            }
-
             $dataType = array_shift($field);
             $matches = array();
             $arg = false;
@@ -521,6 +510,10 @@ class X3_MySQL_Model extends X3_Model implements ArrayAccess {
                 if ($count['cnt'] > 0) {
                     $this->addError($name, (isset($field['errors']['unique'])) ? $field['errors']['unique'] : X3::translate('Поле `{attribute}` уже используется с таким значением', array('{attribute}' => $this->module->fieldName($name))));
                 }
+            }
+            if (!in_array('null', $field) && !isset($field['default']) && (!$isset || ($isset && empty($this[$name])))) {
+                $this->addError($name, (isset($field['errors']['notnull'])) ? $field['errors']['notnull'] : X3::translate('Поле `{attribute}` не должно быть пустым', array('{attribute}' => $this->module->fieldName($name))));
+                continue;
             }
         }
         $this->module->afterValidate();
