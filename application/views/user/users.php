@@ -48,6 +48,9 @@ if($type == 'ksk'){
             <?endforeach;?>
         </table>
     </div>
+    <div id="navi">
+            <?=$paginator?>
+    </div>
     <div class="shadow"><i></i><b></b><em></em></div>
 </div>
 <script type="text/html" id="form_tmpl">

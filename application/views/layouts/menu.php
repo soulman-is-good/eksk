@@ -35,6 +35,11 @@ $menus = Menu::get(array('@condition'=>array('status','type'=>'Нижнее'),'@
         <?else:?>
         <a href="/users/" class="menu_item users"><span><?=X3::translate('Жильцы');?></span></a>
         <?endif;?>
+        <?if(X3::app()->request->isActive('/forum')):?>
+        <span class="menu_item themes"><span><?=X3::translate('Темы обсуждения');?></span></span>
+        <?else:?>
+        <a href="/forum/" class="menu_item themes"><span><?=X3::translate('Темы обсуждения');?></span></a>
+        <?endif;?>
         <?if(X3::app()->request->isActive('/vote')):?>
         <span class="menu_item questions"><span><?=X3::translate('Мои опросы');?></span></span>
         <?else:?>

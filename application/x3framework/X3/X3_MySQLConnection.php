@@ -113,6 +113,10 @@ class X3_MySQLConnection extends X3_Component {
         return mysql_query($this->sql, self::$_db);
     }
     
+    public function lastQuery() {
+        return $this->sql;
+    }
+    
     public function count($sql = NULL) {
         if($sql == null && $this->sql != null)
             $sql = $this->sql;

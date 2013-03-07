@@ -595,7 +595,7 @@ Messages
 .message_block div.right_side {display:inline-block;margin-top:2px;vertical-align: top;width:495px;position:relative;} 
 .message_block div.right_side div.del {position:absolute;right:0;top:0;} 
 .message_block div.right_side img.miniava {float:left;margin:0 5px 5px 0;border-radius:3px;} 
-.message_block div.right_side p {margin-top:0px;font-size:16px;color:#000000;word-break: break-all;word-wrap:break-word;} 
+.message_block div.right_side p {margin-top:0px;font-size:16px;color:#000000;word-wrap:break-word;padding-right:25px;} 
 .message.index .message_block div.right_side p {margin:0px;font-size:16px;color:#000000;word-break: break-all;word-wrap:break-word;height:80px;overflow: hidden;position:relative;} 
 .message_block div.middle_side a {font-size:16px;font-family:Arial,sans-serif;text-decoration:none;}
 /*.message_block div.middle_side a:hover {border-bottom-color:#f0b2b2;}*/
@@ -692,6 +692,26 @@ User Settings
 
 .forum.create .eksk-form .label{
     width:200px;
+}
+.forum.show .answer{
+    display:inline-block;
+    margin:10px 0;
+}
+.forum.show .answered-to  {
+    margin-bottom:10px;
+}
+.forum.show .message_block div.right_side .answered-to img.miniava {
+    margin-right:15px;
+}
+.forum.show .answered-to .fleft {
+    width:105px;
+    padding-top:8px;
+}
+.forum.show .answered-to .fleft a {
+    font-size:13px;
+}
+.forum.show .message_block div.inside_block {
+    height:auto;
 }
 
 .field h3{
@@ -988,6 +1008,10 @@ runWindow Classes
 ***************/
 .mywnd .eksk-wnd {
     height:auto;
+    padding-bottom:0;
+}
+.mywnd .eksk-wnd div.content {
+    margin-bottom:0;
 }
 .mywnd {
     position:absolute;

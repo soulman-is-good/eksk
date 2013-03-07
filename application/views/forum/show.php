@@ -8,27 +8,43 @@
     <div class="content">
         <div class="admin-list">
             <?foreach($models as $model):
-                $user = $users[$model->user_from];
+                $user = $users[$model->user_id];
+                $m = $model->user_to>0?$users[$model->user_to]:false;
                 $files = X3::db()->query("SELECT f.id id, f.name name FROM data_uploads f INNER JOIN forum_uploads mu ON mu.file_id=f.id WHERE mu.message_id = ".$model->id);
                 ?>
-                <div class="message_block<?=$model->status==1 || $model->user_from==X3::user()->id?'':' unread'?>" pid="<?=$model->id?>">
+                <div class="message_block" pid="<?=$model->id?>">
                         <div class="inside_block">
                         <div class="left_side">
                                 <img width="100" src="<?=$user['avatar']?>">
                         </div>
                         <div class="middle_side">
-                                <a href="/user/<?=$model->user_from?>.html"><?=$user['title']?></a>
+                                <a href="/user/<?=$model->user_id?>.html"><?=$user['title']?></a>
                                 <i><?=I18n::date($model->created_at)?>, <?=date("H:i",$model->created_at)?></i>
                         </div>
                         <div class="right_side">
-                                <p><?=nl2br($model->content)?></p>
+                            <?if($m!=false):?>
+                                <div class="answered-to">
+                                    <div class="fleft"><em><?=X3::translate('Ответил пользователю');?></em></div>
+                                    <img src="<?=$m['avatar']?>" class="miniava" width="50" alt="" title="<?=addslashes($m['title'])?>" />
+                                    <div class="fleft"><a href="/user/<?=$model->user_id?>"><?=$m['title']?></a></div>
+                                    <div class="clear">&nbsp;</div>
+                                </div>
+                            <?endif;?>
+                                <p>
+                                <?=nl2br($model->content);?>
+                                </p>
                                 <?if(mysql_num_rows($files)):?>
                                 <em><?=X3::translate('Прикрепленные файлы')?></em>:
                                 <?while($file = mysql_fetch_assoc($files)):?>
                                 <span class="file_link"><a href="/uploads/get/file/<?=$file['id']?>"><?=$file['name']?></a></span>
                                 <?endwhile;?>
                                 <?endif;?>
-                                <div class="del"><a href="/message/delete/id/<?=$model->id?>.html" class="map_link remove"><img src="/images/cross.png" alt="<?=X3::translate('Удалить')?>" title="<?=X3::translate('Удалить')?>" /></a></div>
+                                <?if($model->user_id == X3::user()->id || X3::user()->isAdmin()):?>
+                                <div class="del"><a href="/forum/delete/message/<?=$model->id?>.html" class="map_link remove"><img src="/images/cross.png" alt="<?=X3::translate('Удалить')?>" title="<?=X3::translate('Удалить')?>" /></a></div>
+                                <?endif;?>
+                                <?if($model->user_id != X3::user()->id):?>
+                                <br/><a data-uid="<?=$model->user_id?>" href="#" class="answer button">Ответить</a>
+                                <?endif;?>
                         </div>
                         </div>
                 </div>
@@ -41,16 +57,16 @@
     <div class="shadow"><i></i><b></b><em></em></div>
 </div>
 <script type="text/html" id="form_tmpl">
-    <form method="post" action="/message/send.html">
+    <form method="post" action="/forum/send.html">
         <div class="errors" style="display:none"></div>
         <table class="eksk-form" width="100%">
-            <tr>
+            <tr id="user_info">
                 <td class="label" width="70">
                     <label for="Message[user_to]"><?=Message::getInstance()->fieldName('user_to')?></label>
                 </td>
                 <td class="field" style="padding:5px 0px">
-                    <input type="hidden" name="Message[user_to]"  value="<?=$with?>" />
-                    <span id="user_to"><?=$users[$with]['title']?></span>
+                    <input id="Message_user_to" type="hidden" name="Message[user_to]"  value="" />
+                    <span id="user_to"></span>
                 </td>
             </tr>
             <tr>
@@ -59,6 +75,7 @@
                 </td>
                 <td class="field">
                     <textarea name="Message[content]" style="width:623px"></textarea>
+                    <input type="hidden" value="<?=$theme->id?>" name="Message[forum_id]" id="forum_id" />
                     <input type="hidden" value="" name="files" id="files" />
                 </td>
             </tr>
@@ -97,18 +114,30 @@
 </script>
 <script>
     var file_tpl = '<span class="file_link"><a filetitle href="#">Скриншот ошибки</a><a fileremove class="red_cross" href="#"><img width="7" height="" src="/images/zeropic.png" /></a></span>';
+    var users = <?=  json_encode($users)?>;
     $(function(){
         $('.unread').each(function(){
             //$(this).one('mouseover',function(){
                 var self=this;
-                $.get('/message/read/id/'+$(this).attr('pid'),function(){  
+                $.get('/forum/read/id/'+$(this).attr('pid'),function(){  
                     $(self).removeClass('unread');
                 })
             //})
         })
-        $('#send_message').click(function(){
+        $('#send_message, .answer').click(function(){
             var eform = $($('#form_tmpl').html());
-            var self = $.dialog(eform,'<?=X3::translate('Написать сообщение');?>','no buttons').setSize(750).setRelativePosition('center');
+            if($(this).data('uid')>0){
+                eform.find('#Message_user_to').val($(this).data('uid'));
+                eform.find('#user_to').html(users[$(this).data('uid')]['title']);
+                eform.find('#user_info').css('display','table-row');
+            }else{
+                eform.find('#Message_user_to').val('');
+                eform.find('#user_to').html('');
+                eform.find('#user_info').css('display','none');
+            }
+            var self = $.dialog(eform,'<?=X3::translate('Написать сообщение');?>','no buttons');
+            self.setSize(750);
+            self.setRelativePosition('center');
             eform.find('#send_btn').click(function(){
                 $.loader();
                 var action = eform.attr('action');
@@ -169,11 +198,9 @@
                     var href = $(this).attr('href');
                     var self = this;
                     $.get(href,function(m){
-                        if(m=='OK'){
-                            $(self).parent().parent().parent().parent().fadeOut(function(){
-                                $(this).remove();
-                            })
-                        }
+                        $(self).parent().parent().parent().parent().fadeOut(function(){
+                            $(this).remove();
+                        })
                     })
                 }
                 return false;

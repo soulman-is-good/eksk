@@ -1,7 +1,21 @@
 <?php
-$title = X3::translate('Создание обсуждения');
+$title = $model->id>0?X3::translate('Редактирование обсуждения'):X3::translate('Создание обсуждения');
 $pk = 'id';
 $errors = $model->getTable()->getErrors();
+$files = '';
+$F = array();
+if($message->id>0){
+    $fs = X3::db()->fetchAll("SELECT fu.file_id, u.name FROM forum_uploads fu INNER JOIN data_uploads u ON fu.file_id=u.id WHERE message_id=$message->id");
+    if(!empty($fs)){
+        $tmp = array();
+        foreach($fs as $fl){
+            $tmp[] = $fl['file_id'];
+            $F[$fl['file_id']] = $fl['name'];
+        }
+        $files = implode(',',$tmp);
+        unset($tmp);
+    }
+}
 $form = new Form($model);
 ?>
 <div class="eksk-wnd">
@@ -42,7 +56,7 @@ $form = new Form($model);
                     <label><?=X3::translate('Сообщение')?></label>
                 </td>
                 <td class="field">
-                    <div class="wrapperEx inline-block"><?=X3_Html::form_tag('textarea', array('name'=>'Message[content]','value'=>$message->content,'class'=>'content'))?></div>
+                    <div class="wrapperEx inline-block"><?=X3_Html::form_tag('textarea', array('name'=>'Message[content]','%content'=>$message->content,'class'=>'content'))?></div>
                 </td>
                 <td class="error"></td>
             </tr>
@@ -54,13 +68,19 @@ $form = new Form($model);
                     <div style="position:relative;">
                         <a href="#" class="map_link" style="display: inline-block"><span><?=X3::translate('Прикрепить файл')?></span></a>
                         <input type="hidden" id="file_trig" name="file_trigger" value="0" />
-                        <input type="hidden" id="files" name="Message[files]" value="" />
+                        <input type="hidden" id="files" name="Message[files]" value="<?=$files?>" />
                         <input type="file" id="file" name="file" class="file" size="1" />
                         <iframe name="for_files" id="for_files" class="upload"></iframe>
                     </div>
                     <div class="hr" style="margin:10px 0;">&nbsp;</div>
                     <div id="file_list">
+                        <?if(empty($F)):?>
                         <em><?=X3::translate('Нет файлов');?></em>
+                        <?else:?>
+                        <?foreach($F as $k=>$fl):?>
+                        <span class="file_link"><a target="_blank" href="/uploads/get/file/<?=$k?>"><?=$fl?></a><a data-fid="<?=$k?>" fileremove class="red_cross" href="#"><img width="7" height="" src="/images/zeropic.png" /></a></span>
+                        <?endforeach;?>
+                        <?endif;?>
                     </div>
                 </td>
                 <td class="error"></td>
@@ -127,8 +147,13 @@ $form = new Form($model);
                     &nbsp;
                 </td>
                 <td class="field" colspan="2">
+                    <?if($model->getTable()->getIsNewRecord()):?>
                     <div class="wrapper inline-block"><button type="submit"><?=X3::translate('Создать');?></button></div>
                     <div class="wrapper inline-block"><button type="submit" name="public" value="1"><?=X3::translate('Создать и опубликовать');?></button></div>
+                    <?else:?>
+                    <div class="wrapper inline-block"><button type="submit"><?=X3::translate('Сохранить');?></button></div>
+                    <div class="wrapper inline-block"><button type="submit" name="public" value="1"><?=X3::translate('Опубликовать');?></button></div>
+                    <?endif;?>
                 </td>
             </tr>
         </table>
@@ -138,7 +163,7 @@ $form = new Form($model);
 </div>
 <script>
     var file_tpl = '<span class="file_link"><a filetitle href="#"></a><a fileremove class="red_cross" href="#"><img width="7" height="" src="/images/zeropic.png" /></a></span>';
-    var no_files = $('#file_list').html();
+    var no_files = '<em><?=X3::translate('Нет файлов');?></em>';
     $(function(){
         $('#file').change(function(){
             $('#file_trig').val('1');
@@ -156,21 +181,7 @@ $form = new Form($model);
                     var file = $(file_tpl);
                     file.find('[filetitle]').html(json.message.filename)
                         .attr({'target':'_blank','href':'/uploads/get/file/'+json.message.id});
-                    file.find('[fileremove]').data('fid',json.message.id).click(function(){
-                        var files = $('#files').val().split(',');
-                        for(i in files)
-                            if(files[i] == $(this).data('fid')){
-                                files.splice(i, 1);
-                                break;
-                            }
-                        console.log(files);
-                        if(files.length==0 || (files.length == 1 && files[0]=="")){
-                            $('#file_list').html(no_files);
-                            $('#files').val('');
-                        }else
-                            $('#files').val(files.join(','));
-                        $(this).parent().fadeOut(function(){$(this).remove()});
-                    })
+                    file.find('[fileremove]').data('fid',json.message.id);
                     var files = $('#files').val().split(',');
                     files.push(json.message.id);
                     $('#files').val(files.join(','));
@@ -236,5 +247,21 @@ $form = new Form($model);
             },'json')
         });
         $('.city_id').change();
+        
+        $('[fileremove]').live('click',function(){
+                        var files = $('#files').val().split(',').map(function(item,i){return item=item.replace(/\s/g,'');});
+                        for(i in files){
+                            if(files[i] == $(this).data('fid')){
+                                files.splice(i, 1);
+                                break;
+                            }
+                        }
+                        if(files.length==0 || (files.length == 1 && files[0]=="")){
+                            $('#file_list').html(no_files);
+                            $('#files').val('');
+                        }else
+                            $('#files').val(files.join(','));
+                        $(this).parent().fadeOut(function(){$(this).remove()});
+                    })
     })
 </script>

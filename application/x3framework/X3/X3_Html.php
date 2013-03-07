@@ -123,5 +123,19 @@ class X3_Html extends X3_Component {
     {
             return htmlspecialchars($text,ENT_QUOTES,X3::app()->module->encoding);
     }
+    
+    public static function errorSummary($model) {
+        if(!($model instanceof X3_Module_Table))
+            return false;
+        $errors = $model->getTable()->getErrors();
+        if(empty($errors))
+            return '';
+        $html = '<ul class="errors">';
+        foreach($errors as $ers){
+            $html .= '<li>' . implode('</li><li>',$ers) . '</li>';
+        }
+        $html .= '</ul>';
+        return $html;
+    }
 }
 ?>

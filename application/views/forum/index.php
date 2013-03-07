@@ -39,14 +39,15 @@ if(is_file('uploads/User/'.$me->image)){
                         <p><a href="/forum/<?=$model->id?>.html"><?=nl2br($model->title);?></a></p>
                     </td>
                     <td class="ops">
-                        <a href="/forum/<?=$model->id?>.html"><span><?=X3::translate('Перейти к теме')?></span></a>
-                        <?if(X3::user()->id == $user->id):?>
+                        <?if(X3::user()->id == $user->id || X3::user()->isAdmin()):?>
                             <?if($model->status=='0'):?>
+                                <a href="/forum/create/id/<?=$model->id?>.html"><span><?=X3::translate('Редактировать')?></span></a>
                                 <a href="/forum/public/id/<?=$model->id?>.html"><span><?=X3::translate('Опубликовать')?></span></a>
                             <?else:?>
+                                <a href="/forum/<?=$model->id?>.html"><span><?=X3::translate('Перейти к теме')?></span></a>
                                 <em style="display:block;margin-bottom:15px"><?=X3::translate('Опубликовано')?></em>
                             <?endif;?>
-                        <a href="/forum/create/id/<?=$model->id?>.html"><span><?=X3::translate('Редактировать')?></span></a>
+                        <a href="/forum/delete/id/<?=$model->id?>.html" onclick="return confirm('Действительно удалить эту тему со всеми сообщениями?');"><span><?=X3::translate('Удалить')?></span></a>
                         <?endif;?>
                     </td>
                 </tr>

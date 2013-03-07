@@ -150,7 +150,7 @@ class Warning extends X3_Module_Table {
             if($model->validate()){
                 if(isset($_POST['public'])){
                     $role = $model->type == '*'?'':"role='$model->type' AND ";
-                    if($model->type == 'ksk'){
+                    if(X3::user()->isKsk()){
                         $b = X3::db()->query("SELECT city_id, region_id, house FROM user_address WHERE user_id='$model->user_id' AND status=1");
                         $o = array();
                         while($bb = mysql_fetch_assoc($b)){
