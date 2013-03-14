@@ -30,6 +30,9 @@ if($type == 'ksk'){
                 <td class="name"><a href="/user/<?=$model->id?>.html"><?=$model->fullname?><?=$model->status==0?'<em>'.X3::translate('Не активирован').'</em>':''?></a></td>
                 <td class="ops">
                     <a class="send_message" href="/message/with/<?=$model->id?>.html"><span><?=X3::translate('Написать сообщение')?></span></a>
+                    <?if(!X3::user()->isKsk() && $model->role == 'ksk'):?>
+                        <a href="/reports/<?=$model->id?>.html"><span><?=X3::translate('Отчеты')?></span></a>
+                    <?endif;?>
                     <?if(X3::user()->isAdmin() || X3::user()->isKsk()):?>
                         <?if($model->status == 2):?>
                             <a href="/user/unblock/id/<?=$model->id?>.html"><span><?=X3::translate('Разблокировать')?></span></a>

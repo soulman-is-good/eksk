@@ -541,6 +541,41 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
         }
         parent::onDelete($tables, $condition);
     }
+    
+    public static function search($word,$type) {
+        $uid = X3::user()->id;
+        $query = array();
+        $scope = array(
+            '@join'=>"INNER JOIN user_settings `us` ON us.user_id=data_user.id",
+            '@order'=>'name',
+        );
+        if($type == 'user'){
+            $scope['@select'] = 'data_user.id, data_user.name, data_user.surname, data_user.image';
+            $query[]['name'] = array('LIKE'=>"'%$word%'");
+            $query[]['surname'] = array('LIKE'=>"'%$word%'");
+            $query[]['about'] = array('LIKE'=>"'%$word%'");
+            if(X3::user()->isUser()){
+                $query = array('role'=>'user','data_user.id'=>array('@@'=>"data_user.id IN (SELECT a1.user_id FROM user_address a1, user_address a2 WHERE a2.user_id=$uid AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id AND `a2`.`region_id` = a1.region_id AND `a2`.`house` = a1.house)"),array($query));
+            }elseif(X3::user()->isKsk()){
+                $query = array('role'=>'user','data_user.id'=>array('@@'=>"data_user.id IN (SELECT a1.user_id FROM user_address a1, user_address a2 WHERE a2.user_id=$uid AND a2.status=1 AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id AND `a2`.`region_id` = a1.region_id AND `a2`.`house` = a1.house)"),array($query));
+            }
+        }
+        if($type == 'ksk'){
+            $scope['@select'] = 'data_user.id, data_user.name, data_user.surname, data_user.kskname, data_user.ksksurname, data_user.image';
+            $query[]['name'] = array('LIKE'=>"'%$word%'");
+            $query[]['kskname'] = array('LIKE'=>"'%$word%'");
+            $query[]['surname'] = array('LIKE'=>"'%$word%'");
+            $query[]['ksksurname'] = array('LIKE'=>"'%$word%'");
+            $query[]['about'] = array('LIKE'=>"'%$word%'");
+            if(X3::user()->isUser()){
+                $query = array('role'=>'ksk','data_user.id'=>array('@@'=>"data_user.id IN (SELECT a1.user_id FROM user_address a1, user_address a2 WHERE a2.user_id=$uid AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id AND `a2`.`region_id` = a1.region_id AND `a2`.`house` = a1.house)"),array($query));
+            }else
+                $query = array('role'=>'ksk',array($query));
+            
+        }
+        $scope['@condition'] = $query;
+        return $scope;
+    }
 
 }
 ?>

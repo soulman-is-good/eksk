@@ -21,10 +21,13 @@ $limit = ceil($limit/2);
         <table width="100%" class="search-results">
             <tr><td width="50%" class="fc">
         <table class="admin-list">
-            <?$i=1;while($model = mysql_fetch_assoc($models)):?>
+            <?$i=1;while($u = mysql_fetch_assoc($models)):
+                $model = new User();
+                $model->acquire($u);
+                ?>
             <tr>
-                <td class="ava"><img src="/images/default.png" width="100" alt="" /></td>
-                <td class="name"><a href="<?=str_replace('[LINK]',$model['link'],$data['link'])?>"><?=$model['title']?></a>
+                <td class="ava"><a href="/user/<?=$model->id?>.html"><img src="<?=$model->avatar?>" width="100" alt="" /></a></td>
+                <td class="name"><a href="/user/<?=$model->id?>.html"><?=$model->fullname?></a>
                     <?if($model['text']!=''):?>
                     <p><?=nl2br(X3_String::create($model['text'])->carefullCut(512));?></p>
                     <?endif;?>
@@ -34,10 +37,13 @@ $limit = ceil($limit/2);
         </table>
             </td><td width="50%">
         <table class="admin-list">
-            <?while($model = mysql_fetch_assoc($models)):?>
+            <?while($u = mysql_fetch_assoc($models)):
+                $model = new User();
+                $model->acquire($u);
+                ?>
             <tr>
-                <td class="ava"><img src="/images/default.png" width="100" alt="" /></td>
-                <td class="name"><a href="<?=str_replace('[LINK]',$model['link'],$data['link'])?>"><?=$model['title']?></a></td>
+                <td class="ava"><a href="/user/<?=$model->id?>.html"><img src="<?=$model->avatar?>" width="100" alt="" /></a></td>
+                <td class="name"><a href="/user/<?=$model->id?>.html"><?=Search::highlight($model->fullname)?></a></td>
             </tr>
             <?endwhile;?>
         </table>                    

@@ -149,54 +149,7 @@ class Warning extends X3_Module_Table {
                 $model->status = '1';
             if($model->validate()){
                 if(isset($_POST['public'])){
-                    $role = $model->type == '*'?'':"role='$model->type' AND ";
-                    if(X3::user()->isKsk()){
-                        $b = X3::db()->query("SELECT city_id, region_id, house FROM user_address WHERE user_id='$model->user_id' AND status=1");
-                        $o = array();
-                        while($bb = mysql_fetch_assoc($b)){
-                            $o['city_id'][] = $bb['city_id'];
-                            $o['region_id'][] = $bb['region_id'];
-                            $o['house'][] = $bb['house'];
-                        }
-                        $o['city_id'] = implode(', ', $o['city_id']);
-                        $o['region_id'] = implode(', ', $o['region_id']);
-                        $o['house'] = implode(', ', $o['house']);
-                        if($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat != null){
-                            $c = "a1.city_id=$model->city_id AND a1.region_id=$model->region_id AND a1.house='$model->house' AND a1.flat='$model->flat'";
-                        }
-                        elseif($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat == null){
-                            $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house'";
-                        }
-                        elseif($model->city_id > 0 && $model->region_id > 0 && $model->house == null && $model->flat == null){
-                            $c = "a1.house IN ({$o['house']}) AND a1.city_id='$model->city_id' AND a1.region_id='$model->region_id'";
-                        }
-                        elseif($model->city_id > 0 && $model->region_id == 0 && $model->house == null && $model->flat == null){
-                            $c = "a1.region_id IN ({$o['region_id']}) AND a1.house IN ({$o['house']}) AND a1.city_id='$model->city_id'";
-                        }else
-                            $c = "a1.city_id IN ({$o['city_id']}) AND a1.region_id IN ({$o['region_id']}) AND a1.house IN ({$o['house']})";
-                    }else{
-                        if($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat != null){
-                            $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house' AND a1.flat='$model->flat'";
-                        }
-                        elseif($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat == null){
-                            $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house'";
-                        }
-                        elseif($model->city_id > 0 && $model->region_id > 0 && $model->house == null && $model->flat == null){
-                            $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id'";
-                        }
-                        elseif($model->city_id > 0 && $model->region_id == 0 && $model->house == null && $model->flat == null){
-                            $c = "a1.city_id='$model->city_id'";
-                        }else
-                            $c = "1";
-                    }
-                    $users = X3::db()->query("SELECT CONCAT(name,' ',surname) username, email FROM data_user u INNER JOIN user_address a1 ON a1.user_id=u.id WHERE 
-                        u.id<>$model->user_id AND $role $c
-                        GROUP BY u.id
-                        ");
-                    while($user = mysql_fetch_assoc($users)){
-//                        var_dump($user);
-                        Notify::sendMail('newNotify', array('text'=>$model->title,'name'=>$user['username'],'from'=>X3::user()->fullname), $user['email']);
-                    }
+                    $this->notify($model);
                 }
                 $this->redirect('/warning/');
             }
@@ -267,7 +220,11 @@ class Warning extends X3_Module_Table {
 
     public function actionSend() {
         if (isset($_GET['id']) && ($id = (int)$_GET['id'])>0) {
-            $a = Warning::update(array('status'=>'1'),array('user_id'=>X3::user()->id,'id'=>$id));
+            if(X3::user()->isAdmin())
+                Warning::update(array('status'=>'1'),array('id'=>$id));
+            else
+                Warning::update(array('status'=>'1'),array('user_id'=>X3::user()->id,'id'=>$id));
+            $this->notify(self::getByPk($id));
             if(IS_AJAX)
                 exit;
             $this->redirect($_SERVER['HTTP_REFERER']);
@@ -295,6 +252,58 @@ class Warning extends X3_Module_Table {
         echo json_encode($flats);
         exit;
     }
+    
+    public function notify($model) {
+        $role = $model->type == '*'?'':"role='$model->type' AND ";
+        $id = X3::user()->id;
+        if(X3::user()->isKsk()){
+            $b = X3::db()->query("SELECT city_id, region_id, house FROM user_address WHERE user_id='$model->user_id' AND status=1");
+            $o = array();
+            while($bb = mysql_fetch_assoc($b)){
+                $o['city_id'][] = $bb['city_id'];
+                $o['region_id'][] = $bb['region_id'];
+                $o['house'][] = $bb['house'];
+            }
+            $o['city_id'] = implode(', ', $o['city_id']);
+            $o['region_id'] = implode(', ', $o['region_id']);
+            $o['house'] = implode(', ', $o['house']);
+            if($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat != null){
+                $c = "a1.city_id=$model->city_id AND a1.region_id=$model->region_id AND a1.house='$model->house' AND a1.flat='$model->flat'";
+            }
+            elseif($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat == null){
+                $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house'";
+            }
+            elseif($model->city_id > 0 && $model->region_id > 0 && $model->house == null && $model->flat == null){
+                $c = "a1.house IN ({$o['house']}) AND a1.city_id='$model->city_id' AND a1.region_id='$model->region_id'";
+            }
+            elseif($model->city_id > 0 && $model->region_id == 0 && $model->house == null && $model->flat == null){
+                $c = "a1.region_id IN ({$o['region_id']}) AND a1.house IN ({$o['house']}) AND a1.city_id='$model->city_id'";
+            }else
+                $c = "a1.city_id IN ({$o['city_id']}) AND a1.region_id IN ({$o['region_id']}) AND a1.house IN ({$o['house']})";
+        }else{
+            if($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat != null){
+                $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house' AND a1.flat='$model->flat'";
+            }
+            elseif($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat == null){
+                $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house'";
+            }
+            elseif($model->city_id > 0 && $model->region_id > 0 && $model->house == null && $model->flat == null){
+                $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id'";
+            }
+            elseif($model->city_id > 0 && $model->region_id == 0 && $model->house == null && $model->flat == null){
+                $c = "a1.city_id='$model->city_id'";
+            }else
+                $c = "1";
+        }
+        $users = X3::db()->query("SELECT CONCAT(name,' ',surname) username, email FROM data_user u INNER JOIN user_address a1 ON a1.user_id=u.id WHERE 
+            u.id<>$model->user_id AND $role $c
+            GROUP BY u.id
+            ");
+        while($user = mysql_fetch_assoc($users)){
+        //                        var_dump($user);
+            Notify::sendMail('newNotify', array('text'=>$model->title,'name'=>$user['username'],'from'=>X3::user()->fullname), $user['email']);
+        }
+    }
 
     public function beforeValidate() {
         if($this->city_id == 0) $this->city_id = null;
@@ -318,6 +327,50 @@ class Warning extends X3_Module_Table {
             Warning_Stat::delete(array('warning_id'=>$model->id));
         }
         parent::onDelete($tables, $condition);
+    }
+    
+    public static function search($word) {
+        $id = X3::user()->id;
+        $query = array();
+        $date = X3::db()->fetch("SELECT created_at FROM data_user WHERE id=$id");
+        $type = X3::user()->isUser()?"(f.type='user' OR f.type='*')":(X3::user()->isKsk()?"(f.type='ksk' OR f.type='*')":"(f.type='admin' OR f.type='*')");
+        if(X3::user()->isUser() || 1){
+            $cond = array();
+            $query['@select']='f.*';
+            $query['@group']='f.id';
+            $query['@from']=array('data_warning'=>'f');
+            $query['@join']="INNER JOIN data_user u ON u.id=f.user_id LEFT JOIN user_address a ON a.user_id=$id";
+            $cond['id']=array(
+                '@@'=>"f.title LIKE '%$word%' AND f.end_at>={$date['created_at']} AND (
+            (f.user_id=$id)
+                OR
+            (f.status AND 
+                $type AND u.role='admin' AND 
+                (
+                   (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                   (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                   (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL) OR 
+                   (f.city_id=a.city_id AND f.region_id IS NULL) OR
+                   (f.city_id IS NULL)
+                )
+            )
+                OR
+            (f.status AND $type AND u.role='ksk' AND
+             (
+                (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR 
+                (f.city_id=a.city_id AND f.region_id IS NULL AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR
+                (f.city_id IS NULL AND a.city_id IN (SELECT city_id FROM user_address aa WHERE aa.user_id=u.id AND aa.status=1) AND a.region_id IN (SELECT region_id FROM user_address aa WHERE aa.user_id=u.id AND aa.status=1) AND a.house IN (SELECT house FROM user_address aa WHERE aa.user_id=u.id AND aa.status=1))
+             )
+             )
+            )"
+            );
+            $query['@condition'] = $cond;
+        }elseif(X3::user()->isKsk()){
+            
+        }
+        return $query;
     }
 }
 ?>

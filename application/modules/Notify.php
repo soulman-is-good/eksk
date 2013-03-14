@@ -89,9 +89,9 @@ class Notify extends X3_Module_Table{
         $mailer->copy = $cc;
         $mailer->email = 'noreply@eksk.kz';
         $mailer->encoding = 'UTF-8';
-        $mail->title = $mail->formLetter($data,$mailer,$mail->title);
         if(!isset($data['title']))
             $data['title'] = $mail->title;
+        $data['title'] = $mail->formLetter($data,$mailer,$data['title']);
         $message = $mail->formLetter($data,$mailer);
         if(is_null($from) && !empty($mail->from)){
             $from = $mailer->email = $mail->from;
@@ -102,10 +102,11 @@ class Notify extends X3_Module_Table{
             $rcps = array('info@eksk.kz');
         else 
             $rcps = explode(',',$to);
+        $errs = '';
         foreach($rcps as $to)
             try{
                 $to = trim($to);
-                $msg = $mailer->send($to, $mail->title, $message,$from);
+                $msg = $mailer->send($to, $data['title'], $message,$from);
                 $mail->sent_at = time();
                 if(is_string($msg))
                     X3::log($msg,'mailer');
@@ -113,9 +114,10 @@ class Notify extends X3_Module_Table{
                     $mail->save();
                 }
             }catch(Exception $e){
+                $errs .= $e->getMessage();
                 X3::log($e->getMessage(),'mailer');
             }
-        return true;
+        return $errs==''?true:$errs;
     }
     
     public function formLetter($data=array(),$mailer,$text='') {

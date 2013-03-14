@@ -3,6 +3,7 @@ $id = X3::user()->id;
 $me = (object)X3::db()->fetch("SELECT id, CONCAT(name,' ',surname) name, image, role FROM data_user WHERE id = ".$id);
 $me->name = $me->role=='admin'?X3::translate('Администратор').'#'.$me->id:$me->name;
 $me->avatar = '/images/default.png';
+$order = X3::user()->ForumOrder;
 if(is_file('uploads/User/'.$me->image)){
         $me->avatar = '/uploads/User/50x50/' . $me->image;
 }
@@ -16,43 +17,58 @@ if(is_file('uploads/User/'.$me->image)){
         <?endif;?>
         <h1><?=X3::translate('Список тем');?></h1>
     </div>
-    <div class="content">
-        <table class="admin-list">
+    <div class="content" style="margin:20px 0px;">
+        <div style="padding:5px 20px 10px;">
+        <em>Сортировать по:</em>
+            <a style="font-size:12px" href="?order=date-<?=$order['order']=='date'?($order['dir']+1)%2:'0'?>"><?=$order['order']=='date'&&($order['dir']+1)%2?'&darr;':'&uarr;'?> <?=X3::translate('Дате последнего обновления');?></a> 
+            <span style="color:#666;font-size:12px;">|</span>
+            <a style="font-size:12px" href="?order=count-<?=$order['order']=='count'?($order['dir']+1)%2:'0'?>"><?=$order['order']=='count'&&($order['dir']+1)%2?'&darr;':'&uarr;'?> <?=X3::translate('Количеству сообщений');?></a>
+        </div>
+        <div class="admin-list">
             <?while($model = mysql_fetch_object($models)):
                 $user = (object)X3::db()->fetch("SELECT id, CONCAT(name,' ',surname) name, image, role FROM data_user WHERE id = ".$model->user_id);
                 $user->name = $user->role=='admin'?X3::translate('Администратор').' #'.$user->id:$user->name;
                 $model->avatar = '/images/default.png';
                 if(is_file('uploads/User/'.$user->image))
                     $model->avatar = '/uploads/User/100x100/' . $user->image;
+                $isnew = X3::db()->count("SELECT COUNT(0) FROM forum_users WHERE user_id=".X3::user()->id." AND forum_id=$model->id AND updated_at<$model->latest")>0 || X3::db()->count("SELECT COUNT(0) FROM forum_users WHERE user_id=".X3::user()->id." AND forum_id=$model->id")==0;
                 ?>
-                <tr>
-                    <td class="ava">
-                        <a href="/user/<?=$user->id?>/">
-                            <img width="100" src="<?=$model->avatar?>" />
-                        </a>
-                    </td>
-                    <td class="name">
+                <div class="message_block<?=$isnew?' unread':''?>" style="padding:0px 20px;">
+                <div class="inside_block" style="position:relative">
+                    <div class="left_side">
+                        <?if($user->role=='admin' && !X3::user()->isAdmin()):?>
+                        <img width="100" src="<?=$model->avatar?>" />
+                        <?else:?>
+                        <a href="/user/<?=$user->id?>/"><img width="100" src="<?=$model->avatar?>" /></a>
+                        <?endif;?>
+                    </div>
+                    <div class="middle_side">
+                        <?if($user->role=='admin' && !X3::user()->isAdmin()):?>
+                        <span><?=$user->name?></span><br/>
+                        <?else:?>
                         <a href="/user/<?=$user->id?>.html"><?=$user->name?></a><br/>
-                        <em><?=I18n::date($model->latest)?>, <?=date("H:i",$model->latest)?></em>
-                    </td>
-                    <td class="text">
-                        <p><a href="/forum/<?=$model->id?>.html"><?=nl2br($model->title);?></a></p>
-                    </td>
-                    <td class="ops">
+                        <?endif;?>
+                        <i><?=I18n::date($model->latest)?>, <?=date("H:i",$model->latest)?></i>
+                    </div>
+                    <div class="right_side" style="min-width:275px;width:auto;max-width:375px;padding-right:115px;">
+                        <p><a href="/forum/<?=md5($model->title.$model->id)?>.html"><?=nl2br($model->title);?></a></p>
+                    </div>
+                    <div class="" style="position:absolute;right:0;top:10px">
                         <?if(X3::user()->id == $user->id || X3::user()->isAdmin()):?>
                             <?if($model->status=='0'):?>
-                                <a href="/forum/create/id/<?=$model->id?>.html"><span><?=X3::translate('Редактировать')?></span></a>
-                                <a href="/forum/public/id/<?=$model->id?>.html"><span><?=X3::translate('Опубликовать')?></span></a>
+                                <a style="display:block;margin-bottom:15px" href="/forum/create/id/<?=$model->id?>.html"><span><?=X3::translate('Редактировать')?></span></a>
+                                <a style="display:block;margin-bottom:15px" href="/forum/public/id/<?=$model->id?>.html"><span><?=X3::translate('Опубликовать')?></span></a>
                             <?else:?>
-                                <a href="/forum/<?=$model->id?>.html"><span><?=X3::translate('Перейти к теме')?></span></a>
+                                <a style="display:block;margin-bottom:15px" href="/forum/<?=$model->id?>.html"><span><?=X3::translate('Перейти к теме')?></span></a>
                                 <em style="display:block;margin-bottom:15px"><?=X3::translate('Опубликовано')?></em>
                             <?endif;?>
                         <a href="/forum/delete/id/<?=$model->id?>.html" onclick="return confirm('Действительно удалить эту тему со всеми сообщениями?');"><span><?=X3::translate('Удалить')?></span></a>
                         <?endif;?>
-                    </td>
-                </tr>
+                    </div>
+                </div>
+                </div>
             <?endwhile;?>
-        </table>
+        </div>
     </div>
     <div id="navi">
             <?=$paginator?>

@@ -58,7 +58,10 @@ class X3_MongoConnection extends X3_Component {
         try{
             $connection = new Mongo($server);        
         }catch(Exception $e){
-            throw new X3_Exception($e->getMessage(),500);
+            if(X3_DEBUG)
+                throw new X3_Exception($e->getMessage(),500);
+            else
+                @mail('i@soulman.kz','eksk.kz Mongo failed to start!',$e->getMessage());
         }
         if($connection===false){
             throw new X3_Exception("Could not connect to mongo server", 500);

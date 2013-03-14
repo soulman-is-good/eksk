@@ -3,13 +3,17 @@
         <div class="buttons">
             <div class="wrapper inline-block"><a class="button inline-block" id="send_message" href="#message/send.html"><?=X3::translate('Написать сообщение')?></a></div>
         </div>
-        <h1><?=$theme->title?></h1>
+        <h1 title="<?=$theme->title?>"><?=X3_String::create($theme->title)->carefullCut(35)?></h1>
     </div>
     <div class="content">
         <div class="admin-list">
             <?foreach($models as $model):
                 $user = $users[$model->user_id];
                 $m = $model->user_to>0?$users[$model->user_to]:false;
+                $parent = false;
+                if($model->parent_id>0){
+                    $parent = Forum_Message::getByPk($model->parent_id);
+                }
                 $files = X3::db()->query("SELECT f.id id, f.name name FROM data_uploads f INNER JOIN forum_uploads mu ON mu.file_id=f.id WHERE mu.message_id = ".$model->id);
                 ?>
                 <div class="message_block" pid="<?=$model->id?>">
@@ -30,6 +34,9 @@
                                     <div class="clear">&nbsp;</div>
                                 </div>
                             <?endif;?>
+                            <?if($parent):?>
+                            <div class="quote"><i>&#147;</i><span><?=nl2br(X3_String::create($parent->content)->carefullCut(512))?></span></div>
+                            <?endif;?>
                                 <p>
                                 <?=nl2br($model->content);?>
                                 </p>
@@ -43,7 +50,7 @@
                                 <div class="del"><a href="/forum/delete/message/<?=$model->id?>.html" class="map_link remove"><img src="/images/cross.png" alt="<?=X3::translate('Удалить')?>" title="<?=X3::translate('Удалить')?>" /></a></div>
                                 <?endif;?>
                                 <?if($model->user_id != X3::user()->id):?>
-                                <br/><a data-uid="<?=$model->user_id?>" href="#" class="answer button">Ответить</a>
+                                <br/><a data-uid="<?=$model->user_id?>" data-pid="<?=$model->id?>" href="#" class="answer button">Ответить</a>
                                 <?endif;?>
                         </div>
                         </div>
@@ -76,6 +83,7 @@
                 <td class="field">
                     <textarea name="Message[content]" style="width:623px"></textarea>
                     <input type="hidden" value="<?=$theme->id?>" name="Message[forum_id]" id="forum_id" />
+                    <input type="hidden" value="" name="Message[parent_id]" id="parent_id" />
                     <input type="hidden" value="" name="files" id="files" />
                 </td>
             </tr>
@@ -129,6 +137,7 @@
             if($(this).data('uid')>0){
                 eform.find('#Message_user_to').val($(this).data('uid'));
                 eform.find('#user_to').html(users[$(this).data('uid')]['title']);
+                eform.find('#parent_id').val($(this).data('pid'));
                 eform.find('#user_info').css('display','table-row');
             }else{
                 eform.find('#Message_user_to').val('');

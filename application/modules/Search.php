@@ -26,6 +26,9 @@ class Search extends X3_Module{
         );
     }
     
+    /**
+     * @throws X3_Exception
+     */
     public function actionIndex() {
         if(isset($_POST['q'])){
             X3::user()->SearchPage = 0;
@@ -34,57 +37,70 @@ class Search extends X3_Module{
         if(($search = strip_tags(X3::user()->search['word']))!='' && ($search = trim($search))!='' && mb_strlen($search,'UTF-8')>1){
             $search = preg_replace("/[\s]+/"," ",$search);
             $search = preg_replace("/<>/","",$search);
-            //keywords logic
-            $query = "status";
-            $type = X3::user()->search['type'];
-            $title = "title" . (X3::user()->lang!='ru'?"_".X3::user()->lang:'');
-            $text = "text" . (X3::user()->lang!='ru'?"_".X3::user()->lang:'');
-            $attrs = array(
-                'user'=>array(
-                    'table'=>'data_user',
-                    'default'=>"status>0 AND role='user'",
-                    'fields'=>array("name","surname"),
-                    'select'=>array("`id` AS link","CONCAT(name,' ',surname) AS title","NULL AS text","'user' AS `type`"),
-                    'link'=>"/user/[LINK].html"
-                ),
-                'message'=>array(
-                    'table'=>'data_message m INNER JOIN data_user u ON u.id=m.user_to',
-                    'default'=>"m.user_from=".X3::user()->id,
-                    'fields'=>array("content"),
-                    'select'=>array("u.id AS link","IF(u.role='admin';CONCAT('Администратор#',u.id);CONCAT(u.name,' ',u.surname)) AS title","content AS text","'message' AS `type`"),
-                    'link'=>"/message/with/[LINK].html"
-                ),
-            );
-            $words = explode(' ',X3::db()->validateSQL($search));
-            $t = "([ATTR] LIKE '%".implode("%' OR [ATTR] LIKE '%",$words)."%')";
-            $o = array();
-            $qs = array();
-            $i=0;
-            $ats = $attrs[$type];
-            $table = $ats['table'];
-            if(!empty($ats['fields'])){
-                $q = $ats['default'];
-                foreach($ats['fields'] as $attr){
-                    $o[]= str_replace("[ATTR]","$attr",$t);
-                }
-                $q .= " AND (" . implode(' OR ',$o) . ")";
-                $qs[0][$i] = "(SELECT COUNT(0) AS c$i FROM $table WHERE $q)";
-                $qs[1][$i] = "(SELECT ".implode(',',$ats['select'])." FROM $table WHERE $q)";
-                $i++;
+            $type = strtolower(X3::user()->search['type']);
+            $class = false;
+            $query = false;
+            switch($type){
+                case 'user':
+                    $class = 'User';
+                    $query = User::search($search,'user');
+                break;
+                case 'notify':
+                    $class = 'Warning';
+                    $query = Warning::search($search);
+                break;
+                case 'ksk':
+                    if(X3::user()->isAdmin()){
+                        $class = 'User';
+                        $query = User::search($search,'ksk');
+                    }
+                break;
+                case 'message':
+                    $class = 'Message';
+                    $query = Message::search($search);
+                break;
+                case 'themes':
+                    $class = 'Forum';
+                    $query = Forum::search($search);
+                break;
+                case 'reports':
+                    $class = 'User_Report';
+                    $query = User_Report::search($search);
+                break;
+                case 'questions':
+                    $class = 'Vote';
+                    $query = Vote::search($search);
+                break;
             }
-            $cnt = X3::db()->fetch("SELECT (".implode(" + ",$qs[0]).") AS cnt");
-            $cnt = $cnt!==null?(int)$cnt['cnt']:0;
+            if(!$class || !$query)
+                throw new X3_Exception("Illegal search type",403);
+            $tname = X3_Module_Table::getInstance($class)->tableName;
+            $qC = new X3_MySQL_Query($tname);
+            $queryNum = $query;
+            $cnt = X3::db()->count($qC->formQuery($queryNum)->buildSQL());
             $pagiator = new Paginator('Search', $cnt);
-            $query = implode(" UNION ",$qs[1]) . " LIMIT $pagiator->offset, $pagiator->limit";
-            $models = X3::db()->query($query);
-            if(!is_resource($models)){
-                throw new X3_Exception($query . "<br/>\n" . X3::db()->getErrors(),500);
-            }
-            $this->template->render('results',array('models'=>$models,'paginator'=>$pagiator,'data'=>$ats,'cnt'=>$cnt));
+            $query['@limit'] = $pagiator->limit;
+            $query['@offset'] = $pagiator->offset;
+//            echo $qC->formQuery($query)->buildSQL();exit;
+            $models = X3::db()->query($qC->formQuery($query)->buildSQL());
+            if(!is_resource($models))
+                throw new X3_Exception("Database error while quering".X3::db()->lastQuery().".<br/> ".X3::db()->getErrors(),500);
+            $this->template->render("results_$type",array('models'=>$models,'paginator'=>$pagiator,'cnt'=>$cnt));
         }else{
             $this->template->render('results',array('models'=>null,'paginator'=>'','data'=>'','cnt'=>0));
         }
     }    
+    
+    public static function highlight($str) {
+        $word = X3::user()->search['word'];
+        $len = mb_strlen($word,X3::app()->encoding);
+        $strlen = mb_strlen($str,X3::app()->encoding);
+        $ic = 256 - $len;
+        $res = "";
+        $k = mb_stripos($str,$word,0,X3::app()->encoding);
+        $res = ($k<$ic?"":"...") . mb_substr($str, $k - $ic,$len+$ic,X3::app()->encoding) . ($len+$ic>$strlen?"":"...");
+        $res = str_ireplace("$word","<b style='color:#933'>$word</b>",$res);
+    }
 }
 
 ?>

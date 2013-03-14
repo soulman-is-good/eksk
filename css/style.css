@@ -712,6 +712,7 @@ User Settings
 }
 .forum.show .message_block div.inside_block {
     height:auto;
+    padding:20px 0;
 }
 
 .field h3{
@@ -756,6 +757,26 @@ Administrators list
     width:100px;
     padding-right:10px;
 }
+.forum .eksk-wnd .quote {
+    background: #E9F3F7;
+    padding: 20px;
+    margin-right: 30px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    position: relative;
+}
+.forum .eksk-wnd .quote i {
+    position: absolute;
+    font: 72px Arial, serif;
+    top: -10px;
+    left: 0;
+    color: white;
+    z-index: 0;    
+}
+.forum .eksk-wnd .quote  span {
+    position:relative;
+    z-index:1;
+}
 .forum .eksk-wnd .content .admin-list td.name{
     width:150px;
 }
@@ -768,7 +789,7 @@ Administrators list
 .vote td.label, .warning td.label {
     width:80px;
 }
-.vote textarea, .warning textarea {
+.vote textarea, .warning textarea, .create textarea {
     width:365px;
     border:1px solid #9f9f9f;
     padding:5px;

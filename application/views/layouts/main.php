@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="robots" content="noindex, nofollow" />
 <meta property="og:image" content="<?=X3::app()->baseUrl?>/images/logo.png" />
 <link href="/css/style.css" type="text/css" rel="stylesheet" />
 <title><?=X3::app()->name?></title>
@@ -10,6 +11,8 @@
 <link href="http://code.jquery.com/ui/1.10.0/themes/cupertino/jquery-ui.css" type="text/css" rel="stylesheet" />
 <script type="text/javascript" src="http://code.jquery.com/ui/1.10.0/jquery-ui.js"></script>
 <?endif;?>
+<link href="/js/tipTip.css" type="text/css" rel="stylesheet" />
+<script type="text/javascript" src="/js/jquery.tipTip.js"></script>
 <script type="text/javascript" src="/js/jquery.fcselect.js"></script>
 <script type="text/javascript" src="/js/jquery.fctabs.js"></script>
 <script type="text/javascript" src="/js/jquery.maskedinput.min.js"></script>
@@ -142,24 +145,22 @@ String.prototype.repeat = function( num ){return new Array( num + 1 ).join( this
         var message_timeout = null;
         var message_count = function(){
             $.get('/message/count.html',function(m){
-                var msg = parseInt(m.msg);
-                var notify = parseInt(m.notify);
-                $('.menu_item.message b').remove();
-                $('.menu_item.notify b').remove();
-                if(!isNaN(msg) && msg>0){
-                    $('.menu_item.message').append('<b>'+msg+'</b>');
-                    message_timeout = setTimeout(function(){message_count()}, 3000);
-                }
-                if(!isNaN(notify) && notify>0){
-                    $('.menu_item.notify').append('<b>'+notify+'</b>');
-                    if(!message_timeout)
-                        message_timeout = setTimeout(function(){message_count()}, 3000);
+                if(typeof m == 'object'){
+                    for(i in m){
+                        var cnt = parseInt(m[i]);
+                        $('.menu_item.'+i+' b').remove();
+                        if(!isNaN(cnt) && cnt>0){
+                            $('.menu_item.'+i).append('<b>'+cnt+'</b>');
+                            message_timeout = setTimeout(function(){message_count()}, 300000);
+                        }
+                    }
                 }
             },'json')
         }
         $(function(){
             $('.eksk-wnd:not(.noresize)').css('min-height',$('.body').height()+'px');
             message_count();
+            $('h1[title]').tipTip();
         })
     </script>
 </body>

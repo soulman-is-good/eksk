@@ -4,27 +4,25 @@
  *
  * @author Soul_man
  */
-class Vote extends X3_Module_Table {
+class User_Report extends X3_Module_Table {
 
     public $encoding = 'UTF-8';
     /*
      * uncomment if want new model functional
      */
-    public $tableName = 'data_vote';
+    public $tableName = 'user_report';
 
     public $_fields = array(
         'id'=>array('integer[10]','unsigned','primary','auto_increment'),
+        'file_id'=>array('string[128]','index','ref'=>array('Uploads','id','default'=>"name")),
         'user_id'=>array('integer[10]','unsigned','index','ref'=>array('User','id','default'=>"name")),
         'city_id' => array('integer[10]', 'unsigned', 'default'=>'NULL', 'index', 'ref'=>array('City','id','default'=>'title','null'=>'Все','query'=>array())),
         'region_id' => array('integer[10]', 'unsigned','default'=>'NULL', 'index', 'ref'=>array('City_Region','id','default'=>'title')),
         'house'=>array('string[10]','default'=>"NULL"),
         'flat'=>array('string[10]','default'=>"NULL"),
         'title'=>array('content[255]'),
-        'answer'=>array('content','default'=>'||'),
         'status'=>array('boolean','default'=>'0'),
-        'type'=>array('enum["*","admin","ksk","user"]','default'=>"*"),
         'created_at'=>array('datetime'),
-        'end_at'=>array('datetime')
     );
     
     public function __construct($action = null) {
@@ -39,13 +37,13 @@ class Vote extends X3_Module_Table {
     public function fieldNames() {
         return array(
             'user_id'=>'Автор',
+            'file_id'=>X3::translate('Отчет'),
             'city_id'=>X3::translate('Регион'),
             'region_id'=>X3::translate('Улица'),
             'house' => X3::translate('№ дома'),
             'flat' => X3::translate('№ квартиры'),
-            'title'=>X3::translate('Вопрос'),
-            'type'=>X3::translate('Кому'),
-            'end_at'=>X3::translate('Дата окончания'),
+            'title'=>X3::translate('Заголовок'),
+            'created_at'=>X3::translate('Дата отчета'),
             'status'=>'Пуликован',
         );
     }
@@ -53,9 +51,9 @@ class Vote extends X3_Module_Table {
     public function filter() {
         return array(
             'allow' => array(
-                'user' => array('index', 'show', 'send','with','read','count'),
-                'ksk' => array('index', 'show', 'send','with','read','count','create','flats','delete'),
-                'admin' => array('index', 'show', 'send', 'file','with','read','count','create','flats','delete')
+                'user' => array('index', 'get','send','with','read','count'),
+                'ksk' => array('index', 'get','send','with','read','count','create','flats','delete'),
+                'admin' => array('index', 'get','send', 'file','with','read','count','create','flats','delete')
             ),
             'deny' => array(
                 '*' => array('*'),
@@ -64,11 +62,12 @@ class Vote extends X3_Module_Table {
         );
     }
     
-    public static function isMyVote($id) {
-        $uid = X3::user()->id;
+    
+    public static function isMyReport($id) {
         if(X3::user()->isAdmin())
             return true;
-        $q = "SELECT f.id FROM data_vote f INNER JOIN data_user u ON u.id=f.user_id LEFT JOIN user_address a ON a.user_id=$uid WHERE 
+        $uid = X3::user()->id;
+        $q = "SELECT f.id FROM user_report f INNER JOIN data_user u ON u.id=f.user_id LEFT JOIN user_address a ON a.user_id=$uid WHERE 
             f.id='$id' AND ((
                     f.status AND 
                     u.role='admin' AND 
@@ -90,45 +89,32 @@ class Vote extends X3_Module_Table {
                     (f.city_id IS NULL AND a.city_id IN (SELECT city_id FROM user_address WHERE user_id=u.id AND status=1) AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1))
                  )
                  )) LIMIT 1";
-        return X3::db()->call("isMyVote",$id,$uid) > 0;
-    }
-    
-    public static function hasVoted($id){
-        $uid = X3::user()->id;
-        $vote = (object)X3::db()->fetch("SELECT * FROM data_vote WHERE id=$id");
-        $type = $vote->type=='*'?'1':"f.role='".strtolower($vote->type)."'";
-        if($vote->flat>0)
-            $uq = X3::db()->query("SELECT user_address.id FROM user_address INNER JOIN data_user f ON f.id=user_address.user_id WHERE city_id=$vote->city_id AND region_id=$vote->region_id AND house=$vote->house AND flat=$vote->flat AND $type");
-        elseif($vote->flat == 0 && $vote->house != null)
-            $uq = X3::db()->query("SELECT user_address.id FROM user_address INNER JOIN data_user f ON f.id=user_address.user_id WHERE city_id=$vote->city_id AND region_id=$vote->region_id AND house=$vote->house AND $type");
-        elseif($vote->flat == 0 && $vote->house == null && $vote->region_id>0)
-            $uq = X3::db()->query("SELECT user_address.id FROM user_address INNER JOIN data_user f ON f.id=user_address.user_id WHERE city_id=$vote->city_id AND region_id=$vote->region_id AND $type");
-        elseif($vote->flat == 0 && $vote->house == null && $vote->region_id == 0 && $vote->city_id>0)
-            $uq = X3::db()->query("SELECT user_address.id FROM user_address INNER JOIN data_user f ON f.id=user_address.user_id WHERE city_id=$vote->city_id AND $type");
-        else
-            $uq = X3::db()->query("SELECT user_address.id FROM user_address INNER JOIN data_user f ON f.id=user_address.user_id WHERE $type");
-        $uids = array(0);
-        while($u = mysql_fetch_assoc($uq))
-            $uids[] = $u['id'];
-        $uids = implode(', ', $uids);
-        return X3::db()->count("SELECT COUNT(id) FROM user_address a1, user_address a2 WHERE a1.user_id=$uid AND a2.id IN ($aids) AND a1.id IN ($aids) AND")>0;
+        return X3::db()->call("isMyReport",$id,$uid) > 0;
     }
 
 
     public function actionIndex() {
         $id = X3::user()->id;
-        $date = X3::db()->fetch("SELECT created_at FROM data_user WHERE id=$id");
-        $type = X3::user()->isUser()?"(f.type='user' OR f.type='*')":(X3::user()->isKsk()?"(f.type='ksk' OR f.type='*')":"");
+        $filter = "";
+        $from = "";
+        if(isset($_GET['by'])){
+            $filter = " AND f.user_id='".((int)$_GET['by'])."'";
+            $tmp = User::getByPk((int)$_GET['by']);
+            if($tmp){
+                $from = $tmp->getFullname();
+                unset($tmp);
+            }
+        }
         if(X3::user()->isAdmin()){
-            $q = "FROM data_vote f WHERE 1";
-        }else
-            $q = "FROM data_vote f INNER JOIN data_user u ON u.id=f.user_id LEFT JOIN user_address a ON a.user_id=$id WHERE
-                f.end_at>={$date['created_at']} AND (
+            $q = "FROM user_report f WHERE 1 $filter";
+        }else if(X3::user()->isKsk()){
+            $q = "FROM user_report f INNER JOIN data_user u ON u.id=f.user_id LEFT JOIN user_address a ON a.user_id=$id WHERE
                 (f.user_id=$id)
-                    OR
+                 ";
+        }else
+            $q = "FROM user_report f INNER JOIN data_user u ON u.id=f.user_id LEFT JOIN user_address a ON a.user_id=$id WHERE (
                 (
-                    f.status AND 
-                    $type AND u.role='admin' AND 
+                    f.status AND u.role='admin' AND 
                     (
                        (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
                        (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
@@ -138,62 +124,73 @@ class Vote extends X3_Module_Table {
                     )                
                 )
                     OR
-                (f.status AND $type AND u.role='ksk' AND
-                 (
+                (
+                    f.status AND u.role='ksk' AND
+                  (
                     (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
                     (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
                     (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR 
                     (f.city_id=a.city_id AND f.region_id IS NULL AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR
                     (f.city_id IS NULL AND a.city_id IN (SELECT city_id FROM user_address WHERE user_id=u.id AND status=1) AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1))
-                 )
-                 )
+                  )
                 )
+                )$filter
                  ";
         $count = X3::db()->count("SELECT f.id, MAX(f.created_at) latest ".$q." GROUP BY f.id");
         $paginator = new Paginator(__CLASS__, $count);
-        $q = "SELECT f.id, f.title, f.user_id, MAX(f.created_at) latest, f.status, f.type, f.city_id, f.region_id, f.house, f.flat " . $q . " GROUP BY f.id ORDER BY latest DESC LIMIT $paginator->offset,$paginator->limit";
+        $q = "SELECT f.id, f.title, f.user_id, MAX(f.created_at) latest, f.status, f.file_id, f.city_id, f.region_id, f.house, f.flat " . $q . " GROUP BY f.id ORDER BY latest DESC LIMIT $paginator->offset,$paginator->limit";
         $models = X3::db()->query($q);
-        $this->template->render('index', array('models' => $models, 'count' => $count, 'paginator' => $paginator));
-    }
-    
-    public function actionShow() {
-        if (isset($_GET['id']) && ($id = (int)$_GET['id']) > 0 && self::isMyVote($id)) {
-            $model = self::getByPk($id);
-            $this->template->render('show', array('model' => $model));
-        }else
-            throw new X3_404();
+        $this->template->render('@views:user:report.php', array('models' => $models, 'count' => $count, 'paginator' => $paginator,'from'=>$from));
     }
     
     public function actionCreate() {
         $id = X3::user()->id;
         if(isset($_GET['id']) && (int)$_GET['id']>0){
-            $model = Vote::getByPk((int)$_GET['id']);
+            $model = self::getByPk((int)$_GET['id']);
         }else{
-            $model = new Vote();
+            $model = new self();
         }
-        if(isset($_POST['Vote'])){
-            $data = $_POST['Vote'];
+        if(isset($_POST[__CLASS__])){
+            $data = $_POST[__CLASS__];
             $model->getTable()->acquire($data);
             if($model->getTable()->getIsNewRecord())
                 $model->user_id = $id;
-            if(!array_reduce($ans = explode('||',$model->answer), create_function('$v,$w', 'return $w && trim($v)!="";'),true)){
-                $model->addError('answer',X3::translate('Заполните все ответы'));
-            }elseif(count(array_unique($ans))<count($ans)){
-                $model->addError('answer',X3::translate('Ответы не должны повторяться'));
-            }
-            if(X3::user()->isKsk())
-                $model->type = 'user';
             if(isset($_POST['public']))
                 $model->status = '1';
-            if($model->save()){
+            if (isset($_FILES['file']) && $_FILES['file']['error']==0) {
+                $h = new Upload('file');
+                if($h->message!='')
+                    $model->addError('file_id',$h->message);
+                $orig = $h->filename;
+                $ext = strtolower(pathinfo($orig,PATHINFO_EXTENSION));
+                $allowed = SysSettings::getValue('Message_Uploads.Extensions', 'string', 'Разрешенные к загрузке расширения файлов', '[INVISIBLE]', 'jpg,png,gif,tif,rar,zip,doc,docx,xls,xlsx,txt,ppt,pptx');
+                $allowed = array_map(function($item){return trim($item);},explode(',',$allowed));
+                if(!in_array($ext,$allowed))
+                    $model->addError('file_id',$ext.". ".strtr(X3::translate('Возможно загрузить только файлы с расширениями: {files}'),array('{files}'=>implode(', ',$allowed)))); 
+                $filename = md5_file($h->tmp_name);
+                if ($h->saveAs($filename)) {
+                    if (NULL === Uploads::getByPk($filename)) {
+                        $mf = new Uploads();
+                        $mf->id = $filename;
+                        $mf->name = $orig;
+                        $mf->created_at = time();
+                        $mf->save();
+                    }
+                    $model->file_id = $filename;
+                } else {
+                    $model->addError('file_id',$h->message);
+                }
+            }elseif($model->getTable()->getIsNewRecord())
+                $model->file_id = NULL;
+            if(!$model->hasErrors() && $model->save()){
                 if(isset($_POST['public'])){
                     $this->notify($model);
                 }
-                $this->redirect('/vote/');
+                $this->redirect('/reports/');
             }
         }
         X3::app()->datapicker = true;
-        $this->template->render('form', array('model' => $model));
+        $this->template->render('@views:user:report_form.php', array('model' => $model));
     }
 
     public function actionCount() {
@@ -206,13 +203,13 @@ class Vote extends X3_Module_Table {
         if(!X3::user()->isAdmin()){
             $id = X3::user()->id;
             if(isset($_GET['id']) && (int)$_GET['id']>0){
-                Vote::delete(array('user_id'=>$id,'id'=>$_GET['id']));
+                self::delete(array('user_id'=>$id,'id'=>(int)$_GET['id']));
             }
         }else {
             if(isset($_GET['id']) && (int)$_GET['id']>0)
-                Vote::delete(array('id'=>$_GET['id']));
+                self::deleteByPk((int)$_GET['id']);
         }
-        $this->redirect('/vote/');
+        $this->redirect('/reports/');
     }
 
 
@@ -220,7 +217,7 @@ class Vote extends X3_Module_Table {
         $id = (int)$_GET['id'];
         $uid = X3::user()->id;
         $answer = (int)$_GET['val'];
-        $vote = Vote::getByPk($id);
+        $vote = self::getByPk($id);
         if($vote == NULL){
             if(IS_AJAX)
                 exit;
@@ -313,7 +310,7 @@ class Vote extends X3_Module_Table {
     public function actionSend() {
         if(!X3::user()->isAdmin()){
             if (isset($_GET['id']) && ($id = (int)$_GET['id'])>0) {
-                $a = Vote::update(array('status'=>'1'),array('user_id'=>X3::user()->id,'id'=>$id));
+                $a = self::update(array('status'=>'1'),array('user_id'=>X3::user()->id,'id'=>$id));
                 $this->notify(self::getByPk($id));
                 if(IS_AJAX)
                     exit;
@@ -321,12 +318,45 @@ class Vote extends X3_Module_Table {
             }
         }else
             if (isset($_GET['id']) && ($id = (int)$_GET['id'])>0) {
-                $a = Vote::update(array('status'=>'1'),array('id'=>$id));
+                $a = self::update(array('status'=>'1'),array('id'=>$id));
                 $this->notify(self::getByPk($id));
                 if(IS_AJAX)
                     exit;
                 $this->redirect($_SERVER['HTTP_REFERER']);
             }
+        throw new X3_404();
+    }
+    
+    public function actionGet() {
+        $id = $_GET['id'];
+        $rep = self::getByPk($id);
+        if($rep == null || !self::isMyReport($id))
+            throw new X3_404();
+        $model = Uploads::getByPk($rep->file_id);
+        if($model == null) 
+            throw new X3_404();
+        $file = X3::app()->basePath . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $model->id;
+        if (file_exists($file)) {
+            if(NULL == Report_Stat::get(array('report_id'=>$rep->id,'user_id'=>X3::user()->id),1)){
+                $n = new Report_Stat();
+                $n->report_id = $rep->id;
+                $n->user_id = X3::user()->id;
+                $n->save();
+            }
+            
+            header('Content-Description: File Transfer');
+            header('Content-Type: application/octet-stream');
+            header('Content-Disposition: attachment; filename='.$model->name);
+            header('Content-Transfer-Encoding: binary');
+            header('Expires: 0');
+            header('Cache-Control: must-revalidate');
+            header('Pragma: public');
+            header('Content-Length: ' . filesize($file));
+            ob_clean();
+            flush();
+            readfile($file);
+            exit;
+        }
         throw new X3_404();
     }
     
@@ -352,9 +382,9 @@ class Vote extends X3_Module_Table {
     }
     
     public function notify($model) {
-        $role = $model->type == '*'?'':"role='$model->type' AND ";
         $id = X3::user()->id;
         if(X3::user()->isKsk()){
+            $role = "role='user' AND ";
             $b = X3::db()->query("SELECT city_id, region_id, house FROM user_address WHERE user_id='$model->user_id' AND status=1");
             $o = array();
             while($bb = mysql_fetch_assoc($b)){
@@ -379,6 +409,7 @@ class Vote extends X3_Module_Table {
             }else
                 $c = "a1.city_id IN ({$o['city_id']}) AND a1.region_id IN ({$o['region_id']}) AND a1.house IN ({$o['house']})";
         }else{
+            $role = "";
             if($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat != null){
                 $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house' AND a1.flat='$model->flat'";
             }
@@ -398,8 +429,8 @@ class Vote extends X3_Module_Table {
             GROUP BY u.id
             ");
         while($user = mysql_fetch_assoc($users)){
-    //                        var_dump($user);
-            Notify::sendMail('newVote', array('text'=>$model->title,'name'=>$user['username'],'from'=>X3::user()->fullname), $user['email']);
+        //                        var_dump($user);
+            Notify::sendMail('newReport', array('text'=>$model->title,'name'=>$user['username'],'from'=>X3::user()->fullname,'link'=>X3::app()->baseUrl.'/reports/'), $user['email']);
         }
     }
 
@@ -412,66 +443,56 @@ class Vote extends X3_Module_Table {
             $this->created_at = strtotime($this->created_at);
         }elseif($this->created_at == 0)
             $this->created_at = time();
-        if(strpos($this->end_at,'.')!==false){
-            $time = strtotime($this->end_at);
-            $this->end_at = mktime(23,59,59,date('n',$time), date('j',$time), date('Y',$time));
-        }elseif($this->end_at == 0)
-            $this->end_at = time() + 84600;
-        $today = mktime(0,0,0,date('n'),date('j'),date('Y'));
-        if($this->end_at < $today)
-            $this->addError('end_at',X3::translate("Нельзя создать опрос с прошедшей датой"));
     }
     
     public function onDelete($tables, $condition) {
         if (strpos($tables, $this->tableName) !== false) {
             $model = $this->table->select('*')->where($condition)->asObject(true);
-            Warning_Stat::delete(array('warning_id'=>$model->id));
+            X3::db()->query("DELETE FROM user_report_stat WHERE report_id='$model->id'");
         }
         parent::onDelete($tables, $condition);
     }
     
     public static function search($word) {
         $id = X3::user()->id;
-        $query = array();
-        $date = X3::db()->fetch("SELECT created_at FROM data_user WHERE id=$id");
-        $type = X3::user()->isUser()?"(f.type='user' OR f.type='*')":(X3::user()->isKsk()?"(f.type='ksk' OR f.type='*')":"(f.type='admin' OR f.type='*')");
-        if(X3::user()->isUser() || 1){
-            $cond = array();
-            $query['@select']='f.*';
-            $query['@group']='f.id';
-            $query['@from']=array('data_vote'=>'f');
-            $query['@join']="INNER JOIN data_user u ON u.id=f.user_id LEFT JOIN user_address a ON a.user_id=$id";
-            $cond['id']=array(
-                '@@'=>"f.title LIKE '%$word%' AND f.end_at>={$date['created_at']} AND (
-            (f.user_id=$id)
-                OR
-            (f.status AND 
-                $type AND u.role='admin' AND 
-                (
-                   (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
-                   (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
-                   (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL) OR 
-                   (f.city_id=a.city_id AND f.region_id IS NULL) OR
-                   (f.city_id IS NULL)
-                )
-            )
-                OR
-            (f.status AND $type AND u.role='ksk' AND
-             (
-                (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
-                (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
-                (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR 
-                (f.city_id=a.city_id AND f.region_id IS NULL AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR
-                (f.city_id IS NULL AND a.city_id IN (SELECT city_id FROM user_address aa WHERE aa.user_id=u.id AND aa.status=1) AND a.region_id IN (SELECT region_id FROM user_address aa WHERE aa.user_id=u.id AND aa.status=1) AND a.house IN (SELECT house FROM user_address aa WHERE aa.user_id=u.id AND aa.status=1))
-             )
-             )
-            )"
-            );
-            $query['@condition'] = $cond;
-        }elseif(X3::user()->isKsk()){
-            
+        $scope = array(
+            '@select'=>'f.title, f.id, u.name, u.surname, u.kskname, u.ksksurname, u.image',
+            '@from'=>array('user_report'=>'f'),
+        );
+        if(X3::user()->isAdmin()){
+            $scope['@join'] = "INNER JOIN data_user u ON u.id=f.user_id";
+            $q = "f.title LIKE '%$word%'";
+        }else{
+            $scope['@join'] = "INNER JOIN data_forum f ON f.id=fm.forum_id INNER JOIN data_user u ON u.id=f.user_id  INNER JOIN data_user um ON um.id=fm.user_id LEFT JOIN user_address a ON a.user_id=$id";
+            $q = "(f.title LIKE '%$word%') AND (
+                    (f.user_id=$id)
+                    OR
+                    (
+                        f.status AND 
+                        u.role='admin' AND 
+                        (
+                           (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                           (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                           (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL) OR 
+                           (f.city_id=a.city_id AND f.region_id IS NULL) OR
+                           (f.city_id IS NULL)
+                        )                
+                    )
+                    OR
+                    (f.status AND u.role='ksk' AND
+                     (
+                        (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                        (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                        (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR 
+                        (f.city_id=a.city_id AND f.region_id IS NULL AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR
+                        (f.city_id IS NULL AND a.city_id IN (SELECT city_id FROM user_address WHERE user_id=u.id AND status=1) AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1))
+                     )
+                    )
+                 )
+                 ";
         }
-        return $query;
+        $scope['@condition'] = array('id'=>array('@@'=>$q));
+        return $scope;
     }
 }
 ?>

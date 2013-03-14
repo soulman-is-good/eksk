@@ -381,6 +381,10 @@ return array(false);//TODO: not tested!!!
         else
             return $class->getTable()->formQuery($params)->asObject($single);
     }
+    
+    public function hasErrors() {
+        return $this->getTable()->hasErrors();
+    }
 
     /**
      * Getters setters and other routine

@@ -78,7 +78,30 @@ WHERE a2.user_id=".X3::user()->id." AND a1.user_id<>a2.user_id AND `a2`.`city_id
             $query = array(array('user_from' => $id,'user_to'=>X3::user()->id),array('user_to' => $id,'user_from'=>X3::user()->id));
             $query = array('@condition' => $query, '@order' => 'created_at DESC');
             $count = self::num_rows($query);
-            $paginator = new Paginator(__CLASS__, $count);
+            //'Search the page' logic
+            if(X3::user()->search!=null && X3::user()->search['type'] == 'message' && strpos($_SERVER['HTTP_REFERER'],'/search')){
+                $paginator = new Paginator(__CLASS__, $count);
+                $queryZ = $query;
+                $queryZ['@select'] = 'content';
+                $q = new X3_MySQL_Query('data_message');
+                $a = X3::db()->query($q->formQuery($queryZ)->buildSQL());
+                if(!is_resource($a))
+                    throw new X3_Exception(X3::db()->getErrors().X3::db()->lastQuery());
+                $i = 0;
+                $p = 0;
+                $f=false;
+                while(list($data) = mysql_fetch_row($a)){
+                    $p = (int)floor($i++/$paginator->limit);
+                    if(($f=strpos($data,X3::user()->search['word']))!==false)
+                        break;
+                }
+                if($f!==false){
+                    X3::user()->MessagePage = $p;
+                    $paginator->page = $p;
+                    $paginator->offset = $p * $paginator->limit;
+                }
+            }else
+                $paginator = new Paginator(__CLASS__, $count);
             $query['@limit'] = $paginator->limit;
             $query['@offset'] = $paginator->offset;
             $models = self::get($query);
@@ -97,7 +120,7 @@ WHERE a2.user_id=".X3::user()->id." AND a1.user_id<>a2.user_id AND `a2`.`city_id
     }
     
     public function actionCount() {
-        if(!IS_AJAX) throw new X3_404();
+        //if(!IS_AJAX) throw new X3_404();
         $id = X3::user()->id;
         $msg = Message::num_rows(array('status'=>'0','user_to'=>$id));        
         $date = X3::db()->fetch("SELECT created_at FROM data_user WHERE id=$id");
@@ -125,8 +148,71 @@ WHERE a2.user_id=".X3::user()->id." AND a1.user_id<>a2.user_id AND `a2`.`city_id
              )
             ) AND f.id NOT IN (SELECT warning_id FROM warning_stat WHERE user_id=$id) GROUP BY f.id
              ";
-        $count = X3::db()->count($q);
-        echo json_encode(array('msg'=>(int)$msg,'notify'=>(int)$count));
+        $ncount = X3::db()->count($q);
+        if(X3::user()->isAdmin())
+            $G = "f.id IN (SELECT forum_id FROM forum_users fu WHERE user_id=$id AND fu.updated_at<f.updated_at) OR f.id NOT IN (SELECT forum_id FROM forum_users fu WHERE user_id=$id)";
+        else
+            $G = "
+                (f.id NOT IN (SELECT forum_id FROM forum_users fu WHERE user_id=$id AND fu.updated_at>f.updated_at)) AND (
+                f.status AND f.user_id<>$id AND (
+                (
+                    u.role='admin' AND 
+                    (
+                       (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                       (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                       (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL) OR 
+                       (f.city_id=a.city_id AND f.region_id IS NULL) OR
+                       (f.city_id IS NULL)
+                    )                
+                )
+                    OR
+                (
+                    u.role='ksk' AND
+                    (
+                        (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                        (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                        (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR 
+                        (f.city_id=a.city_id AND f.region_id IS NULL AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR
+                        (f.city_id IS NULL AND a.city_id IN (SELECT city_id FROM user_address WHERE user_id=u.id AND status=1) AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1))
+                    )
+                )
+                )
+            )";
+        $q = "FROM data_forum f INNER JOIN data_user u ON u.id=f.user_id LEFT JOIN user_address a ON a.user_id=$id WHERE $G";
+        //echo(htmlspecialchars("SELECT f.id, MAX(f.created_at) latest ".$q. " GROUP BY f.id"));exit;
+        $fcount = X3::db()->count("SELECT f.id ".$q. " GROUP BY f.id");
+        if(X3::user()->isAdmin())
+            $q = "SELECT f.id FROM user_report f WHERE f.id NOT IN (SELECT report_id FROM user_report_stat rs WHERE rs.user_id=$id)";
+        elseif(X3::user()->isUser())
+            $q = "SELECT f.id FROM user_report f INNER JOIN data_user u ON u.id=f.user_id LEFT JOIN user_address a ON a.user_id=$id WHERE f.id NOT IN (SELECT report_id FROM user_report_stat rs WHERE rs.user_id=$id)
+                AND f.status AND (
+                  (
+                    u.role='admin' AND 
+                    (
+                       (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                       (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                       (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL) OR 
+                       (f.city_id=a.city_id AND f.region_id IS NULL) OR
+                       (f.city_id IS NULL)
+                    )                
+                  )
+                    OR
+                  (
+                    u.role='ksk' AND
+                    (
+                        (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                        (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                        (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR 
+                        (f.city_id=a.city_id AND f.region_id IS NULL AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR
+                        (f.city_id IS NULL AND a.city_id IN (SELECT city_id FROM user_address WHERE user_id=u.id AND status=1) AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1))
+                    )
+                  )
+                ) GROUP BY f.id";
+        else
+            $q = "SELECT f.id FROM user_report f WHERE 0";
+        $rcount = X3::db()->count($q);
+//        echo json_encode(array('message'=>(int)$msg,'notify'=>(int)$ncount,'themes'=>(int)0,'stats'=>(int)$rcount));
+        echo json_encode(array('message'=>(int)$msg,'notify'=>(int)$ncount,'themes'=>(int)$fcount,'stats'=>(int)$rcount));
         exit;
     }
     
@@ -257,6 +343,25 @@ WHERE a2.user_id=".X3::user()->id." AND a1.user_id<>a2.user_id AND `a2`.`city_id
             }
         }
         parent::onDelete($tables, $condition);
+    }
+    
+    public static function search($word) {
+        $id = X3::user()->id;
+        $scope = array(
+            '@select'=>'m.content,u.id,u.name,u.surname,u.kskname,u.ksksurname,u.image',
+            '@from'=>array('data_message'=>'m', 'data_user'=>'u'),
+            '@condition'=>array(
+                'm.hidden_id'=>array('<>'=>$id),
+                'm.content'=>array('LIKE'=>"'%$word%'"),
+                array(
+                    array('m.user_from'=>$id,'m.user_to'=>array(' ='=>'u.id')),
+                    array('m.user_to'=>$id,'m.user_from'=>array(' ='=>'u.id')),
+                )
+            ),//((m.user_from=$id AND m.user_to=u.id) OR (m.user_to=$id AND m.user_from=u.id)) AND m.hidden_id<>$id
+            '@order'=>'m.created_at DESC',
+            '@group'=>'u.id'
+        );
+        return $scope;
     }
 }
 

@@ -325,7 +325,7 @@ class X3_MySQL_Query extends X3_MySQL_Command implements X3_Interface_Query {
             $this->select("{$table}.*");
         }
         $key = strtolower(key($params));
-        if (!in_array($key, array('@join', '@condition', '@limit', '@order', '@offset','@select'))) {
+        if (!in_array($key, array('@join', '@condition', '@limit', '@order', '@offset','@select','@from','@group'))) {
             $tmp = $params;
             $params = array();
             $params['@condition'] = $tmp;
@@ -357,6 +357,12 @@ class X3_MySQL_Query extends X3_MySQL_Command implements X3_Interface_Query {
                         $this->order('`' . implode('`, `', $array) . '`');
                     else
                         $this->order($array);
+                    break;
+                case "@from":
+                    if (is_array($array))
+                        $this->tables = $array;
+                    else
+                        $this->tables = $array;
                     break;
             }
         }

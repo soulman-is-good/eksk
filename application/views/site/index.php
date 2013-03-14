@@ -31,6 +31,9 @@ $addreses = User_Address::get(array('user_id'=>$user->id));
                     <div class="full" style="width:<?=User_Rank::add($user->id)?>%"></div>
                 </div>
             </div>
+            <?if(!X3::user()->isKsk()):?>
+            <br/><a style="font-size:12px;" href="/reports/<?=$user->id?>.html">Отчеты (<?=X3::db()->count("SELECT id FROM user_report WHERE user_id='$user->id'")?>)</a>
+            <?endif;?>
             <?endif;?>
         </div>
         <div class="main_info <?=$user->role?>-profile">

@@ -70,6 +70,20 @@ class X3_MySQLConnection extends X3_Component {
         //$this->sql = mysql_real_escape_string($this->sql); // strange it is not working
         //return $this->sql;
     }
+    
+    public function call($function) {
+        $args = func_get_args();
+        array_shift($args);
+        if(!empty($args))
+            $args = implode(',',array_map(create_function('$item', 'return "\'".trim($item,"\'")."\'";'), $args));
+        else
+            $args = '';
+        $sql = "SELECT $function($args) AS `fn`";
+        $res = $this->fetch($sql);
+        if(!$res)
+            throw new X3_Exception($this->getErrors(),500);
+        return $res['fn'];
+    }
 
     public function fetch($sql = null) {
         $res = $this->query($sql);

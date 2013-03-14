@@ -56,7 +56,7 @@ $form = new Form($model);
                     <label><?=X3::translate('Сообщение')?></label>
                 </td>
                 <td class="field">
-                    <div class="wrapperEx inline-block"><?=X3_Html::form_tag('textarea', array('name'=>'Message[content]','%content'=>$message->content,'class'=>'content'))?></div>
+                    <div class="wrapperEx inline-block"><?=X3_Html::form_tag('textarea', array('name'=>'Message[content]','%content'=>$message->content,'class'=>'content','rows'=>'7'))?></div>
                 </td>
                 <td class="error"></td>
             </tr>

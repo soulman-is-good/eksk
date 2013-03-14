@@ -102,13 +102,18 @@ class X3_MySQL_Command extends X3_Component {
 
     public function buildSQL(){
         $tables = '';
-        if(is_array($this->tables))
-            $tables = '`'.implode('`, `', $this->tables).'`';
-        else 
+        if(is_array($this->tables)){
+            //$tables = '`'.implode('`, `', $this->tables).'`';
+            $tables = array();
+            foreach($this->tables as $table=>$as){
+                if(is_numeric($table))
+                    $tables[] = "`$as`";
+                else
+                    $tables[] = "`$table` AS `$as`";
+            }
+            $tables = implode(', ',$tables);
+        }else 
             $tables = "`$this->tables`";
-        foreach($this->as as $table=>$as){
-            $tables = str_replace("`$table`", "`$table` AS $as", $this->tables);
-        }
         if(strpos($this->action, '/')!==false){
             $actions = explode('/',$this->action);
             $this->action = array_shift($actions);

@@ -11,6 +11,7 @@ class Forum_Message extends X3_Module_Table {
     public $tableName = 'forum_message';
     public $_fields = array(
         'id' => array('integer[10]', 'unsigned', 'primary', 'auto_increment'),
+        'parent_id' => array('integer[10]', 'unsigned','default'=>'NULL', 'index', 'ref' => array('Forum_Message', 'id', 'default' => 'content')),
         'forum_id' => array('integer[10]', 'unsigned', 'index', 'ref' => array('Forum', 'id', 'default' => 'title')),
         'user_id' => array('integer[10]', 'unsigned', 'index', 'ref' => array('User', 'id', 'default' => 'email')),
         'user_to' => array('integer[10]', 'unsigned','default'=>'NULL', 'index', 'ref' => array('User', 'id', 'default' => 'email')),

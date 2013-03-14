@@ -551,6 +551,10 @@ class X3_MySQL_Model extends X3_Model implements ArrayAccess {
         return mysql_insert_id();
     }
 
+    public function hasErrors() {
+        return !empty($this->_errors);
+    }
+
     public function getErrors() {
         return $this->_errors;
     }

@@ -19,7 +19,8 @@ class Forum extends X3_Module_Table {
         'flat'=>array('string[10]','default'=>"NULL"),
         'title'=>array('string[512]'),
         'status'=>array('boolean','default'=>'0'),
-        'created_at'=>array('datetime')
+        'created_at'=>array('datetime'),
+        'updated_at'=>array('datetime','default'=>'0')
     );
 
     public function fieldNames() {
@@ -58,14 +59,33 @@ class Forum extends X3_Module_Table {
     }
     
     public static function isMyTheme($id) {
+        if(X3::user()->isAdmin())
+            return true;
         $uid = X3::user()->id;
-        $q = "SELECT f.id FROM data_forum f, user_address a WHERE 
-            a.user_id='$uid' AND f.id='$id' AND (
-            (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
-            (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
-            (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL) OR 
-            (f.city_id=a.city_id AND f.region_id IS NULL)) LIMIT 1";
-        return X3::db()->count($q) > 0;
+        $q = "SELECT f.id, f.title FROM data_forum f INNER JOIN data_user u ON u.id=f.user_id LEFT JOIN user_address a ON a.user_id=$uid WHERE 
+            MD5(CONCAT(f.title,f.id))='$id' AND ((
+                    f.status AND 
+                    u.role='admin' AND 
+                    (
+                       (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                       (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                       (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL) OR 
+                       (f.city_id=a.city_id AND f.region_id IS NULL) OR
+                       (f.city_id IS NULL)
+                    )                
+                )
+                    OR
+                (f.status AND u.role='ksk' AND
+                 (
+                    (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                    (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                    (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR 
+                    (f.city_id=a.city_id AND f.region_id IS NULL AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR
+                    (f.city_id IS NULL AND a.city_id IN (SELECT city_id FROM user_address WHERE user_id=u.id AND status=1) AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1))
+                 )
+                 )) LIMIT 1";
+//        return X3::db()->count($q)>0;
+        return X3::db()->call("isMyForum",$id,$uid)>0;
     }
 
 
@@ -102,17 +122,35 @@ class Forum extends X3_Module_Table {
                  ";
         $count = X3::db()->count("SELECT f.id, MAX(f.created_at) latest ".$q. " GROUP BY f.id");
         $paginator = new Paginator(__CLASS__."Index", $count);
-        $q = "SELECT f.id, f.title, f.user_id, MAX(f.created_at) latest, f.status " . $q . " GROUP BY f.id ORDER BY latest DESC LIMIT $paginator->offset,$paginator->limit";
+        $ordr = array('date'=>'latest','count'=>'(SELECT COUNT(0) FROM forum_message WHERE forum_id=f.id)');
+        $ordrdir = array('desc','asc');
+        if(X3::user()->ForumOrder==null)
+            X3::user()->ForumOrder = array(
+                'order'=>'date',
+                'dir'=>'0'
+            );
+        if(isset($_GET['order'])){
+            $o = explode('-',$_GET['order']);
+            if(isset($ordr[$o[0]],$ordrdir[$o[1]])){
+                $ord = X3::user()->ForumOrder;
+                $ord['order'] = $o[0];
+                $ord['dir'] = (string)$o[1];
+                X3::user()->ForumOrder = $ord;
+            }
+        }
+        $o = X3::user()->ForumOrder;
+        $Oq = $ordr[$o['order']]." ".strtoupper($ordrdir[$o['dir']]);
+        $q = "SELECT f.id, f.title, f.user_id, MAX(f.updated_at) latest, f.status " . $q . " GROUP BY f.id ORDER BY $Oq LIMIT $paginator->offset,$paginator->limit";
         $models = X3::db()->query($q);
         $this->template->render('index', array('models' => $models, 'count' => $count, 'paginator' => $paginator));
     }
     
     public function actionShow() {
-        if (isset($_GET['id']) && (($id = (int)$_GET['id']) > 0) && (X3::user()->isAdmin() || Forum::isMyTheme($id))) {
-            $theme = Forum::getByPk($id);
+        if (isset($_GET['id']) && (($id = $_GET['id'])) && (X3::user()->isAdmin() || Forum::isMyTheme($id))) {
+            $theme = Forum::get(array('id'=>array('@@'=>"MD5(CONCAT(title,id))='$id'")),1);
             if($theme == null)
                 throw new X3_404();
-            $query = array('@condition' => array('forum_id'=>$id), '@order' => 'created_at ASC');
+            $query = array('@condition' => array('forum_id'=>$theme->id), '@order' => 'created_at ASC');
             $count = Forum_Message::num_rows($query);
             $paginator = new Paginator(__CLASS__."#$theme->id", $count);
             $query['@limit'] = $paginator->limit;
@@ -120,7 +158,7 @@ class Forum extends X3_Module_Table {
             $models = Forum_Message::get($query);
             $users = array();
             $uq = X3::db()->query("SELECT id,CONCAT(name,' ',surname) name, image, role FROM data_user WHERE id IN (
-                SELECT user_id FROM forum_message fm WHERE forum_id='$id')");
+                SELECT user_id FROM forum_message fm WHERE forum_id='$theme->id')");
             while($u = mysql_fetch_assoc($uq)){
                 if($u['image']=='' || $u['image']==null || !is_file('uploads/User/'.$u['image']))
                     $image = '/images/default.png';
@@ -128,7 +166,15 @@ class Forum extends X3_Module_Table {
                     $image = '/uploads/User/100x100/'.$u['image'];
                 $users[$u['id']] = array('title'=>$u['role']=='admin'?X3::translate('Администратор').' #'.$u['id']:$u['name'],'avatar'=>$image);
             }
-            $this->template->render('show', array('models' => $models,'theme'=>$theme, 'count' => $count, 'paginator' => $paginator,'users'=>$users,'with'=>$id));
+            $fu = Forum_Users::get(array('forum_id'=>$theme->id,'user_id'=>X3::user()->id),1);
+            if($fu == null){
+                $fu = new Forum_Users;
+                $fu->user_id = X3::user()->id;
+                $fu->forum_id = $theme->id;
+            }
+            $fu->save();
+                //Forum_Users::update(array('updated_at'=>time()), array('forum_id'=>$theme->id,'user_id'=>X3::user()->id));
+            $this->template->render('show', array('models' => $models,'theme'=>$theme, 'count' => $count, 'paginator' => $paginator,'users'=>$users,'with'=>$theme->id));
         }else
             throw new X3_404();
     }
@@ -202,65 +248,20 @@ class Forum extends X3_Module_Table {
                 }else 
                     $model->save();
                 if(isset($_POST['public'])){
-                    if(X3::user()->isKsk()){
-                        $b = X3::db()->query("SELECT city_id, region_id, house FROM user_address WHERE user_id='$model->user_id' AND status=1");
-                        $o = array();
-                        while($bb = mysql_fetch_assoc($b)){
-                            $o['city_id'][] = $bb['city_id'];
-                            $o['region_id'][] = $bb['region_id'];
-                            $o['house'][] = $bb['house'];
-                        }
-                        $o['city_id'] = implode(', ', $o['city_id']);
-                        $o['region_id'] = implode(', ', $o['region_id']);
-                        $o['house'] = implode(', ', $o['house']);
-                        if($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat != null){
-                            $c = "a1.city_id=$model->city_id AND a1.region_id=$model->region_id AND a1.house='$model->house' AND a1.flat='$model->flat'";
-                        }
-                        elseif($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat == null){
-                            $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house'";
-                        }
-                        elseif($model->city_id > 0 && $model->region_id > 0 && $model->house == null && $model->flat == null){
-                            $c = "a1.house IN ({$o['house']}) AND a1.city_id='$model->city_id' AND a1.region_id='$model->region_id'";
-                        }
-                        elseif($model->city_id > 0 && $model->region_id == 0 && $model->house == null && $model->flat == null){
-                            $c = "a1.region_id IN ({$o['region_id']}) AND a1.house IN ({$o['house']}) AND a1.city_id='$model->city_id'";
-                        }else
-                            $c = "a1.city_id IN ({$o['city_id']}) AND a1.region_id IN ({$o['region_id']}) AND a1.house IN ({$o['house']})";
-                    }else{
-                        if($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat != null){
-                            $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house' AND a1.flat='$model->flat'";
-                        }
-                        elseif($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat == null){
-                            $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house'";
-                        }
-                        elseif($model->city_id > 0 && $model->region_id > 0 && $model->house == null && $model->flat == null){
-                            $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id'";
-                        }
-                        elseif($model->city_id > 0 && $model->region_id == 0 && $model->house == null && $model->flat == null){
-                            $c = "a1.city_id='$model->city_id'";
-                        }else
-                            $c = "1";
+                    $this->notify($model);
+                    $fu = Forum_Users::get(array('forum_id'=>$model->id,'user_id'=>X3::user()->id),1);
+                    if($fu == null){
+                        $fu = new Forum_Users;
+                        $fu->user_id = X3::user()->id;
+                        $fu->forum_id = $model->id;
                     }
-                    $users = X3::db()->query("SELECT CONCAT(name,' ',surname) username, email FROM data_user u INNER JOIN user_address a1 ON a1.user_id=u.id WHERE 
-                        u.id<>$model->user_id AND $c
-                        GROUP BY u.id
-                        ");
-                    while($user = mysql_fetch_assoc($users)){
-//                        var_dump($user);
-                        Notify::sendMail('newForum', array('text'=>$model->title,'name'=>$user['username'],'from'=>X3::user()->fullname,'link'=>X3::app()->baseUrl . '/forum/'.$model->id.'.html'), $user['email']);
-                    }
+                    $fu->save();
                 }
                 if($pass)
                     $this->redirect('/forum/');
             }
         }
         $this->template->render('form', array('model' => $model,'message'=>$message));
-    }
-
-    public function actionCount() {
-        if(!IS_AJAX) throw new X3_404();
-        echo Message::num_rows(array('status'=>'0','user_to'=>X3::user()->id));
-        exit;
     }
     
     public function actionRead() {
@@ -336,6 +337,7 @@ class Forum extends X3_Module_Table {
             $mes->user_to = $user_to>0?$user_to:NULL;
             $mes->user_id = X3::user()->id;            
             $mes->forum_id = $message['forum_id'];
+            $mes->parent_id = $message['parent_id']>0?$message['parent_id']:null;
             //TODO: check $message['forum_id'] on MyTheme
             $mes->content = trim(preg_replace("/[\r\n]+/","\r\n",$message['content']));
             $mes->created_at = time();
@@ -351,6 +353,15 @@ class Forum extends X3_Module_Table {
                 }
                 //$userto = X3::db()->fetch("SELECT email FROM data_user WHERE id IN ()");
                 //Notify::sendMail('NewMessage',array('name'=>X3::user()->fullname,'message'=>nl2br($mes->content)),$userto['email']);
+                Forum::update(array('updated_at'=>time()), array('id'=>$mes->forum_id));
+                //Forum_Users::update(array('updated_at'=>time()), array('forum_id'=>$mes->forum_id,'user_id'=>X3::user()->id));
+                if($mes->user_to>0){
+                    $forum = Forum::getByPk($mes->forum_id);
+                    $from = User::getByPk(X3::user()->id);
+                    $to = X3::db()->fetch("SELECT id, CONCAT(name,' ',surname) username, email FROM data_user WHERE id=$mes->user_to");
+                    $msg = Notify::sendMail('forumAnswer', array('name'=>$to['username'],'from'=>$from->getFullname(),'time'=>date('H:i',$mes->created_at).', '.I18n::date($mes->created_at,'ru'),'text'=>nl2br($mes->content),
+                        'forum'=>$forum->title,'link'=>X3::app()->baseUrl . '/forum/'.$forum->id.'.html'), $to['email']);
+                }
                 echo json_encode (array('status'=>'ok','message'=>X3::translate('Сообщение успешно отправлено')));
             }else{
                 $errors = $mes->getTable()->getErrors();
@@ -371,6 +382,7 @@ class Forum extends X3_Module_Table {
                 Forum::update(array('status'=>'1'),array('id'=>$id));
             else
                 Forum::update(array('status'=>'1'),array('user_id'=>X3::user()->id,'id'=>$id));
+            $this->notify(self::getByPk($id));
             if(IS_AJAX)
                 exit;
             $this->redirect($_SERVER['HTTP_REFERER']);
@@ -397,6 +409,57 @@ class Forum extends X3_Module_Table {
         echo json_encode($flats);
         exit;
     }
+    
+    public function notify($model) {
+        if(X3::user()->isKsk()){
+            $b = X3::db()->query("SELECT city_id, region_id, house FROM user_address WHERE user_id='$model->user_id' AND status=1");
+            $o = array();
+            while($bb = mysql_fetch_assoc($b)){
+                $o['city_id'][] = $bb['city_id'];
+                $o['region_id'][] = $bb['region_id'];
+                $o['house'][] = $bb['house'];
+            }
+            $o['city_id'] = implode(', ', $o['city_id']);
+            $o['region_id'] = implode(', ', $o['region_id']);
+            $o['house'] = implode(', ', $o['house']);
+            if($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat != null){
+                $c = "a1.city_id=$model->city_id AND a1.region_id=$model->region_id AND a1.house='$model->house' AND a1.flat='$model->flat'";
+            }
+            elseif($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat == null){
+                $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house'";
+            }
+            elseif($model->city_id > 0 && $model->region_id > 0 && $model->house == null && $model->flat == null){
+                $c = "a1.house IN ({$o['house']}) AND a1.city_id='$model->city_id' AND a1.region_id='$model->region_id'";
+            }
+            elseif($model->city_id > 0 && $model->region_id == 0 && $model->house == null && $model->flat == null){
+                $c = "a1.region_id IN ({$o['region_id']}) AND a1.house IN ({$o['house']}) AND a1.city_id='$model->city_id'";
+            }else
+                $c = "a1.city_id IN ({$o['city_id']}) AND a1.region_id IN ({$o['region_id']}) AND a1.house IN ({$o['house']})";
+        }else{
+            if($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat != null){
+                $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house' AND a1.flat='$model->flat'";
+            }
+            elseif($model->city_id > 0 && $model->region_id > 0 && $model->house != null && $model->flat == null){
+                $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id' AND a1.house='$model->house'";
+            }
+            elseif($model->city_id > 0 && $model->region_id > 0 && $model->house == null && $model->flat == null){
+                $c = "a1.city_id='$model->city_id' AND a1.region_id='$model->region_id'";
+            }
+            elseif($model->city_id > 0 && $model->region_id == 0 && $model->house == null && $model->flat == null){
+                $c = "a1.city_id='$model->city_id'";
+            }else
+                $c = "1";
+        }
+        $users = X3::db()->query("SELECT u.id, CONCAT(name,' ',surname) username, email FROM data_user u INNER JOIN user_address a1 ON a1.user_id=u.id WHERE 
+            u.id<>$model->user_id AND $c
+            GROUP BY u.id
+            ");
+        $uids = array();
+        while($user = mysql_fetch_assoc($users)){
+            $uids[] = $user['id'];
+            Notify::sendMail('newForum', array('text'=>$model->title,'name'=>$user['username'],'from'=>X3::user()->fullname,'link'=>X3::app()->baseUrl . '/forum/'.md5($model->title.$model->id).'.html'), $user['email']);
+        }
+    }
 
     public function beforeValidate() {
         if($this->region_id == 0) $this->region_id = null;
@@ -408,14 +471,62 @@ class Forum extends X3_Module_Table {
             $this->created_at = time();
     }
     
+    public function beforeSave() {
+        $this->updated_at = time();
+        parent::beforeSave();
+    }
+    
     public function onDelete($tables, $condition) {
         if (strpos($tables, $this->tableName) !== false) {
             $model = $this->table->select('*')->where($condition)->asObject(true);
             Forum_Message::delete(array('forum_id'=>$model->id));
             Forum_Uploads::delete(array('forum_id'=>$model->id));
+            Forum_Users::delete(array('forum_id'=>$model->id));
 //            Forum_Notify::delete(array('forum_id'=>$model->id));
         }
         parent::onDelete($tables, $condition);
+    }
+    
+    public static function search($word) {
+        $id = X3::user()->id;
+        $scope = array(
+            '@select'=>'fm.content,f.title, f.id, um.name, um.surname, um.kskname, um.ksksurname, um.image',
+            '@from'=>array('forum_message'=>'fm'),
+        );
+        if(X3::user()->isAdmin()){
+            $scope['@join'] = "INNER JOIN data_forum f ON f.id=fm.forum_id INNER JOIN data_user u ON u.id=f.user_id INNER JOIN data_user um ON um.id=fm.user_id";
+            $q = "fm.content LIKE '%$word%'";
+        }else{
+            $scope['@join'] = "INNER JOIN data_forum f ON f.id=fm.forum_id INNER JOIN data_user u ON u.id=f.user_id  INNER JOIN data_user um ON um.id=fm.user_id LEFT JOIN user_address a ON a.user_id=$id";
+            $q = "(fm.content LIKE '%$word%') AND (
+                    (f.user_id=$id)
+                    OR
+                    (
+                        f.status AND 
+                        u.role='admin' AND 
+                        (
+                           (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                           (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                           (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL) OR 
+                           (f.city_id=a.city_id AND f.region_id IS NULL) OR
+                           (f.city_id IS NULL)
+                        )                
+                    )
+                    OR
+                    (f.status AND u.role='ksk' AND
+                     (
+                        (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat=a.flat) OR 
+                        (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house=a.house AND f.flat IS NULL) OR 
+                        (f.city_id=a.city_id AND f.region_id=a.region_id AND f.house IS NULL AND f.flat IS NULL AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR 
+                        (f.city_id=a.city_id AND f.region_id IS NULL AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1)) OR
+                        (f.city_id IS NULL AND a.city_id IN (SELECT city_id FROM user_address WHERE user_id=u.id AND status=1) AND a.region_id IN (SELECT region_id FROM user_address WHERE user_id=u.id AND status=1) AND a.house IN (SELECT house FROM user_address WHERE user_id=u.id AND status=1))
+                     )
+                    )
+                 )
+                 ";
+        }
+        $scope['@condition'] = array('id'=>array('@@'=>$q));
+        return $scope;
     }
 }
 ?>
