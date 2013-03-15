@@ -56,6 +56,11 @@ $menus = Menu::get(array('@condition'=>array('status','type'=>'Нижнее'),'@
             <?else:?>
             <a href="/admins/" class="menu_item admins"><span><?=X3::translate('Администраторы');?></span></a>
             <?endif;?>
+            <?if(X3::app()->request->isActive('/analytics')):?>
+            <span class="menu_item analytics"><span><?=X3::translate('Аналитические данные');?></span></span>
+            <?else:?>
+            <a href="/analytics.html" class="menu_item analytics"><span><?=X3::translate('Аналитические данные');?></span></a>
+            <?endif;?>
         <?endif;?>
     </div>
 <? endif; ?>

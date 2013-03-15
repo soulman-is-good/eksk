@@ -210,7 +210,7 @@ class X3_Request extends X3_Component {
         $trueurl = trim($url,'/');
         $trueurl = str_replace(".$this->suffix", '', $trueurl);
         $trueurl = preg_replace("#\?(.*)#", '', $trueurl);
-        if($this->url==$trueurl) return true;
+        if($this->url == $trueurl || $this->uri[0]==$trueurl) return true;
         return false;
     }
 

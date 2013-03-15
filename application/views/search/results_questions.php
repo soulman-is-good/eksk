@@ -20,11 +20,11 @@
             <tr><td width="100%" class="fc">
         <table class="admin-list">
             <?$i=1;while($u = mysql_fetch_assoc($models)):
-                $model = new Warning();
+                $model = new Vote();
                 $model->acquire($u);
                 ?>
             <tr>
-                <td class="name"><a href="/warning/"><?=Search::highlight($model->title)?></a></td>
+                <td class="name"><a href="/vote/show/id/<?=$model->id?>.html"><?=nl2br(Search::highlight($model->title))?></a><br/><em><?=I18n::date($model->created_at)?> <?=date("H:i",$model->created_at)?></em></td>
             </tr>
             <?endwhile;?>
         </table>

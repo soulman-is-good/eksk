@@ -33,7 +33,7 @@ class X3_String extends X3_Component {
      * 
      * @param string $string
      * @param string $encoding
-     * @return \self
+     * @return X3_String
      */
     public static function create($string, $encoding = null) {
         return new self($string, $encoding);
@@ -404,10 +404,38 @@ class X3_String extends X3_Component {
             $pos = $this->strpos($s);
             while ($pos !== false) {
                 $subject = mb_substr($subject, 0, $pos, $this->encoding) . $r . mb_substr($subject, $pos + mb_strlen($s, $this->encoding), 65535, $this->encoding);
-                $pos = $this->strpos($s, $pos + mb_strlen($r, $this->encoding));
+                $pos = $this->strpos($s,0, $pos + mb_strlen($r, $this->encoding));
             }
         }
         return $subject;
+    }
+
+    /**
+     * Searches and replaces needed string canse-insensitive
+     * 
+     * @param string $search search string
+     * @param string $replace replace string
+     * @return string
+     */
+    public function ireplace($search, $replace) {
+        $counter = 1;
+        foreach ((array) $search as $key => $s) {
+            if ($s == '') {
+                continue;
+            }
+            $r = !is_array($replace) ? $replace : (array_key_exists($key, $replace) ? $replace[$key] : '');
+            $pos = $this->strpos($s,2);
+            $len = mb_strlen($s,$this->encoding);
+            while ($pos !== false) {
+                $word = mb_substr($this->string, $pos, $len, $this->encoding);
+                $word = str_replace('$'.$counter,$word,$r);
+                
+                $this->string = mb_substr($this->string, 0, $pos, $this->encoding) . $word . mb_substr($this->string, $pos + mb_strlen($s, $this->encoding), 65535, $this->encoding);
+                $pos = $this->strpos($s,2, $pos + mb_strlen($word, $this->encoding));
+            }
+            $counter++;
+        }
+        return $this;
     }
 
     public function trim($chars = "", $chars_array = array()) {

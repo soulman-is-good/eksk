@@ -385,6 +385,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             $error = $userI->login();
             $user->email = $u['email'];
             if(!is_string($error)){
+                User_Stat::add();
                 $this->refresh();
             }
         }

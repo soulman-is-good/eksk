@@ -29,7 +29,7 @@ class Uploads extends X3_Module_Table {
     }
     
     public function beforeAction(&$action) {
-        if ($this->controller->action == 'captcha' || $this->controller->action == 'get')
+        if ($this->controller->action == 'captcha' || $this->controller->action == 'get'  || $this->controller->action == 'excel')
             return true;
         if(!X3_DEBUG && !X3::user()->isAdmin())
             throw new X3_404();
@@ -129,6 +129,169 @@ class Uploads extends X3_Module_Table {
         closedir($h);
     }
 
+    public function actionExcel() {
+        if(!X3::user()->isAdmin() || !isset($_GET['generate']))
+            throw new X3_404();
+        $type = strtok($_GET['generate'],'.');
+        require_once(X3::app()->basePath . "/application/extensions/PHPExcel.php");
+        $phpExcel = new PHPExcel();
+        $phpExcel->setActiveSheetIndex(0);
+        $sheet = $phpExcel->getActiveSheet();
+        $phpExcel->getProperties()->setCreator("eksk.kz")
+                ->setLastModifiedBy("eksk.kz")
+                ->setTitle("Аналитические данные")
+                ->setSubject("Аналитические данные");
+        $sheet->setTitle(($type=='user'?'Пользователи':($type=='ksk'?'КСК':'Опросы')));
+        $abs = range('A', 'Z');
+        $aba = array_map(create_function('$item','return "A$item";'),$abs);
+        $abb = array_map(create_function('$item','return "B$item";'),$abs);
+        $abc = array_map(create_function('$item','return "C$item";'),$abs);
+        $abd = array_map(create_function('$item','return "D$item";'),$abs);
+        $abs = array_merge($abs,$aba,$abb,$abc,$abd);
+        if($type == 'user' || $type == 'ksk') {
+            $models = X3::db()->query("SELECT * FROM data_user u INNER JOIN user_settings us ON us.user_id=u.id WHERE role='$type'");
+            $maxaddr = X3::db()->fetch("SELECT COUNT(ua.id) mxa FROM user_address ua INNER JOIN data_user u ON u.id=ua.user_id  WHERE u.role='$type' GROUP BY user_id");
+            $maxaddr = (int)$maxaddr['mxa'] + 1;
+            $j=0;
+            $sheet->setCellValue("{$abs[$j++]}1", 'ID');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            if($type == 'ksk'){
+                $sheet->setCellValue("{$abs[$j++]}1", 'Название');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+                $sheet->setCellValue("{$abs[$j++]}1", 'Должность');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            }
+            $sheet->setCellValue("{$abs[$j++]}1", 'Фамилия');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Имя');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Пол');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Дата рождения');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Дата регистрации');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'О себе');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Телефон');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Рабочий');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Мобильный');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'E-mail');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Skype');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Веб-сайт');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $i=0;
+            for($i=0;$i<$maxaddr;$i++){
+                if($type=='ksk' && $i==0)
+                    $sheet->setCellValue("{$abs[$j+$i]}1", 'Адрес офиса');
+                elseif($type == 'ksk')
+                    $sheet->setCellValue("{$abs[$j+$i]}1", 'Адрес '.$i);
+                else
+                    $sheet->setCellValue("{$abs[$j+$i]}1", 'Адрес '.($i+1));
+                $sheet->getColumnDimension("{$abs[$j+$i]}")->setAutoSize(true);
+            }
+            $sheet->getStyle("A1:{$abs[$i+$j]}1")->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('FFCCCCCC');
+            $sheet->getStyle("A1:{$abs[$i+$j]}".(mysql_num_rows($models)+1))->getAlignment()->setWrapText(true);
+            $k=2;
+            while($u = mysql_fetch_assoc($models)){
+                $j=0;                
+                $sheet->getRowDimension($k)->setRowHeight(-1);
+                $sheet->setCellValue("{$abs[$j++]}$k", $u['user_id']);
+                if($type=='ksk'){
+                    $sheet->setCellValue("{$abs[$j++]}$k", $u['name']);
+                    $sheet->setCellValue("{$abs[$j++]}$k", $u['duty']);
+                    $sheet->setCellValue("{$abs[$j++]}$k", $u['ksksurname']);
+                    $sheet->setCellValue("{$abs[$j++]}$k", $u['kskname']);
+                }else {
+                    $sheet->setCellValue("{$abs[$j++]}$k", $u['surname']);
+                    $sheet->setCellValue("{$abs[$j++]}$k", $u['name']);
+                }
+                $sheet->setCellValue("{$abs[$j++]}$k", $u['gender']);
+                $sheet->setCellValue("{$abs[$j++]}$k", date("d.m.Y",$u['date_of_birth']));
+                $sheet->setCellValue("{$abs[$j++]}$k", date("d.m.Y H:i:s",$u['created_at']));
+                $sheet->setCellValue("{$abs[$j++]}$k", $u['about']);
+                $sheet->setCellValue("{$abs[$j++]}$k", $u['home']);
+                $sheet->setCellValue("{$abs[$j++]}$k", $u['work']);
+                $sheet->setCellValue("{$abs[$j++]}$k", $u['mobile']);
+                $sheet->setCellValue("{$abs[$j++]}$k", $u['email']);
+                $sheet->setCellValue("{$abs[$j++]}$k", $u['skype']);
+                $sheet->setCellValue("{$abs[$j++]}$k", $u['site']);
+                $aq = X3::db()->query("SELECT c.title AS city, cr.title AS region, ua.house, ua.flat, ua.status  FROM user_address ua INNER JOIN data_city c ON c.id=ua.city_id INNER JOIN city_region cr ON cr.id=ua.region_id WHERE user_id={$u['user_id']} ORDER BY ua.status, ua.id ASC");
+                $x = 0;
+                while($addr = mysql_fetch_assoc($aq)){
+                    $sheet->getStyle("{$abs[$j]}$k")->getAlignment()->setWrapText(true);
+                    if($type=='ksk'){
+                        if($addr['status']==0)
+                            $sheet->setCellValue("{$abs[$j++]}$k", $addr['city'] . ", " . $addr['region'] . ", ".$addr['house'].", офис ".$addr['flat']);
+                        else
+                            $sheet->setCellValue("{$abs[$j++]}$k", $addr['city'] . ", " . $addr['region'] . ", дом ".$addr['house']);
+                    }else
+                        $sheet->setCellValue("{$abs[$j++]}$k", $addr['city'] . ", " . $addr['region'] . ", ".$addr['house'].", квартира ".$addr['flat']);
+                    $x++;
+                }
+                $k++;
+            }
+        }
+        if($type == 'vote'){
+            $models = X3::db()->query("SELECT v.id, v.user_id, v.title, v.status, v.created_at, v.end_at, v.answer, u.name, u.kskname, u.surname, u.ksksurname FROM data_vote v INNER JOIN data_user u ON u.id=v.user_id");
+            $j=0;
+            $sheet->setCellValue("{$abs[$j++]}1", 'ID');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'USER_ID');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Имя');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Заголовок');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Дата создания');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Дата окончания');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Ответы');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->getStyle("A1:{$abs[$i+$j]}1")->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('FFCCCCCC');
+            $sheet->getStyle("A1:{$abs[$i+$j]}".(mysql_num_rows($models)+1))->getAlignment()->setWrapText(true);
+            $k=2;
+            while($u = mysql_fetch_assoc($models)){
+                $j=0;
+                $user = new User();
+                $user->acquire(array('name'=>$u['name'],'surname'=>$u['surname'],'kskname'=>$u['kskname'],'ksksurname'=>$u['ksksurname'],'id'=>$u['user_id']));
+                $sheet->setCellValue("{$abs[$j++]}$k", $u['id']);
+                $sheet->setCellValue("{$abs[$j++]}$k", $u['user_id']);
+                $sheet->setCellValue("{$abs[$j++]}$k", $user->fullname);
+                $sheet->setCellValue("{$abs[$j++]}$k", $u['title']);
+                $sheet->setCellValue("{$abs[$j++]}$k", date("d.m.Y H:i",$u['created_at']));
+                $sheet->setCellValue("{$abs[$j++]}$k", date("d.m.Y H:i",$u['end_at']));
+                $answers = explode('||',$u['answer']);
+                foreach($answers as $x=>$answer){
+                    $cnt=X3::db()->fetch("SELECT COUNT(0) cnt FROM vote_stat WHERE vote_id='{$u['id']}' AND answer='$x'");
+                    $sheet->getStyle("{$abs[$j]}$k")->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('FFFACCCC');
+                    $sheet->setCellValue("{$abs[$j++]}$k", $answer);
+                    $sheet->setCellValue("{$abs[$j++]}$k", (int)$cnt['cnt']);
+                }
+                $k++;
+            }
+        }elseif(preg_match("/^vote([0-9]+)$/",$type,$m)>0 && NULL!==($model=Vote::getByPk((int)$m[1]))){
+            $answers = explode('||',$model->answer);
+            $sheet->mergeCells("A1:{$abs[count($answers)-1]}1");
+            $sheet->getStyle("A1")->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('FFFC9C9C');
+            $sheet->getStyle("A1")->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_CENTER);
+            $sheet->setCellValue('A1',$model->title);
+            $sheet->setCellValue('A5','Имя');
+            $sheet->setCellValue('B5','Ответ');
+            $sheet->getStyle("A5:B5")->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('FFCCCCCC');
+            $j=0;
+            foreach($answers as $x=>$answer){
+                $cnt=X3::db()->fetch("SELECT COUNT(0) cnt FROM vote_stat WHERE vote_id='{$model->id}' AND answer='$x'");
+                $sheet->getStyle("{$abs[$j]}2")->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('FFCCCCCC');
+                $sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+                $sheet->setCellValue("{$abs[$j]}2", $answer);
+                $sheet->setCellValue("{$abs[$j++]}3", (int)$cnt['cnt']);
+            }
+            $q = X3::db()->query("SELECT u.id, u.name, u.kskname, u.surname, u.ksksurname, u.image, v.answer FROM vote_stat v INNER JOIN user_address vv ON vv.id=v.address_id INNER JOIN data_user u ON u.id=vv.user_id WHERE vote_id='$model->id' GROUP BY u.id");
+            $k = 6;
+            while($u = mysql_fetch_assoc($q)){
+                $user = new User();
+                $user->acquire($u);
+                $sheet->setCellValue("A$k", $user->fullname);
+                $sheet->setCellValue("B$k", $answers[$u['answer']]);
+                $sheet->getColumnDimension("A$k")->setAutoSize(true);
+                $sheet->getColumnDimension("B$k")->setAutoSize(true);
+                $k++;
+            }
+                                
+        }
+        header("Content-Type: application/vnd.ms-excel");
+        header('Content-Disposition: attachment; filename=',$type.'_'.date('d_m_Y').'.xls');
+        header("Cache-Control: max-age=0");
+        $objWriter = PHPExcel_IOFactory::createWriter($phpExcel,'Excel5');
+        $objWriter->save('php://output');
+//        $objWriter->save('uploads/ksk.xls');
+//        header('Location: /uploads/ksk.xls');
+    }
 }
 
 ?>

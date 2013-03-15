@@ -492,6 +492,7 @@ class Forum extends X3_Module_Table {
         $scope = array(
             '@select'=>'fm.content,f.title, f.id, um.name, um.surname, um.kskname, um.ksksurname, um.image',
             '@from'=>array('forum_message'=>'fm'),
+            '@group'=>'f.id'
         );
         if(X3::user()->isAdmin()){
             $scope['@join'] = "INNER JOIN data_forum f ON f.id=fm.forum_id INNER JOIN data_user u ON u.id=f.user_id INNER JOIN data_user um ON um.id=fm.user_id";

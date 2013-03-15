@@ -439,6 +439,7 @@ class Vote extends X3_Module_Table {
             $cond = array();
             $query['@select']='f.*';
             $query['@group']='f.id';
+            $query['@order']='f.created_at DESC';
             $query['@from']=array('data_vote'=>'f');
             $query['@join']="INNER JOIN data_user u ON u.id=f.user_id LEFT JOIN user_address a ON a.user_id=$id";
             $cond['id']=array(

@@ -93,13 +93,15 @@ class Search extends X3_Module{
     
     public static function highlight($str) {
         $word = X3::user()->search['word'];
+        setlocale(LC_ALL, 'ru_RU.CP1251', 'rus_RUS.CP1251', 'Russian_Russia.1251');
         $len = mb_strlen($word,X3::app()->encoding);
         $strlen = mb_strlen($str,X3::app()->encoding);
         $ic = 256 - $len;
         $res = "";
         $k = mb_stripos($str,$word,0,X3::app()->encoding);
         $res = ($k<$ic?"":"...") . mb_substr($str, $k - $ic,$len+$ic,X3::app()->encoding) . ($len+$ic>$strlen?"":"...");
-        $res = str_ireplace("$word","<b style='color:#933'>$word</b>",$res);
+        $res = X3_String::create($res)->ireplace("$word",'<b style="color:#933;text-shadow:0 0 25px #05A">$1</b>');
+        return $res;
     }
 }
 

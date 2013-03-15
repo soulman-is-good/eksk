@@ -458,12 +458,13 @@ class User_Report extends X3_Module_Table {
         $scope = array(
             '@select'=>'f.title, f.id, u.name, u.surname, u.kskname, u.ksksurname, u.image',
             '@from'=>array('user_report'=>'f'),
+            '@group'=>'f.id',
         );
         if(X3::user()->isAdmin()){
             $scope['@join'] = "INNER JOIN data_user u ON u.id=f.user_id";
             $q = "f.title LIKE '%$word%'";
         }else{
-            $scope['@join'] = "INNER JOIN data_forum f ON f.id=fm.forum_id INNER JOIN data_user u ON u.id=f.user_id  INNER JOIN data_user um ON um.id=fm.user_id LEFT JOIN user_address a ON a.user_id=$id";
+            $scope['@join'] = "INNER JOIN data_user u ON u.id=f.user_id LEFT JOIN user_address a ON a.user_id=$id";
             $q = "(f.title LIKE '%$word%') AND (
                     (f.user_id=$id)
                     OR

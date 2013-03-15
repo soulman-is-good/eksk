@@ -28,7 +28,7 @@
                 <td class="ava"><a href="/message/with/<?=$user->id?>.html"><img src="<?=$user->avatar?>" width="100" alt="" /></a></td>
                 <td class="name" width="150"><a href="/message/with/<?=$user->id?>.html"><?=$user->fullname?></a></td>
                 <td class="text">
-                    <a href="/message/with/<?=$user->id?>.html"><?=$m['title']?><br/><em><?=nl2br(Search::highlight($m['content']))?></em></a>
+                    <a href="/forum/<?=md5($m['title'].$user->id)?>.html"><?=$m['title']?><br/><em><?=nl2br(Search::highlight($m['content']))?></em></a>
                 </td>
             </tr>
             <?endwhile;?>

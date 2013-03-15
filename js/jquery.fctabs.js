@@ -3,16 +3,15 @@
  * and open the template in the editor.
  */
 
-$.fn.fctabs = function(){
-    var hash = false;
+$.fn.fctabs = function(hash){
     var self = this;
-    if(typeof location.hash != 'undefined'){
+    if(typeof location.hash != 'undefined' && (typeof hash == 'undefined' || hash.indexOf('#')!=0)){
         hash = location.hash;
         setTimeout(function(){  
             $('body').scrollTop(0);
         },140)
     }
-    if(!hash)
+    if(!hash || hash.length<2)
         hash = $(this).find('ul a:first-child').attr('href');
     $(this).find('.tab').css('display','none');
     $(hash).css('display','block');
@@ -21,6 +20,8 @@ $.fn.fctabs = function(){
         $(this).click(function(){
             if($(this).hasClass('active')) return false;
             var href = $(this).attr('href');
+            if(href.indexOf('#')!=0)
+                return true;
             if(typeof $(href)[0] == 'undefined')
                 return false;
             $(self).find('[href="'+hash+'"]').removeClass('active').parent().removeClass('active');
@@ -36,5 +37,7 @@ $.fn.fctabs = function(){
 }
 
 $(function(){
-    $('[fctabs]').fctabs();
+    $('[fctabs]').each(function(){
+        $(this).fctabs('#'+$(this).attr('fctabs'));
+    });
 })

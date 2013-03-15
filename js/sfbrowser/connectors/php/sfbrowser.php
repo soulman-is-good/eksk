@@ -146,6 +146,8 @@ class SFBrowser extends AbstractSFB {
 						} else {
 							$bAllow = false;
 						}
+                                                if(!isset($_SESSION['X3.User.role']) || $_SESSION['X3.User.role']!='admin')
+                                                    $bAllow = false;
 						if (!$bAllow) {
 							$this->aReturn['error'] = "uploadNotallowed#".$sFileExt;
 							@unlink($sFileTo);
@@ -191,7 +193,7 @@ class SFBrowser extends AbstractSFB {
 				break;
 
 				case "delete": // file delete
-					if (count($_POST)!=3||!isset($_POST["folder"])||!isset($_POST["file"])) exit("ku ka");
+					if (count($_POST)!=3||!isset($_POST["folder"])||!isset($_POST["file"]) || !isset($_SESSION['X3.User.role']) || $_SESSION['X3.User.role']!='admin') exit("ku ka");
 					if (is_file($this->sSFile)) {
 						if (@unlink($this->sSFile))	$this->aReturn['msg'] .= "fileDeleted";
 						else					$this->aReturn['error'] .= "fileNotdeleted";

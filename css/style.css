@@ -838,6 +838,14 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffe8e8', end
     border-bottom-color: #f0b2b2;
 }
 
+.eksk-wnd .content .admin-list td.ops a.dash span{
+    border-bottom:1px dashed #95c4e4;
+}
+.eksk-wnd .content .admin-list td.ops a.dash:hover span{
+    color:#cc0000;
+    border-bottom-color: #f0b2b2;
+}
+
 .eksk-wnd .content .search-results {
     width:100%;
     margin-top:20px;
@@ -981,6 +989,75 @@ div.votelist table tr td {padding-bottom:5px;}
 div.votelist table tr td span.pr {font-size:16px;}
 div.votelist h4 {margin-top:0px;font-size:16px;color:#000000;line-height:130%;margin-bottom:15px;margin-bottom:8px;}
 
+/*****************
+Analytics
+*****************/
+.popup {
+    display:none;
+    text-align: left;
+    position:absolute;
+    right:10px;
+    top:10px;
+    width:460px;
+    padding:20px;
+    font:16px Arial, sans-serif;
+    color:#000;
+    z-index:5;
+    border:2px solid #0077CC;
+    border-radius:15px;
+    -moz-border-radius:15px;
+    -webkit-border-radius:15px;
+    background: #ffffff;
+    background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZmZmZiIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmMGY4ZmMiIHN0b3Atb3BhY2l0eT0iMSIvPgogIDwvbGluZWFyR3JhZGllbnQ+CiAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+);
+    background: -moz-linear-gradient(top, #ffffff 0%, #f0f8fc 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ffffff), color-stop(100%,#f0f8fc));
+    background: -webkit-linear-gradient(top, #ffffff 0%,#f0f8fc 100%);
+    background: -o-linear-gradient(top, #ffffff 0%,#f0f8fc 100%);
+    background: -ms-linear-gradient(top, #ffffff 0%,#f0f8fc 100%);
+    background: linear-gradient(to bottom, #ffffff 0%,#f0f8fc 100%);
+    -pie-background: linear-gradient(to bottom, #ffffff 0%,#f0f8fc 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#f0f8fc',GradientType=0 );
+    behavior:url(/PIE.htc);
+}
+.line:hover .popup {
+    display:block;
+}
+
+.analytics .ops .line {
+    position:relative;
+}
+.analytics .ops .line a {
+    display:inline-block;
+}
+.popup .info-row {
+    margin-bottom:14px;
+}
+.popup .info-row em {
+    display: inline-block;
+}
+.popup .info-row td {
+    width:110px;
+}
+
+a.excel {
+    border:none;
+    padding:0 25px 0 0;
+    margin:0 0 0 25px;
+    background: url(/images/excel.png) no-repeat right 50%;
+}
+a.excel span {
+    border-bottom:1px dashed #95c4e4;
+}
+a.excel:hover span {
+    color:#cc0000;
+    border-bottom-color: #f0b2b2;
+}
+.analytics .eksk-wnd .stats {
+    padding: 0 0 15px 0;
+}
+.analytics .eksk-wnd .stats b {
+    
+}
 
 /***************
 fcselect Classes
