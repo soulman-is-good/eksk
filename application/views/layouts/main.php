@@ -34,6 +34,11 @@ String.prototype.repeat = function( num ){return new Array( num + 1 ).join( this
 <link href="/favicon.ico" rel="shortcut icon" type="image/x-icon">
 </head>
 <body itemscope itemtype="http://schema.org/WebPage" <?=X3::user()->isGuest()?'class="unauthorized"':''?>>
+<!--
+Development and Layout - Maxim Savin <http://careers.stackoverflow.com/soulman>
+Based on x3framework2.0
+working with Zuber.kz
+-->
     <?$uid = X3::user()->id;
     $time = time();
     $where = " WHERE 
@@ -47,16 +52,16 @@ String.prototype.repeat = function( num ){return new Array( num + 1 ).join( this
             w.city_id IS NULL OR
             (w.city_id IN (SELECT city_id FROM user_address WHERE user_id=$uid) AND w.region_id IS NULL) OR
             (w.city_id IN (SELECT city_id FROM user_address WHERE user_id=$uid) AND w.region_id IN (SELECT region_id FROM user_address WHERE user_id=$uid) AND w.house IS NULL) OR
-            (w.city_id IN (SELECT city_id FROM user_address WHERE user_id=$uid) AND w.region_id IN (SELECT region_id FROM user_address WHERE user_id=$uid) AND w.house IN (SELECT house FROM user_address WHERE user_id=$uid) AND flat IS NULL) OR
-            (w.city_id IN (SELECT city_id FROM user_address WHERE user_id=$uid) AND w.region_id IN (SELECT region_id FROM user_address WHERE user_id=$uid) AND w.house IN (SELECT house FROM user_address WHERE user_id=$uid) AND flat IN (SELECT flat FROM user_address WHERE user_id=$uid))
+            (w.city_id IN (SELECT city_id FROM user_address WHERE user_id=$uid) AND w.region_id IN (SELECT region_id FROM user_address WHERE user_id=$uid) AND w.house IN (SELECT house FROM user_address WHERE user_id=$uid) AND w.flat IS NULL) OR
+            (w.city_id IN (SELECT city_id FROM user_address WHERE user_id=$uid) AND w.region_id IN (SELECT region_id FROM user_address WHERE user_id=$uid) AND w.house IN (SELECT house FROM user_address WHERE user_id=$uid) AND w.flat IN (SELECT flat FROM user_address WHERE user_id=$uid))
             )
           ) OR (u.role='ksk' AND (SELECT COUNT(0) FROM user_address a1, user_address a2 WHERE a1.user_id=$uid AND a2.user_id=u.id AND a1.city_id=a2.city_id AND a1.region_id=a2.region_id AND a1.house=a2.house)>0 AND
             (
             w.city_id IS NULL OR
             (w.city_id IN (SELECT city_id FROM user_address WHERE user_id=$uid) AND w.region_id IS NULL) OR
             (w.city_id IN (SELECT city_id FROM user_address WHERE user_id=$uid) AND w.region_id IN (SELECT region_id FROM user_address WHERE user_id=$uid) AND w.house IS NULL) OR
-            (w.city_id IN (SELECT city_id FROM user_address WHERE user_id=$uid) AND w.region_id IN (SELECT region_id FROM user_address WHERE user_id=$uid) AND w.house IN (SELECT house FROM user_address WHERE user_id=$uid) AND flat IS NULL) OR
-            (w.city_id IN (SELECT city_id FROM user_address WHERE user_id=$uid) AND w.region_id IN (SELECT region_id FROM user_address WHERE user_id=$uid) AND w.house IN (SELECT house FROM user_address WHERE user_id=$uid) AND flat IN (SELECT flat FROM user_address WHERE user_id=$uid))
+            (w.city_id IN (SELECT city_id FROM user_address WHERE user_id=$uid) AND w.region_id IN (SELECT region_id FROM user_address WHERE user_id=$uid) AND w.house IN (SELECT house FROM user_address WHERE user_id=$uid) AND w.flat IS NULL) OR
+            (w.city_id IN (SELECT city_id FROM user_address WHERE user_id=$uid) AND w.region_id IN (SELECT region_id FROM user_address WHERE user_id=$uid) AND w.house IN (SELECT house FROM user_address WHERE user_id=$uid) AND w.flat IN (SELECT flat FROM user_address WHERE user_id=$uid))
             )
           )
         )

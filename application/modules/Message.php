@@ -278,9 +278,11 @@ WHERE a2.user_id=".X3::user()->id." AND a1.user_id<>a2.user_id AND `a2`.`city_id
                         $F->created_at = time();
                         $F->save();
                     }
-                    $userto = X3::db()->fetch("SELECT email FROM data_user WHERE id='$user_to'");
-                    Notify::sendMail('NewMessage',array('name'=>X3::user()->fullname,'message'=>nl2br($mes->content)),$userto['email']);
-                    echo json_encode (array('status'=>'ok','message'=>X3::translate('Сообщение успешно отправлено')));
+                    $userto = X3::db()->fetch("SELECT u.email FROM data_user u WHERE id='$user_to'");
+                    $userset = X3::db()->fetch("SELECT * FROM user_settings us WHERE user_id='$user_to'");
+                    if($userset['mailMessages'])
+                        Notify::sendMail('NewMessage',array('name'=>X3::user()->fullname,'message'=>nl2br($mes->content)),$userto['email']);
+                    echo json_encode (array('status'=>'error','message'=>X3::translate('Сообщение успешно отправлено')));
                 }else{
                     $errors = $mes->getTable()->getErrors();
                     $html = array();

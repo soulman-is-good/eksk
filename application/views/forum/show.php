@@ -37,9 +37,11 @@
                             <?if($parent):?>
                             <div class="quote"><i>&#147;</i><span><?=nl2br(X3_String::create($parent->content)->carefullCut(512))?></span></div>
                             <?endif;?>
-                                <p>
-                                <?=nl2br($model->content);?>
-                                </p>
+                                <?if(X3::user()->search!=null && X3::user()->search['type']=='themes'):?>
+                                    <p><?=nl2br(str_replace(X3::user()->search['word'],"<b style='color:#922'>".X3::user()->search['word']."</b>",$model->content))?></p>
+                                <?else:?>
+                                    <p><?=nl2br($model->content)?></p>
+                                <?endif;?>
                                 <?if(mysql_num_rows($files)):?>
                                 <em><?=X3::translate('Прикрепленные файлы')?></em>:
                                 <?while($file = mysql_fetch_assoc($files)):?>

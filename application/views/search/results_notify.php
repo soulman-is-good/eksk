@@ -24,7 +24,7 @@
                 $model->acquire($u);
                 ?>
             <tr>
-                <td class="name"><a href="/warning/"><?=Search::highlight($model->title)?></a></td>
+                <td class="name"><a href="#" class="crybaby"><?=Search::highlight($model->title)?></a></td>
             </tr>
             <?endwhile;?>
         </table>
@@ -34,3 +34,9 @@
     </div>
     <div class="shadow"><i></i><b></b><em></em></div>
 </div>
+<script>
+    $('.crybaby').each(function(){$(this).click(function(){
+            $.dialog($('<div class="m-10"></div>').append($(this).text()),'Оповещение', {callback:function(){return true},caption:'Закрыть'});
+            return false;
+    })})
+</script>

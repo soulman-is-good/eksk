@@ -16,12 +16,25 @@
                 </div>
                 <table class="admin-list">
                     <?foreach($models as $model):
-                        $address = User_Address::get(array('@condition'=>array('user_id'=>$model->id,'status'=>'0'),'@order'=>'id ASC','@limit'=>'1'),1);
+                        $addreses = User_Address::get(array('@condition'=>array('user_id'=>$model->id),'@order'=>'status, id ASC'));
                         $profile = User_Settings::get(array('user_id'=>$model->id),1);
+                        $rank = User_Rank::add($model->id);
                         ?>
                     <tr>
                         <td class="ava"><img src="<?=$model->avatar?>" width="100" alt="" /></td>
-                        <td class="name"><a href="/user/<?=$model->id?>.html"><?=$model->fullname?><?=$model->status==0?'<em>'.X3::translate('Не активирован').'</em>':''?></a></td>
+                        <td class="name">
+                            <div class="mb-5"><b><?=$model->ksksurname?> <?=$model->kskname?></b></div>
+                            <div class="mb-5"><em><?=$model->duty?></em></div>
+                            <a href="/user/<?=$model->id?>.html"><?=$model->fullname?><?=$model->status==0?'<em>'.X3::translate('Не активирован').'</em>':''?></a>
+                            <div class="with_stars" style="margin-top:8px;">
+                                <i><?=X3::translate('Рейтинг');?>:</i>
+                                <div class="blank" data-width="<?=$rank?>">
+                                    <div class="starz"></div>
+                                    <div class="hollow"></div>
+                                    <div class="full" style="width:<?=$rank?>%"></div>
+                                </div>
+                            </div>
+                        </td>
                         <td class="ops">
                             <div class="line">
                             <a class="dash" href="#main-info"><span><?=X3::translate('Основная информация')?></span>
@@ -130,16 +143,18 @@
                                         </td>
                                 </tr>
                                 <?endif;?>
+                                <?if(!empty($addreses)) foreach($addreses as $i=>$address):?>
                                 <?if($address):?>
                                 <tr>
                                         <td class="one">
-                                            <em><?=X3::translate('Адрес офиса')?>:</em>
+                                            <em><?=$address->status?X3::translate('Дом').$i:X3::translate('Адрес офиса')?>:</em>
                                         </td>
                                         <td>
                                             <span><?=$address->city->title?>, <?=$address->street->title?>, <?=$address->house?><?if($address->flat>0):?>, <?=X3::translate('офис')?> <?=$address->flat?><?endif;?></span>
                                         </td>
                                 </tr>
                                 <?endif;?>
+                                <?endforeach;?>
                                 </table>
                             </div>
                             </div>

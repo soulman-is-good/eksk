@@ -130,6 +130,47 @@ class Uploads extends X3_Module_Table {
     }
 
     public function actionExcel() {
+        
+function testFormula($sheet,$cell) {
+    $formulaValue = $sheet->getCell($cell)->getValue();
+    echo 'Formula Value is' , $formulaValue , PHP_EOL;
+    $expectedValue = $sheet->getCell($cell)->getOldCalculatedValue();
+    echo 'Expected Value is '  , ((!is_null($expectedValue)) ? $expectedValue : 'UNKNOWN') , PHP_EOL;
+
+
+     PHPExcel_Calculation::getInstance()->writeDebugLog = true;
+    $calculate = false;
+    try {
+        $tokens = PHPExcel_Calculation::getInstance()->parseFormula($formulaValue,$sheet->getCell($cell));
+        echo 'Parser Stack :-' , PHP_EOL;
+        print_r($tokens);
+        echo PHP_EOL;
+        $calculate = true;
+    } catch (Exception $e) {
+        echo 'PARSER ERROR: ' , $e->getMessage() , PHP_EOL;
+
+        echo 'Parser Stack :-' , PHP_EOL;
+        print_r($tokens);
+        echo PHP_EOL;
+    }
+
+    if ($calculate) {
+        try {
+            $cellValue = $sheet->getCell($cell)->getCalculatedValue();
+            echo 'Calculated Value is ' , $cellValue , PHP_EOL;
+
+            echo 'Evaluation Log:' , PHP_EOL;
+            print_r(PHPExcel_Calculation::getInstance()->debugLog);
+            echo PHP_EOL;
+        } catch (Exception $e) {
+            echo 'CALCULATION ENGINE ERROR: ' , $e->getMessage() , PHP_EOL;
+
+            echo 'Evaluation Log:' , PHP_EOL;
+            print_r(PHPExcel_Calculation::getInstance()->debugLog);
+            echo PHP_EOL;
+        }
+    }
+}
         if(!X3::user()->isAdmin() || !isset($_GET['generate']))
             throw new X3_404();
         $type = strtok($_GET['generate'],'.');
@@ -149,14 +190,14 @@ class Uploads extends X3_Module_Table {
         $abd = array_map(create_function('$item','return "D$item";'),$abs);
         $abs = array_merge($abs,$aba,$abb,$abc,$abd);
         if($type == 'user' || $type == 'ksk') {
-            $models = X3::db()->query("SELECT * FROM data_user u INNER JOIN user_settings us ON us.user_id=u.id WHERE role='$type'");
-            $maxaddr = X3::db()->fetch("SELECT COUNT(ua.id) mxa FROM user_address ua INNER JOIN data_user u ON u.id=ua.user_id  WHERE u.role='$type' GROUP BY user_id");
-            $maxaddr = (int)$maxaddr['mxa'] + 1;
+            $models = X3::db()->query("SELECT u.id, u.name, u.surname, u.kskname, u.ksksurname, u.duty, u.gender, u.date_of_birth, u.created_at, us.about, us.home, us.work, us.mobile, us.email, us.skype, us.site
+                FROM data_user u LEFT JOIN user_settings us ON us.user_id=u.id WHERE role='$type'");
             $j=0;
             $sheet->setCellValue("{$abs[$j++]}1", 'ID');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
             if($type == 'ksk'){
                 $sheet->setCellValue("{$abs[$j++]}1", 'Название');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
                 $sheet->setCellValue("{$abs[$j++]}1", 'Должность');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+                $sheet->setCellValue("{$abs[$j++]}1", 'Рейтинг');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
             }
             $sheet->setCellValue("{$abs[$j++]}1", 'Фамилия');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
             $sheet->setCellValue("{$abs[$j++]}1", 'Имя');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
@@ -170,26 +211,22 @@ class Uploads extends X3_Module_Table {
             $sheet->setCellValue("{$abs[$j++]}1", 'E-mail');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
             $sheet->setCellValue("{$abs[$j++]}1", 'Skype');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
             $sheet->setCellValue("{$abs[$j++]}1", 'Веб-сайт');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
-            $i=0;
-            for($i=0;$i<$maxaddr;$i++){
-                if($type=='ksk' && $i==0)
-                    $sheet->setCellValue("{$abs[$j+$i]}1", 'Адрес офиса');
-                elseif($type == 'ksk')
-                    $sheet->setCellValue("{$abs[$j+$i]}1", 'Адрес '.$i);
-                else
-                    $sheet->setCellValue("{$abs[$j+$i]}1", 'Адрес '.($i+1));
-                $sheet->getColumnDimension("{$abs[$j+$i]}")->setAutoSize(true);
-            }
-            $sheet->getStyle("A1:{$abs[$i+$j]}1")->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('FFCCCCCC');
-            $sheet->getStyle("A1:{$abs[$i+$j]}".(mysql_num_rows($models)+1))->getAlignment()->setWrapText(true);
+            $sheet->getStyle("A1:{$abs[$j]}1")->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('FFCCCCCC');
             $k=2;
+            $maxaddr = 0;
             while($u = mysql_fetch_assoc($models)){
                 $j=0;                
                 $sheet->getRowDimension($k)->setRowHeight(-1);
-                $sheet->setCellValue("{$abs[$j++]}$k", $u['user_id']);
+                $sheet->setCellValue("{$abs[$j++]}$k", $u['id']);
                 if($type=='ksk'){
+                    $rank = X3::db()->fetch("SELECT SUM(`rank`) `sum`,COUNT(`id`) AS `cnt` FROM `user_rank` WHERE user_ksk={$u['id']}");
                     $sheet->setCellValue("{$abs[$j++]}$k", $u['name']);
                     $sheet->setCellValue("{$abs[$j++]}$k", $u['duty']);
+                    if($rank['cnt']>0)
+                        $sheet->setCellValueExplicit("{$abs[$j++]}$k", "={$rank['sum']}/{$rank['cnt']}", PHPExcel_Cell_DataType::TYPE_FORMULA);
+                    else
+                        $sheet->setCellValue("{$abs[$j++]}$k", "0");
+                    //testFormula($sheet, "{$abs[$j-1]}$k");die;
                     $sheet->setCellValue("{$abs[$j++]}$k", $u['ksksurname']);
                     $sheet->setCellValue("{$abs[$j++]}$k", $u['kskname']);
                 }else {
@@ -206,18 +243,33 @@ class Uploads extends X3_Module_Table {
                 $sheet->setCellValue("{$abs[$j++]}$k", $u['email']);
                 $sheet->setCellValue("{$abs[$j++]}$k", $u['skype']);
                 $sheet->setCellValue("{$abs[$j++]}$k", $u['site']);
-                $aq = X3::db()->query("SELECT c.title AS city, cr.title AS region, ua.house, ua.flat, ua.status  FROM user_address ua INNER JOIN data_city c ON c.id=ua.city_id INNER JOIN city_region cr ON cr.id=ua.region_id WHERE user_id={$u['user_id']} ORDER BY ua.status, ua.id ASC");
+                $aq = X3::db()->query("SELECT c.title AS city, cr.title AS region, ua.house, ua.flat, ua.status  FROM user_address ua INNER JOIN data_city c ON c.id=ua.city_id INNER JOIN city_region cr ON cr.id=ua.region_id WHERE user_id={$u['id']} ORDER BY ua.status, ua.id ASC");
                 $x = 0;
-                while($addr = mysql_fetch_assoc($aq)){
-                    $sheet->getStyle("{$abs[$j]}$k")->getAlignment()->setWrapText(true);
-                    if($type=='ksk'){
-                        if($addr['status']==0)
-                            $sheet->setCellValue("{$abs[$j++]}$k", $addr['city'] . ", " . $addr['region'] . ", ".$addr['house'].", офис ".$addr['flat']);
-                        else
-                            $sheet->setCellValue("{$abs[$j++]}$k", $addr['city'] . ", " . $addr['region'] . ", дом ".$addr['house']);
-                    }else
-                        $sheet->setCellValue("{$abs[$j++]}$k", $addr['city'] . ", " . $addr['region'] . ", ".$addr['house'].", квартира ".$addr['flat']);
-                    $x++;
+                if(is_resource($aq)){
+                    while($addr = mysql_fetch_assoc($aq)){
+                      //
+                        if($maxaddr<$x+1){
+                            if($type=='ksk' && $x==0)
+                                $sheet->setCellValue("{$abs[$j]}1", 'Адрес офиса');
+                            elseif($type == 'ksk')
+                                $sheet->setCellValue("{$abs[$j]}1", 'Адрес '.$x);
+                            else
+                                $sheet->setCellValue("{$abs[$j]}1", 'Адрес '.($x+1));
+                            $sheet->getStyle("{$abs[$j]}1")->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('FFCCCCCC');
+                            $sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+                            $maxaddr = $x+1;
+                        }
+                      //
+                        $sheet->getStyle("{$abs[$j]}$k")->getAlignment()->setWrapText(true);
+                        if($type=='ksk'){
+                            if($addr['status']==0)
+                                $sheet->setCellValue("{$abs[$j++]}$k", $addr['city'] . ", " . $addr['region'] . ", ".$addr['house'].", офис ".$addr['flat']);
+                            else
+                                $sheet->setCellValue("{$abs[$j++]}$k", $addr['city'] . ", " . $addr['region'] . ", дом ".$addr['house']);
+                        }else
+                            $sheet->setCellValue("{$abs[$j++]}$k", $addr['city'] . ", " . $addr['region'] . ", ".$addr['house'].", квартира ".$addr['flat']);
+                        $x++;
+                    }
                 }
                 $k++;
             }
@@ -249,7 +301,11 @@ class Uploads extends X3_Module_Table {
                 foreach($answers as $x=>$answer){
                     $cnt=X3::db()->fetch("SELECT COUNT(0) cnt FROM vote_stat WHERE vote_id='{$u['id']}' AND answer='$x'");
                     $sheet->getStyle("{$abs[$j]}$k")->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('FFFACCCC');
+                    $sheet->getStyle("{$abs[$j]}1")->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('FFCCCCCC');
+                    $sheet->setCellValue("{$abs[$j]}1", "Ответ ".($x+1));
                     $sheet->setCellValue("{$abs[$j++]}$k", $answer);
+                    $sheet->getStyle("{$abs[$j]}1")->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('FFCCCCCC');
+                    $sheet->setCellValue("{$abs[$j]}1", "Кол-во ".($x+1));
                     $sheet->setCellValue("{$abs[$j++]}$k", (int)$cnt['cnt']);
                 }
                 $k++;
@@ -291,6 +347,7 @@ class Uploads extends X3_Module_Table {
         $objWriter->save('php://output');
 //        $objWriter->save('uploads/ksk.xls');
 //        header('Location: /uploads/ksk.xls');
+        exit;
     }
 }
 

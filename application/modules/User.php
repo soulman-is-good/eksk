@@ -225,8 +225,19 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             $data = $_POST['User_Settings'];
             //$_POST['User']['date_of_birth'] = mktime(12,0,0,$_POST['User']['date_of_birth'][1],$_POST['User']['date_of_birth'][0],$_POST['User']['date_of_birth'][2]);
             $profile->getTable()->acquire($data);
-            if(!$profile->save()){
+            $profile->mailWarning = (int)isset($data['mailWarning']);
+            $profile->smsWarning = (int)isset($data['smsWarning']);
+            $profile->mailMessages = (int)isset($data['mailMessages']);
+            $profile->smsMessages = (int)isset($data['smsMessages']);
+            $profile->mailForum = (int)isset($data['mailForum']);
+            $profile->smsForum = (int)isset($data['smsForum']);
+            $profile->mailVote = (int)isset($data['mailVote']);
+            $profile->smsVote = (int)isset($data['smsVote']);
+            if(!$profile->save() && X3::user()->isAdmin()){
+                echo '<h1>Это сообщение видят только администраторы: '.X3_HTML::errorSummary($profile).' '.X3::db()->getErrors();
             }
+            if(isset($data['smsTime']))
+                $hash = '#mail-settings';
         }
         $address_errors = array();
         if(isset($_POST['Address'])){

@@ -2,6 +2,7 @@
 if(NULL === ($profile = User_Settings::get(array('user_id'=>$user->id),1)))
     $profile = new User_Settings;
 $addreses = User_Address::get(array('user_id'=>$user->id));
+$rank = User_Rank::add($user->id)
 ?>
 <div class="eksk-wnd">
     <div class="head">
@@ -25,10 +26,10 @@ $addreses = User_Address::get(array('user_id'=>$user->id));
             <?if($user->role == 'ksk'):?>
             <div class="with_stars">
                 <i><?=X3::translate('Рейтинг');?>:</i>
-                <div class="blank" data-width="<?=User_Rank::add($user->id)?>">
+                <div class="blank" data-width="<?=$rank?>">
                     <div class="starz"></div>
                     <div class="hollow"></div>
-                    <div class="full" style="width:<?=User_Rank::add($user->id)?>%"></div>
+                    <div class="full" style="width:<?=$rank?>%"></div>
                 </div>
             </div>
             <?if(!X3::user()->isKsk()):?>

@@ -20,15 +20,15 @@
             <tr><td width="100%" class="fc">
         <table class="admin-list">
             <?$i=1;while($m = mysql_fetch_assoc($models)):
-                $u = array('id'=>$m['id'],'name'=>$m['name'],'surname'=>$m['surname'],'kskname'=>$m['kskname'],'ksksurname'=>$m['ksksurname'],'image'=>$m['image']);
+                $u = array('id'=>$m['user_id'],'name'=>$m['name'],'surname'=>$m['surname'],'kskname'=>$m['kskname'],'ksksurname'=>$m['ksksurname'],'image'=>$m['image']);
                 $user = new User();
                 $user->acquire($u);
                 ?>
             <tr>
-                <td class="ava"><a href="/message/with/<?=$user->id?>.html"><img src="<?=$user->avatar?>" width="100" alt="" /></a></td>
-                <td class="name" width="150"><a href="/message/with/<?=$user->id?>.html"><?=$user->fullname?></a></td>
+                <td class="ava"><a href="/user/<?=$user->id?>.html"><img src="<?=$user->avatar?>" width="100" alt="" /></a></td>
+                <td class="name" width="150"><a href="/user/<?=$user->id?>.html"><?=$user->fullname?></a></td>
                 <td class="text">
-                    <a href="/forum/<?=md5($m['title'].$user->id)?>.html"><?=$m['title']?><br/><em><?=nl2br(Search::highlight($m['content']))?></em></a>
+                    <a href="/forum/<?=md5($m['title'].$m['id'])?>.html"><?=$m['title']?><br/><em><?=nl2br(Search::highlight($m['content']))?></em></a>
                 </td>
             </tr>
             <?endwhile;?>

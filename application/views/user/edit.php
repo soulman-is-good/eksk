@@ -487,8 +487,7 @@ $perr = $profile->getTable()->getErrors();
             </form>
             </div>
             <div class="tab" id="mail-settings">
-                <em>В разработке</em>
-                <?/*
+                <?/*<em>В разработке</em>*/?>
                 <?=SysSettings::getValue('User_Settings.Notify', 'text', 'Текст в настройках уведомлений', null, '<p>Внимание! Укажите номер телефона чтобы получить уведомления о событиях на сайте.</p>
                 <p>Отметьте события о которых вы хотите получать уведомления по эл. почте или в SMS (для абонентов Билайн, KCell, Active, TELE2, Pathword, Дос в Казахстане)</p>')?>
                 <br/>
@@ -510,10 +509,10 @@ $perr = $profile->getTable()->getErrors();
                                 <label><?=X3::translate('Мои оповещения');?></label>
                             </td>
                             <td class="field" style="text-align:center">
-                                <?=X3_Html::form_tag('input', array('type'=>'checkbox'))?>
+                                <?=$form2->checkbox('mailWarning')?>
                             </td>
                             <td class="field" style="text-align:center">
-                                <?=X3_Html::form_tag('input', array('type'=>'checkbox'))?>
+                                <?=$form2->checkbox('smsWarning')?>
                             </td>
                         </tr>
                         <tr>
@@ -521,10 +520,10 @@ $perr = $profile->getTable()->getErrors();
                                 <label><?=X3::translate('Мои сообщения');?></label>
                             </td>
                             <td class="field" style="text-align:center">
-                                <?=X3_Html::form_tag('input', array('type'=>'checkbox'))?>
+                                <?=$form2->checkbox('mailMessages')?>
                             </td>
                             <td class="field" style="text-align:center">
-                                <?=X3_Html::form_tag('input', array('type'=>'checkbox'))?>
+                                <?=$form2->checkbox('smsMessages')?>
                             </td>
                         </tr>
                         <tr>
@@ -532,10 +531,10 @@ $perr = $profile->getTable()->getErrors();
                                 <label><?=X3::translate('Темы обсуждения');?></label>
                             </td>
                             <td class="field" style="text-align:center">
-                                <?=X3_Html::form_tag('input', array('type'=>'checkbox'))?>
+                                <?=$form2->checkbox('mailForum')?>
                             </td>
                             <td class="field" style="text-align:center">
-                                <?=X3_Html::form_tag('input', array('type'=>'checkbox'))?>
+                                <?=$form2->checkbox('smsForum')?>
                             </td>
                         </tr>
                         <tr>
@@ -543,13 +542,16 @@ $perr = $profile->getTable()->getErrors();
                                 <label><?=X3::translate('Опросы (голосования)');?></label>
                             </td>
                             <td class="field" style="text-align:center">
-                                <?=X3_Html::form_tag('input', array('type'=>'checkbox'))?>
+                                <?=$form2->checkbox('mailVote')?>
                             </td>
                             <td class="field" style="text-align:center">
-                                <?=X3_Html::form_tag('input', array('type'=>'checkbox'))?>
+                                <?=$form2->checkbox('smsVote')?>
                             </td>
                         </tr>
                     </table>
+                    <?php
+                    $time = explode('-',$profile->smsTime);
+                    ?>
                 <div class="hr">&nbsp;</div>
                     <table class="eksk-form" >
                         <tr>
@@ -557,11 +559,12 @@ $perr = $profile->getTable()->getErrors();
                                 <label><?=X3::translate('Присылать SMS с');?></label>
                             </td>
                             <td class="field">
-                                <div class="wrapper inline-block"><?=X3_Html::form_tag('input', array('type'=>'text','style'=>'width:48px','class'=>'string time'))?></div>
+                                <?=$form2->hidden('smsTime')?>
+                                <div class="wrapper inline-block"><?=X3_Html::form_tag('input', array('type'=>'text','style'=>'width:48px','id'=>'starttime','value'=>$time[0],'class'=>'string time'))?></div>
                             </td>
                             <td class="field">
                                 <label><?=X3::translate('до');?></label> 
-                                <div class="wrapper inline-block"><?=X3_Html::form_tag('input', array('type'=>'text','style'=>'width:48px','class'=>'string time'))?></div> 
+                                <div class="wrapper inline-block"><?=X3_Html::form_tag('input', array('type'=>'text','style'=>'width:48px','id'=>'endtime','value'=>$time[1],'class'=>'string time'))?></div> 
                                 <label><?=X3::translate('по алматинскому времени');?></label>
                             </td>
                         </tr>
@@ -571,7 +574,7 @@ $perr = $profile->getTable()->getErrors();
                             <td>&nbsp;</td>
                         </tr>
                     </table>
-                </form>*/?>
+                </form>
             </div>
         </div>
     </div>
@@ -584,7 +587,43 @@ $perr = $profile->getTable()->getErrors();
     var acnt = <?=++$acnt;?>;
     addrtmpl = $('.address:last').html();
     maptmpl = $('.map_tpl:last').html();
+    function testtime(tm){
+        var hm = tm.split(':');
+        hm[0] = hm[0]>23?23:hm[0];
+        hm[1] = hm[1]>59?59:hm[1];
+        return hm.join(':');
+    }
     $(function(){
+        $('#starttime, #endtime').keydown(function(e){
+            //38 - up 40 - down
+            var hm = $(this).val().split(':').map(function(item){return 1*item;});
+            if(e.keyCode == 38){
+                hm[1]++;
+                if(hm[1]>59) hm[0]++,hm[1]=0;
+                if(hm[0]>23) hm[0] = 0;
+                if(hm[0]<10) hm[0] = '0' + hm[0].toString();
+                if(hm[1]<10) hm[1] = '0' + hm[1].toString();
+                $(this).val(hm.join(':'));
+            }
+            if(e.keyCode == 40){
+                hm[1]--;
+                if(hm[1]<0) hm[0]--,hm[1]=59;
+                if(hm[0]<0) hm[0] = 23;
+                if(hm[0]<10) hm[0] = '0' + hm[0].toString();
+                if(hm[1]<10) hm[1] = '0' + hm[1].toString();
+                $(this).val(hm.join(':'));
+            }
+        })
+        $('#starttime, #endtime').change(function(){
+            var start = $('#starttime').val();
+            var end = $('#endtime').val();
+            start = testtime(start);
+            $('#starttime').val(start);
+            end = testtime(end);
+            $('#endtime').val(end);
+            $('#User_Settings_smsTime').val(start+'-'+end);
+        })
+        
         $.mask.definitions['w'] = '[0-9]{0,1}';
         //$.mask.definitions['p'] = '[0-9]{2,5} [0-9]{2,5}';
         function phone(el,o,t,cmsk,msk){
@@ -629,6 +668,7 @@ $perr = $profile->getTable()->getErrors();
         phone($('#User_Settings_home'),5,9,"999ww","999 99 9w");
         phone($('#User_Settings_work'),5,18,"999ww","999 99 9w (wwwwww)");
         phone($('#User_phone'),3,9,"999","999 99 99");
+        $('.string.time').mask("99:99");
         //Address
         $('.city_id').live('change',function(){
             var id = $(this).attr('id').split('_').pop();

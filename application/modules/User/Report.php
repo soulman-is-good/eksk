@@ -456,7 +456,7 @@ class User_Report extends X3_Module_Table {
     public static function search($word) {
         $id = X3::user()->id;
         $scope = array(
-            '@select'=>'f.title, f.id, u.name, u.surname, u.kskname, u.ksksurname, u.image',
+            '@select'=>'f.title, f.id,u.id as user_id, u.name, u.surname, u.kskname, u.ksksurname, u.image',
             '@from'=>array('user_report'=>'f'),
             '@group'=>'f.id',
         );

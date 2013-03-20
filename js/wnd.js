@@ -260,6 +260,12 @@ function wnd(content,modal,width,height,closeOnTap){
             $.rusWindows[id].setPositionXY(ops.position.x,ops.position.y);
         return $.rusWindows[id];
     }
+    
+    /**
+     * @param mixed content could be either text/html or jquery or a DOMElement
+     * @param string title Title of a dialog
+     * @param object button json object like {callback:function(){},caption:'Button caption'}
+     */
     $.dialog = function(content,title,button){
         var ops = {
             'modal':true,

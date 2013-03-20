@@ -152,7 +152,30 @@ class Forum extends X3_Module_Table {
                 throw new X3_404();
             $query = array('@condition' => array('forum_id'=>$theme->id), '@order' => 'created_at ASC');
             $count = Forum_Message::num_rows($query);
-            $paginator = new Paginator(__CLASS__."#$theme->id", $count);
+            //'Search the page' logic
+            if(X3::user()->search!=null && X3::user()->search['type'] == 'themes' && strpos($_SERVER['HTTP_REFERER'],'/search')){
+                $paginator = new Paginator(__CLASS__."#$theme->id", $count);
+                $queryZ = $query;
+                $queryZ['@select'] = 'content';
+                $q = new X3_MySQL_Query('forum_message');
+                $a = X3::db()->query($q->formQuery($queryZ)->buildSQL());
+                if(!is_resource($a))
+                    throw new X3_Exception(X3::db()->getErrors().X3::db()->lastQuery());
+                $i = 0;
+                $p = 0;
+                $f=false;
+                while(list($data) = mysql_fetch_row($a)){
+                    $p = (int)floor($i++/$paginator->limit);
+                    if(($f=strpos($data,X3::user()->search['word']))!==false)
+                        break;
+                }
+                if($f!==false){
+                    X3::user()->MessagePage = $p;
+                    $paginator->page = $p;
+                    $paginator->offset = $p * $paginator->limit;
+                }
+            }else
+                $paginator = new Paginator(__CLASS__."#$theme->id", $count);
             $query['@limit'] = $paginator->limit;
             $query['@offset'] = $paginator->offset;
             $models = Forum_Message::get($query);
@@ -355,7 +378,7 @@ class Forum extends X3_Module_Table {
                 //Notify::sendMail('NewMessage',array('name'=>X3::user()->fullname,'message'=>nl2br($mes->content)),$userto['email']);
                 Forum::update(array('updated_at'=>time()), array('id'=>$mes->forum_id));
                 //Forum_Users::update(array('updated_at'=>time()), array('forum_id'=>$mes->forum_id,'user_id'=>X3::user()->id));
-                if($mes->user_to>0){
+                if($mes->user_to>0 && (FALSE == ($userset = X3::db()->fetch("SELECT * FROM user_settings WHERE user_id='$mes->user_to'")) || $userset['mailForum']==1)){
                     $forum = Forum::getByPk($mes->forum_id);
                     $from = User::getByPk(X3::user()->id);
                     $to = X3::db()->fetch("SELECT id, CONCAT(name,' ',surname) username, email FROM data_user WHERE id=$mes->user_to");
@@ -450,14 +473,17 @@ class Forum extends X3_Module_Table {
             }else
                 $c = "1";
         }
-        $users = X3::db()->query("SELECT u.id, CONCAT(name,' ',surname) username, email FROM data_user u INNER JOIN user_address a1 ON a1.user_id=u.id WHERE 
+        $users = X3::db()->query("SELECT u.id, CONCAT(name,' ',surname) username, u.email FROM data_user u INNER JOIN user_address a1 ON a1.user_id=u.id WHERE 
             u.id<>$model->user_id AND $c
             GROUP BY u.id
             ");
         $uids = array();
         while($user = mysql_fetch_assoc($users)){
-            $uids[] = $user['id'];
-            Notify::sendMail('newForum', array('text'=>$model->title,'name'=>$user['username'],'from'=>X3::user()->fullname,'link'=>X3::app()->baseUrl . '/forum/'.md5($model->title.$model->id).'.html'), $user['email']);
+            $userset = X3::db()->fetch("SELECT * FROM user_settings us WHERE user_id='{$user['id']}'");
+            if($userset['mailForum']){
+                $uids[] = $user['id'];
+                Notify::sendMail('newForum', array('text'=>$model->title,'name'=>$user['username'],'from'=>X3::user()->fullname,'link'=>X3::app()->baseUrl . '/forum/'.md5($model->title.$model->id).'.html'), $user['email']);
+            }
         }
     }
 
@@ -490,7 +516,7 @@ class Forum extends X3_Module_Table {
     public static function search($word) {
         $id = X3::user()->id;
         $scope = array(
-            '@select'=>'fm.content,f.title, f.id, um.name, um.surname, um.kskname, um.ksksurname, um.image',
+            '@select'=>'fm.content,f.title, f.id, fm.id message_id, um.id user_id, um.name, um.surname, um.kskname, um.ksksurname, um.image',
             '@from'=>array('forum_message'=>'fm'),
             '@group'=>'f.id'
         );

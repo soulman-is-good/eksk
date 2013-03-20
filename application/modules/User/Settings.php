@@ -18,6 +18,15 @@ class User_Settings extends X3_Module_Table {
         'skype' => array('string','default'=>''),
         'email' => array('email','default'=>''),
         'site' => array('string','default'=>''),
+        'mailWarning' => array('boolean','default'=>'1'),
+        'mailMessages' => array('boolean','default'=>'1'),
+        'mailForum' => array('boolean','default'=>'1'),
+        'mailVote' => array('boolean','default'=>'1'),
+        'smsWarning' => array('boolean','default'=>'0'),
+        'smsMessages' => array('boolean','default'=>'0'),
+        'smsForum' => array('boolean','default'=>'0'),
+        'smsVote' => array('boolean','default'=>'0'),
+        'smsTime' => array('string','default'=>'00:00-00:00'),
     );
     
     public function onValidate($attr,$pass) {

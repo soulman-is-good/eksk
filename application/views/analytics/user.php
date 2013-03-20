@@ -16,7 +16,7 @@
                 </div>
                 <table class="admin-list">
                     <?foreach($models as $model):
-                        //$info = X3::db()->fetch("SELECT * FROM user_settings WHERE user_id='$model->id'");
+                        $addreses = User_Address::get(array('@condition'=>array('user_id'=>$model->id),'@order'=>'id ASC'));
                         $profile = User_Settings::get(array('user_id'=>$model->id),1);
                         ?>
                     <tr>
@@ -124,6 +124,18 @@
                                         </td>
                                 </tr>
                                 <?endif;?>
+                                <?if(!empty($addreses)) foreach($addreses as $i=>$address):?>
+                                <?if($address):?>
+                                <tr>
+                                        <td class="one">
+                                            <em><?=X3::translate('Адрес')?> <?=$i+1?>:</em>
+                                        </td>
+                                        <td>
+                                            <span><?=$address->city->title?>, <?=$address->street->title?>, <?=$address->house?><?if($address->flat>0):?>, <?=X3::translate('квартира')?> <?=$address->flat?><?endif;?></span>
+                                        </td>
+                                </tr>
+                                <?endif;?>
+                                <?endforeach;?>
                                 </table>
                             </div>
                             </div>
