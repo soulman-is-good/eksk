@@ -38,7 +38,7 @@
                             <div class="quote"><i>&#147;</i><span><?=nl2br(X3_String::create($parent->content)->carefullCut(512))?></span></div>
                             <?endif;?>
                                 <?if(X3::user()->search!=null && X3::user()->search['type']=='themes'):?>
-                                    <p><?=nl2br(str_replace(X3::user()->search['word'],"<b style='color:#922'>".X3::user()->search['word']."</b>",$model->content))?></p>
+                                    <p><?=nl2br(str_ireplace(X3::user()->search['word'],"<b style='color:#922'>".X3::user()->search['word']."</b>",$model->content))?></p>
                                 <?else:?>
                                     <p><?=nl2br($model->content)?></p>
                                 <?endif;?>
@@ -217,5 +217,8 @@
                 return false;
             })
         })
+    <?if($goto>0):?>
+        $(document).scrollTop($('[pid="<?=$goto?>"]').position().top);
+    <?endif;?>
     })
 </script>

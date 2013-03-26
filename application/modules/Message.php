@@ -92,7 +92,7 @@ WHERE a2.user_id=".X3::user()->id." AND a1.user_id<>a2.user_id AND `a2`.`city_id
                 $f=false;
                 while(list($data) = mysql_fetch_row($a)){
                     $p = (int)floor($i++/$paginator->limit);
-                    if(($f=strpos($data,X3::user()->search['word']))!==false)
+                    if(($f=mb_stripos($data,X3::user()->search['word'],null,'UTF-8'))!==false)
                         break;
                 }
                 if($f!==false){

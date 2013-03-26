@@ -153,10 +153,11 @@ class Forum extends X3_Module_Table {
             $query = array('@condition' => array('forum_id'=>$theme->id), '@order' => 'created_at ASC');
             $count = Forum_Message::num_rows($query);
             //'Search the page' logic
+            $goto = 0;
             if(X3::user()->search!=null && X3::user()->search['type'] == 'themes' && strpos($_SERVER['HTTP_REFERER'],'/search')){
                 $paginator = new Paginator(__CLASS__."#$theme->id", $count);
                 $queryZ = $query;
-                $queryZ['@select'] = 'content';
+                $queryZ['@select'] = 'id, content';
                 $q = new X3_MySQL_Query('forum_message');
                 $a = X3::db()->query($q->formQuery($queryZ)->buildSQL());
                 if(!is_resource($a))
@@ -164,13 +165,16 @@ class Forum extends X3_Module_Table {
                 $i = 0;
                 $p = 0;
                 $f=false;
-                while(list($data) = mysql_fetch_row($a)){
+                while(list($mid,$data) = mysql_fetch_row($a)){
                     $p = (int)floor($i++/$paginator->limit);
-                    if(($f=strpos($data,X3::user()->search['word']))!==false)
+                    if(($f=mb_stripos($data,X3::user()->search['word'],null,'UTF-8'))!==false){
+                        $goto = $mid;
                         break;
+                    }
                 }
                 if($f!==false){
-                    X3::user()->MessagePage = $p;
+                    $t = "Forum#{$theme->id}Page";
+                    X3::user()->$t = $p;
                     $paginator->page = $p;
                     $paginator->offset = $p * $paginator->limit;
                 }
@@ -197,7 +201,7 @@ class Forum extends X3_Module_Table {
             }
             $fu->save();
                 //Forum_Users::update(array('updated_at'=>time()), array('forum_id'=>$theme->id,'user_id'=>X3::user()->id));
-            $this->template->render('show', array('models' => $models,'theme'=>$theme, 'count' => $count, 'paginator' => $paginator,'users'=>$users,'with'=>$theme->id));
+            $this->template->render('show', array('models' => $models,'theme'=>$theme, 'count' => $count, 'paginator' => $paginator,'users'=>$users,'with'=>$theme->id,'goto'=>$goto));
         }else
             throw new X3_404();
     }
