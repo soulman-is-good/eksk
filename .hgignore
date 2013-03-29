@@ -9,3 +9,4 @@ syntax: glob
 nbproject
 PHPExcel
 PHPExcel.php
+config/main.php
