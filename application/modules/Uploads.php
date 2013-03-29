@@ -197,7 +197,7 @@ function testFormula($sheet,$cell) {
             if($type == 'ksk'){
                 $sheet->setCellValue("{$abs[$j++]}1", 'Название');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
                 $sheet->setCellValue("{$abs[$j++]}1", 'Должность');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
-                $sheet->setCellValue("{$abs[$j++]}1", 'Рейтинг');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+                $sheet->setCellValue("{$abs[$j++]}1", 'Рейтинг, %');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
             }
             $sheet->setCellValue("{$abs[$j++]}1", 'Фамилия');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
             $sheet->setCellValue("{$abs[$j++]}1", 'Имя');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
