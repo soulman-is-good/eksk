@@ -25,7 +25,11 @@ class Admin extends X3_Module {
             $user->email = $email;
             $user->status = 0;
             if(!$user->save()){
-                echo json_encode(array('status'=>'error','message'=>X3::translate('Введен не верный E-Mail адрес')));
+                $errs = $user->getTable()->getErrors();
+                if(isset($errs['email']))
+                    echo json_encode(array('status'=>'error','message'=>$errs['email'][0]));
+                else
+                    echo json_encode(array('status'=>'error','message'=>'Возникла неизвестная ошибка. Обратитесь к Администратору'));
                 exit;
             }
             

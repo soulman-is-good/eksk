@@ -147,7 +147,7 @@ class Warning extends X3_Module_Table {
                 $model->type = 'user';
             if(isset($_POST['public']))
                 $model->status = '1';
-            if($model->validate()){
+            if($model->save()){
                 if(isset($_POST['public'])){
                     $this->notify($model);
                 }
