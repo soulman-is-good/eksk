@@ -283,7 +283,7 @@ function wnd(content,modal,width,height,closeOnTap){
             content = '';
         ops.title = $('<h1 />').append(title);
         var div = $('<div />');
-        var footer = $('<div />').css({'padding':'5px 5px 5px 15px','margin-left':'46px'});
+        var footer = $('<div />').css({'padding':'5px 5px 15px 15px','margin-left':'46px'});
         div.append(content);
         ops.footer = footer;
         var zindex = 1*parseInt($('.blackscreen:last').css('z-index')) + 10;
