@@ -7,6 +7,7 @@
     </div>
     <div class="content">
         <div class="admin-list">
+            <a class="m-10 inline-block" href="/message/"><i>←</i><?=X3::translate('Вернуться к списку');?></a>
             <?foreach($models as $model):
                 if($model->hidden_id == X3::user()->id) continue;
                 $user = $users[$model->user_from];

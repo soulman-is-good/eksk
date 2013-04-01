@@ -34,9 +34,12 @@ if(is_file('uploads/User/'.$me->image))
                 ?>
                 <div href="/message/with/<?=$model->id?>.html" class="message_block<?=$m==false || $m['status']==1 || $m['user_from'] == $id?'':' unread'?>">
                     <div class="inside_block">
-                        <div class="left_side">
+                        <div class="left_side" style="position: relative">
                             <a href="/message/with/<?=$model->id?>.html">
                                 <img width="100" src="<?=$model->avatar?>" />
+                                <?if(User::isUserOnline($model->id)):?>
+                                <img alt="O" src="/images/online.png" style="position: absolute;right:10px;bottom:0;" />
+                                <?endif;?>
                             </a>
                         </div>
                         <div class="middle_side">

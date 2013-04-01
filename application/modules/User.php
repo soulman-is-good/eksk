@@ -134,6 +134,14 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
         return !is_null($online);
     }
     
+    public static function isUserOnline($id) {
+        $online = null;
+        if(X3::app()->hasComponent('mongo') && X3::mongo()!=null){
+            $online = X3::mongo()->query(array('online:findOne'=>array('user_id'=>$id)));
+        }
+        return !is_null($online);
+    }
+    
     public function actionIndex() {
         if(isset($_GET['id']))
             $id = (int)$_GET['id'];

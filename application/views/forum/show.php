@@ -7,6 +7,7 @@
     </div>
     <div class="content">
         <div class="admin-list">
+            <a href="/forum/"><i>←</i><?=X3::translate('Вернуться к списку тем');?></a>
             <?foreach($models as $model):
                 $user = $users[$model->user_id];
                 $m = $model->user_to>0?$users[$model->user_to]:false;
@@ -52,7 +53,7 @@
                                 <div class="del"><a href="/forum/delete/message/<?=$model->id?>.html" class="map_link remove"><img src="/images/cross.png" alt="<?=X3::translate('Удалить')?>" title="<?=X3::translate('Удалить')?>" /></a></div>
                                 <?endif;?>
                                 <?if($model->user_id != X3::user()->id):?>
-                                <br/><a data-uid="<?=$model->user_id?>" data-pid="<?=$model->id?>" href="#" class="answer button">Ответить</a>
+                                <br/><a data-uid="<?=$model->user_id?>" data-pid="<?=$model->id?>" href="#" class="answer button"><?=X3::translate('Ответить');?></a>
                                 <?endif;?>
                         </div>
                         </div>

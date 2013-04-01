@@ -59,7 +59,7 @@ if(is_file('uploads/User/'.$me->image)){
                                 <a style="display:block;margin-bottom:15px" href="/forum/create/id/<?=$model->id?>.html"><span><?=X3::translate('Редактировать')?></span></a>
                                 <a style="display:block;margin-bottom:15px" href="/forum/public/id/<?=$model->id?>.html"><span><?=X3::translate('Опубликовать')?></span></a>
                             <?else:?>
-                                <a style="display:block;margin-bottom:15px" href="/forum/<?=$model->id?>.html"><span><?=X3::translate('Перейти к теме')?></span></a>
+                                <a style="display:block;margin-bottom:15px" href="/forum/<?=md5($model->title.$model->id)?>.html"><span><?=X3::translate('Перейти к теме')?></span></a>
                                 <em style="display:block;margin-bottom:15px"><?=X3::translate('Опубликовано')?></em>
                             <?endif;?>
                         <a href="/forum/delete/id/<?=$model->id?>.html" onclick="return confirm('Действительно удалить эту тему со всеми сообщениями?');"><span><?=X3::translate('Удалить')?></span></a>
