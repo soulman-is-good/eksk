@@ -189,7 +189,7 @@ class User_Report extends X3_Module_Table {
                 $this->redirect('/reports/');
             }
         }
-        X3::app()->datapicker = true;
+        X3::app()->global['datapicker'] = true;
         $this->template->render('@views:user:report_form.php', array('model' => $model));
     }
 

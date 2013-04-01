@@ -192,7 +192,7 @@ class Vote extends X3_Module_Table {
                 $this->redirect('/vote/');
             }
         }
-        X3::app()->datapicker = true;
+        X3::app()->global['datapicker'] = true;
         $this->template->render('form', array('model' => $model));
     }
 
