@@ -7,7 +7,7 @@
 <link href="/css/style.css" type="text/css" rel="stylesheet" />
 <title><?=X3::app()->name?></title>
 <script type="text/javascript" src="/js/jquery.js"></script>
-<?if(isset(X3::app()->datapicker)):?>
+<?if(isset(X3::app()->global['datapicker'])):?>
 <link href="http://code.jquery.com/ui/1.10.0/themes/cupertino/jquery-ui.css" type="text/css" rel="stylesheet" />
 <script type="text/javascript" src="http://code.jquery.com/ui/1.10.0/jquery-ui.js"></script>
 <?endif;?>
