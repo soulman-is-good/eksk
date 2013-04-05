@@ -79,6 +79,16 @@ class Notify extends X3_Module_Table{
         return true;
     }
     
+    public function sendSms($mailName,$phone,$data=array()) {
+        if(NULL===($sms = Sms::get(array('name'=>$mailName),1)))
+            return "Нет шаблона с именем '$mailName'";
+        if($sms->status==0)
+            return "Шаблон '$mailName' не открыт к рассылке";
+        $text = $this->formLetter($data,null,$sms->text);
+        Sms_Stack::add($phone,$text);
+        return true;
+    }
+    
         
     public static function sendMail($mailName,$data=array(),$to=null,$from=null,$cc=array()) {
         if(NULL===($mail = self::get(array('name'=>$mailName),1)))

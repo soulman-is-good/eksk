@@ -36,6 +36,17 @@ class Sms_Stack extends X3_Module_Table {
     public static function getByPk($pk,$class=__CLASS__) {
         return parent::getByPk($pk,$class);
     }
+    
+    public static function add($phone, $text,$from="."){
+        $m = new self;
+        $ph = "7".substr(preg_replace("/[^0-9]/", "", $phone),0,10);
+        $m->phone = $ph;
+        $m->text = $text;
+        $m->from = $from;
+        $m->created_at = time();
+        $m->save();
+    }
+    
     public function fieldNames() {
         return array(
             'from'=>'От кого',
