@@ -13,6 +13,7 @@ function wnd(content,modal,width,height,closeOnTap){
 	this.shiftX = null;
 	this.shiftY = null;
 	this.title = null;
+        this.onclose = function(){};
 	var self=this;
 	var closeText = 'Закрыть';
 	
@@ -187,6 +188,9 @@ function wnd(content,modal,width,height,closeOnTap){
 		$(self.blackscreen).fadeOut(200, function(){
 			$(self.blackscreen).remove();
 		})
+                if(typeof self.onclose == 'function'){
+                    self.onclose.call(self);
+                }
                 return this;
 	}
 	this.draw = function(){
@@ -291,7 +295,7 @@ function wnd(content,modal,width,height,closeOnTap){
         var ok = {callback:function(){},caption:'Ok'};
         if(button !== 'no buttons'){
             ok = $.extend({}, ok, button);
-            footer.append($('<button />').attr({'type':'button'}).html(ok.caption).click(function(){if(ok.callback.call(rwnd))rwnd.close()}));
+            footer.append($('<button />').attr({'type':'button'}).html(ok.caption).click(function(){if(ok.callback.call(rwnd)!==false)rwnd.close()}));
         }
         $(rwnd.blackscreen).css('z-index',zindex);
         $(rwnd.content).parent().css('z-index',zindex+1)

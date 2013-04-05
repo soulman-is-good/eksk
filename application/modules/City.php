@@ -84,10 +84,58 @@ class City extends X3_Module_Table {
         throw new X3_404();
     }
     
+    public function actionImport(){
+        if(!X3::user()->isAdmin() || !isset($_POST['city_id']) || null == ($city = City::getByPk((int)$_POST['city_id'])))
+            throw new X3_404();
+        $u = new Upload('excel',null,array('xls','xlsx'));
+        if($u->message != false){
+            die(json_encode(array('status'=>'ERROR','message'=>'Ошибка загрузки файла: '.$u->message)));
+        }
+        require_once(X3::app()->basePath . "/application/extensions/PHPExcel.php");
+        $validLocale = PHPExcel_Settings::setLocale('ru');
+        //$sheet = new PHPExcel_Worksheet;
+        $objReader = PHPExcel_IOFactory::createReaderForFile($u->tmp_name)->load($u->tmp_name);
+        $sheet = $objReader->getActiveSheet();
+        $rezult = 0;
+        $total = 0;
+        $msg = '';
+        
+        foreach($sheet->getRowIterator() as $row){
+            $y = $row->getRowIndex();
+            $street = $sheet->getCellByColumnAndRow(0, $y)->getValue();
+            if($street!=''){
+                $total++;
+                $res = X3::db()->fetch("SELECT city_id FROM city_region WHERE title LIKE '$street'");
+                if(!$res || $res['city_id']!=$city->id){
+                    $s = new City_Region();
+                    $s->city_id = $city->id;
+                    $s->title = $street;
+                    $s->weight = $y;
+                    if($s->save())
+                        $rezult++;
+                    else{
+                        $msg .= "#row$y: ".X3_Html::errorSummary($s).' '.X3::db()->getErrors()."<br>";
+                    }
+                }elseif(!$res)
+                    $msg .= "#row$y: ".X3::db()->getErrors()."<br>";
+            }
+        }
+        @unlink($u->tmp_name);
+        die(json_encode(array('status'=>'OK','message'=>"Всего улиц: $total<br>Новых улиц добавлено:$rezult".($msg!=''?"<br>Ошибки при выполенении:<p style='color:#822'>$msg<\/p>":''))));
+    }
+        
     public function getDefaultScope() {
         return array('@order'=>'weight');
     }
 
+    public function onDelete($tables, $condition) {
+        if (strpos($tables, $this->tableName) !== false) {
+            $model = $this->table->select('*')->where($condition)->asObject(true);
+            City_Region::delete(array('city_id'=>$model->id));
+        }
+        parent::onDelete($tables, $condition);
+    }
+    
     public function beforeValidate() {
         //if($this->name == '')
             //$this->name = $this->title;

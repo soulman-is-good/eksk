@@ -58,7 +58,7 @@ class City_Region extends X3_Module_Table {
             'nocache'=>array('actions'=>'*','role'=>'admin')
         );
     }
-    
+
     public function getDefaultScope() {
         return array('@order'=>'weight');
     }

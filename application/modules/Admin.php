@@ -113,6 +113,7 @@ class Admin extends X3_Module {
         $path = X3::app()->getPathFromAlias("@views:admin:sudo:$action.php");
         if(is_file($path)){
             $this->template->render("sudo/$action",array('class'=>$class));
+            exit;
         }
         $class = ucfirst($_GET['module']);
         $module = X3_Module::getInstance($class);
@@ -190,6 +191,7 @@ class Admin extends X3_Module {
         $pk = X3_Module::getInstance($class)->getTable()->getPK();
         $scope = array("$pk" => $id);
         X3_Module_Table::delete($scope,$class);
-        $this->redirect("/admin/list/module/$class.html");
+        $hash = isset($_GET['hash'])?'#'.$_GET['hash']:'';
+        $this->redirect("/admin/list/module/$class.html$hash");
     }
 }

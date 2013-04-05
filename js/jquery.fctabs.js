@@ -38,6 +38,7 @@ $.fn.fctabs = function(hash){
 
 $(function(){
     $('[fctabs]').each(function(){
-        $(this).fctabs('#'+$(this).attr('fctabs'));
+        var a = !location.hash?'#'+$(this).attr('fctabs'):'';
+        $(this).fctabs(a);
     });
 })
