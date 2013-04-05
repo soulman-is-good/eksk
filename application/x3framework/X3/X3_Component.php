@@ -183,8 +183,6 @@ class X3_Component {
     public function stopBubbling($method) {
         if(isset(self::$_e[$method]))
             unset(self::$_e[$method]);
-        else
-            X3::log("No such function in bubbling stack");
     }
 
 }

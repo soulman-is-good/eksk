@@ -344,6 +344,7 @@ class X3_App extends X3_Component {
             echo "<h1>PHP Error [$code]</h1>\n";
             echo "<p>$message</p>\n";
         }
+        X3::log("PHP Error [$code] $message, $file, $line");
     }
 
     /**
@@ -377,12 +378,11 @@ class X3_App extends X3_Component {
                     }
                 }
             }
-            //echo '<pre>' . $exception->getTraceAsString() . '</pre>';
-            exit;
         } else {
             echo '<h1>' . get_class($exception) . "</h1>\n";
             echo '<p>' . $exception->getMessage() . '</p>';
         }
+        X3::log("PHP Exception [$code] $message, $file, $line");
     }
 
     /**
