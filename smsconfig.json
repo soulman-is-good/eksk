@@ -5,10 +5,10 @@
     "password": "62d96e",
     "mysql":{
         "host":"localhost",
-        "user":"root",
-        "password":"NjkmrjDgthtl",
+        "user":"eksk",
+        "password":"1234qwert=",
         "database":"eksk",
-        "table":"data_sms",
+        "table":"sms_stack",
         "attributes":{
             "phone":"phone",
             "message":"text",

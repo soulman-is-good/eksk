@@ -98,6 +98,8 @@ class Admin extends X3_Module {
                 '/admin/list/module/Menu'=>'Меню',
                 '/admin/list/module/Page'=>'Тестовые страницы',
                 '/admin/list/module/Notify'=>'Письма',
+                '/admin/list/module/Sms'=>'Шаблоны СМС',
+                '/admin/list/module/Sms_Stack'=>'Очередь СМС рассылки',
                 '/admin/list/module/City'=>'Города',
                 '/admin/list/module/City_Region'=>'Улицы',
                 '/admin/list/module/SysSettings'=>'Настройки',
