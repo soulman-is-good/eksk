@@ -339,7 +339,31 @@ function testFormula($sheet,$cell) {
                 $k++;
             }
                                 
-        }
+        }elseif($type == 'sms'){
+            $models = X3::db()->query("SELECT v.id, v.phone, v.text, v.status, v.created_at, v.sent_at FROM sms_stack v");
+            $j=0;
+            $sheet->setCellValue("{$abs[$j++]}1", 'ID');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Телефон');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Сообщение');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Добавлено');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Обработано');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->setCellValue("{$abs[$j++]}1", 'Статус');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
+            $sheet->getStyle("A1:{$abs[$i+$j]}1")->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setARGB('FFCCCCCC');
+            $sheet->getStyle("A1:{$abs[$i+$j]}".(mysql_num_rows($models)+1))->getAlignment()->setWrapText(true);
+            $k=2;
+            while($u = mysql_fetch_assoc($models)){
+                $j=0;
+                $status = (isset(Sms::$errorCodes[$u['status']])?Sms::$errorCodes[$u['status']]:'Неизвестный код #'.$u['status']);
+                $sheet->setCellValue("{$abs[$j++]}$k", $u['id']);
+                $sheet->setCellValue("{$abs[$j++]}$k", $u['phone']);
+                $sheet->setCellValue("{$abs[$j++]}$k", $u['text']);
+                $sheet->setCellValue("{$abs[$j++]}$k", date("d.m.Y H:i",$u['created_at']));
+                $sheet->setCellValue("{$abs[$j++]}$k", date("d.m.Y H:i",$u['sent_at']));
+                $sheet->setCellValue("{$abs[$j++]}$k", $status);
+                $k++;
+            }            
+        }else
+            throw new X3_404();
         header("Content-Type: application/vnd.ms-excel");
         header('Content-Disposition: attachment; filename=',$type.'_'.date('d_m_Y').'.xls');
         header("Cache-Control: max-age=0");

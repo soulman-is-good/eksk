@@ -115,6 +115,7 @@
         $('#send_message').click(function(){
             var eform = $($('#form_tmpl').html());
             var self = $.dialog(eform,'<?=X3::translate('Написать сообщение');?>','no buttons').setSize(750).setRelativePosition('center');
+            eform.find('textarea').focus();
             eform.find('#send_btn').click(function(){
                 $.loader();
                 var action = eform.attr('action');

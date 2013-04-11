@@ -15,7 +15,23 @@ $fields = $model->_fields;
             <?foreach($fields as $name=>$field):?>
             <tr>
                 <td><?=$model->fieldName($name)?></td>
-                <td><?=$model->$name?></td>
+                <td>
+                    <?php
+                    $dataType = strtolower(trim(preg_replace("/\[.+?\]/","",$model->_fields[$name][0])));
+                    switch($dataType){
+                        case "datetime":
+                            echo date("d.m.Y H:i:s",$model->$name);
+                            break;
+                        default:
+                            $method = ucfirst($name);
+                            $method = "get{$method}Label";
+                            if(method_exists($model, $method)){
+                                echo call_user_func(array($model,$method));
+                            }else
+                                echo $model->$name;
+                    }
+                    ?>
+                </td>
             </tr>
             <?endforeach;?>
         </table>

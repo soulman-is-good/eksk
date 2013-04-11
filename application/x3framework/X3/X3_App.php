@@ -339,12 +339,12 @@ class X3_App extends X3_Component {
                     }
                 }
             }
-            exit;
         } else {
             echo "<h1>PHP Error [$code]</h1>\n";
-            echo "<p>$message</p>\n";
+            echo "<p>$message $file($line)</p>\n";
         }
         X3::log("PHP Error [$code] $message, $file, $line");
+        exit;
     }
 
     /**
@@ -382,7 +382,9 @@ class X3_App extends X3_Component {
             echo '<h1>' . get_class($exception) . "</h1>\n";
             echo '<p>' . $exception->getMessage() . '</p>';
         }
-        X3::log("PHP Exception [$code] $message, $file, $line");
+        $message = $exception->getMessage();
+        X3::log("PHP Exception $message, $file, $line");
+        exit;
     }
 
     /**

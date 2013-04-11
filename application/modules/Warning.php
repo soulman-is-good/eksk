@@ -295,7 +295,7 @@ class Warning extends X3_Module_Table {
             }else
                 $c = "1";
         }
-        $users = X3::db()->query("SELECT u.id, CONCAT(name,' ',surname) username, email FROM data_user u INNER JOIN user_address a1 ON a1.user_id=u.id WHERE 
+        $users = X3::db()->query("SELECT u.id, CONCAT(name,' ',surname) username, email, phone FROM data_user u INNER JOIN user_address a1 ON a1.user_id=u.id WHERE 
             u.id<>$model->user_id AND $role $c
             GROUP BY u.id
             ");
@@ -303,6 +303,8 @@ class Warning extends X3_Module_Table {
             $userset = X3::db()->fetch("SELECT * FROM user_settings us WHERE user_id='{$user['id']}'");
             if($userset['mailWarning'])
                 Notify::sendMail('newNotify', array('text'=>$model->title,'name'=>$user['username'],'from'=>X3::user()->fullname), $user['email']);
+            if($userset['smsWarning'])
+                Notify::sendSms('newNotify',$user['phone'],array('text'=>$model->title,'name'=>X3::user()->fullname));
         }
     }
 

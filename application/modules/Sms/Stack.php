@@ -20,10 +20,14 @@ class Sms_Stack extends X3_Module_Table {
         'phone'=>array('string[255]'),
         'from'=>array('string[255]','default'=>'.'),
         'text'=>array('content'),
-        'crated_at'=>array('datetime','default'=>'0'),
+        'created_at'=>array('datetime','default'=>'0'),
         'sent_at'=>array('datetime','default'=>'0'),
         'status'=>array('integer[3]','default'=>'-1'),
     );
+    public function getStatusLabel(){
+        return isset(Sms::$errorCodes[$this->status])?Sms::$errorCodes[$this->status]:'нет статуса';
+    }
+
     public static function newInstance($class=__CLASS__) {
         return parent::newInstance($class);
     }

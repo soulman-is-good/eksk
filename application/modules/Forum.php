@@ -385,9 +385,13 @@ class Forum extends X3_Module_Table {
                 if($mes->user_to>0 && (FALSE == ($userset = X3::db()->fetch("SELECT * FROM user_settings WHERE user_id='$mes->user_to'")) || $userset['mailForum']==1)){
                     $forum = Forum::getByPk($mes->forum_id);
                     $from = User::getByPk(X3::user()->id);
-                    $to = X3::db()->fetch("SELECT id, CONCAT(name,' ',surname) username, email FROM data_user WHERE id=$mes->user_to");
-                    $msg = Notify::sendMail('forumAnswer', array('name'=>$to['username'],'from'=>$from->getFullname(),'time'=>date('H:i',$mes->created_at).', '.I18n::date($mes->created_at,'ru'),'text'=>nl2br($mes->content),
-                        'forum'=>$forum->title,'link'=>X3::app()->baseUrl . '/forum/'.$forum->id.'.html'), $to['email']);
+                    $to = X3::db()->fetch("SELECT id, CONCAT(name,' ',surname) username, email,phone FROM data_user WHERE id=$mes->user_to");
+                    $userset = X3::db()->fetch("SELECT mailForum, smsForum FROM user_settings WHERE user_id=$mes->user_to");
+                    if($userset['mailForum'])
+                        $msg = Notify::sendMail('forumAnswer', array('name'=>$to['username'],'from'=>$from->getFullname(),'time'=>date('H:i',$mes->created_at).', '.I18n::date($mes->created_at,'ru'),'text'=>nl2br($mes->content),
+                            'forum'=>$forum->title,'link'=>X3::app()->baseUrl . '/forum/'.$forum->id.'.html'), $to['email']);
+                    if($userset['smsForum'])
+                        Notify::sendSms('forumAnswer',$to['phone'], array('name'=>$from->getFullname(),'forum'=>$forum->title));
                 }
                 echo json_encode (array('status'=>'ok','message'=>X3::translate('Сообщение успешно отправлено')));
             }else{
@@ -477,7 +481,7 @@ class Forum extends X3_Module_Table {
             }else
                 $c = "1";
         }
-        $users = X3::db()->query("SELECT u.id, CONCAT(name,' ',surname) username, u.email FROM data_user u INNER JOIN user_address a1 ON a1.user_id=u.id WHERE 
+        $users = X3::db()->query("SELECT u.id, CONCAT(name,' ',surname) username, u.email, u.phone FROM data_user u INNER JOIN user_address a1 ON a1.user_id=u.id WHERE 
             u.id<>$model->user_id AND $c
             GROUP BY u.id
             ");
@@ -488,6 +492,8 @@ class Forum extends X3_Module_Table {
                 $uids[] = $user['id'];
                 Notify::sendMail('newForum', array('text'=>$model->title,'name'=>$user['username'],'from'=>X3::user()->fullname,'link'=>X3::app()->baseUrl . '/forum/'.md5($model->title.$model->id).'.html'), $user['email']);
             }
+            if($userset['smsForum'])
+                Notify::sendSms('newForum', $user['phone'], array('forum'=>$model->title,'name'=>X3::user()->fullname));
         }
     }
 

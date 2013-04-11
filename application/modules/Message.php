@@ -80,7 +80,7 @@ WHERE a2.user_id=".X3::user()->id." AND a1.user_id<>a2.user_id AND `a2`.`city_id
             $count = self::num_rows($query);
             //'Search the page' logic
             if(X3::user()->search!=null && X3::user()->search['type'] == 'message' && strpos($_SERVER['HTTP_REFERER'],'/search')){
-                $paginator = new Paginator(__CLASS__, $count);
+                $paginator = new Paginator(__CLASS__.'User'.$id, $count);
                 $queryZ = $query;
                 $queryZ['@select'] = 'content';
                 $q = new X3_MySQL_Query('data_message');
@@ -101,7 +101,7 @@ WHERE a2.user_id=".X3::user()->id." AND a1.user_id<>a2.user_id AND `a2`.`city_id
                     $paginator->offset = $p * $paginator->limit;
                 }
             }else
-                $paginator = new Paginator(__CLASS__, $count);
+                $paginator = new Paginator(__CLASS__.'User'.$id, $count);
             $query['@limit'] = $paginator->limit;
             $query['@offset'] = $paginator->offset;
             $models = self::get($query);
@@ -283,7 +283,7 @@ WHERE a2.user_id=".X3::user()->id." AND a1.user_id<>a2.user_id AND `a2`.`city_id
                     if($userset['mailMessages'])
                         Notify::sendMail('NewMessage',array('name'=>X3::user()->fullname,'message'=>nl2br($mes->content)),$userto['email']);
                     if($userset['smsMessages'])
-                        Notify::sendSms('NewMessage',array('name'=>X3::user()->fullname,$userto['phone'],'message'=>nl2br($mes->content)));
+                        Notify::sendSms('NewMessage',$userto['phone'],array('name'=>X3::user()->fullname,'message'=>nl2br($mes->content)));
                     echo json_encode (array('status'=>'ok','message'=>X3::translate('Сообщение успешно отправлено')));
                 }else{
                     $errors = $mes->getTable()->getErrors();

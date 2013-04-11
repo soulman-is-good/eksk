@@ -79,12 +79,13 @@ class Notify extends X3_Module_Table{
         return true;
     }
     
-    public function sendSms($mailName,$phone,$data=array()) {
+    public static function sendSms($mailName,$phone,$data=array()) {
         if(NULL===($sms = Sms::get(array('name'=>$mailName),1)))
             return "Нет шаблона с именем '$mailName'";
         if($sms->status==0)
             return "Шаблон '$mailName' не открыт к рассылке";
-        $text = $this->formLetter($data,null,$sms->text);
+        $mail = new self;
+        $text = $mail->formLetter($data,null,$sms->text);
         Sms_Stack::add($phone,$text);
         return true;
     }
@@ -133,7 +134,7 @@ class Notify extends X3_Module_Table{
     public function formLetter($data=array(),$mailer,$text='') {
         if(empty($text))
             $text = $this->text;
-        if(empty($data)) return $this->text;
+        if(empty($data)) return $text;
         $ms = array();
         $data = array_extend($data, array(
             'host'=>X3::app()->baseUrl,

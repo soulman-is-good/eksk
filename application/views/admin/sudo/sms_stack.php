@@ -14,7 +14,8 @@ $pk = $module->getTable()->getPK();
     <div class="head">
         <div class="buttons">
             <div class="wrapper inline-block">
-                <?/*<a class="button inline-block" id="import" href="#import">Экспорт в Excel</a>*/?>
+                <a class="button inline-block" id="clearstack" href="/sms/clearstack">Очистить стек</a>
+                <a class="button inline-block" id="import" href="/uploads/excel/generate/sms.xls">Экспорт в Excel</a>
             </div>
         </div>
         <h1><?=$title?></h1>
@@ -25,13 +26,20 @@ $pk = $module->getTable()->getPK();
                 <div class="message_block" style="height:auto;min-height: 0">
                     <div class="inside_block">
                         <div class="middle_side" style="width:auto">
-                            <a href="/admin/view/module/<?=$class?>/id/<?=$model[$pk]?>.html"><?=  $model['phone']?></a>
+                            <a href="/admin/view/module/<?=$class?>/id/<?=$model[$pk]?>.html"><?=  $model['phone']?></a><br/>
+                            <p style="font:11px Tahoma;color:#888"><?=$model['text']?></p>
                         </div>
                         <div class="right_side" style="float:right;position:relative;top:-8px;text-align: right;width:250px;">
-                            <div class="wrapper">
                             <?/*<a href="/admin/edit/module/<?=$class?>/id/<?=$model[$pk]?>.html" class="button no-rb no-rt">Редактировать</a>*/?>
-                            <?=$model['status']!=-1?'<em style="color:#0F0">Отправлено</em>':'<em style="color:#00F">В очереди</em>'?>
-                            <a href="/admin/delete/module/<?=$class?>/id/<?=$model[$pk]?>.html" class="button no-lt no-lb">Удалить</a></div>
+                            <?if($model['status']>0):?>
+                            <br/><em title="code#<?=$model['status']?>" style="color:#<?=dechex($model['status']%16).dechex($model['status']%8)?>A"><?=Sms::$errorCodes[(int)$model['status']]?></em><br/><br/>
+                            <div class="wrapper"><a href="/sms/resend/id/<?=$model[$pk]?>.html" class="button no-lt no-lb">Переотправить</a></div>
+                            <?elseif($model['status']==0):?>
+                            <br/><em style="color:#5A5"><?=Sms::$errorCodes[$model['status']]?></em><br/><br/>
+                            <?else:?>
+                            <br/><em style="color:#D55">В очереди</em><br/><br/>
+                            <?endif;?>
+                            <div class="wrapper"><a href="/admin/delete/module/<?=$class?>/id/<?=$model[$pk]?>.html" class="button no-lt no-lb">Удалить</a></div>
                         </div>
                     </div>
                 </div>

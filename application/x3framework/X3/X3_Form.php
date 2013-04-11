@@ -61,6 +61,7 @@ class X3_Form extends X3_Renderer {
             $attributes['id'] = !isset($attributes['id'])?get_class($this->module) . '_' . $checked:$attributes['id'];
             if($this->module->$checked)
                 $attributes['checked'] = "checked";
+            $attributes['value'] = '1';
         }else {
             if($checked)
                 $attributes['checked'] = "checked";

@@ -102,7 +102,7 @@ class SMPP {
                 $phone, // destination_addr
                 0, // esm_class
                 0, // protocol_id
-                3, // priority_flag
+                1, // priority_flag
                 "", // schedule_delivery_time
                 "", // validity_period
                 0, // registered_delivery_flag
