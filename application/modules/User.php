@@ -230,8 +230,12 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             }
         }
         if(isset($_POST['User_Settings'])){
+            if(isset($_POST['User_Settings']['smsCount']) && ($_POST['User_Settings']['smsCount']>1000 || $_POST['User_Settings']['smsCount']<1)){
+                $profile->addError('smsCount', 'Укажите число от 1 до 1000');
+                $profile->smsCount = 5;
+                unset($_POST['User_Settings']['smsCount']);
+            }
             $data = $_POST['User_Settings'];
-            //$_POST['User']['date_of_birth'] = mktime(12,0,0,$_POST['User']['date_of_birth'][1],$_POST['User']['date_of_birth'][0],$_POST['User']['date_of_birth'][2]);
             $profile->getTable()->acquire($data);
             $profile->mailWarning = (int)isset($data['mailWarning']);
             $profile->smsWarning = (int)isset($data['smsWarning']);
@@ -241,8 +245,10 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             $profile->smsForum = (int)isset($data['smsForum']);
             $profile->mailVote = (int)isset($data['mailVote']);
             $profile->smsVote = (int)isset($data['smsVote']);
+            $profile->mailReport = (int)isset($data['mailReport']);
+            $profile->smsReport = (int)isset($data['smsReport']);
             if(!$profile->save() && X3::user()->isAdmin()){
-                echo '<h1>Это сообщение видят только администраторы: '.X3_HTML::errorSummary($profile).' '.X3::db()->getErrors();
+                //echo '<h1>Это сообщение видят только администраторы: '.X3_HTML::errorSummary($profile).' '.X3::db()->getErrors();
             }
             if(isset($data['smsTime']))
                 $hash = '#mail-settings';
@@ -546,7 +552,9 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
         if($this->role == 'admin')
             return X3::translate('Администратор') . "#" . $this->id;
         if($this->role == 'ksk')
-            return $this->name;
+            return $this->name==""?"КСК №$this->id":$this->name;
+        if($this->name=="" && $this->surname=="")
+            return str_replace ("@", "(at)", $this->email);
         return $this->name . " " . $this->surname;
     }
 

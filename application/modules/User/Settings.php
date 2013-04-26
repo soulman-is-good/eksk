@@ -22,11 +22,14 @@ class User_Settings extends X3_Module_Table {
         'mailMessages' => array('boolean','default'=>'1'),
         'mailForum' => array('boolean','default'=>'1'),
         'mailVote' => array('boolean','default'=>'1'),
+        'mailReport' => array('boolean','default'=>'1'),
         'smsWarning' => array('boolean','default'=>'0'),
         'smsMessages' => array('boolean','default'=>'0'),
         'smsForum' => array('boolean','default'=>'0'),
         'smsVote' => array('boolean','default'=>'0'),
+        'smsReport' => array('boolean','default'=>'0'),
         'smsTime' => array('string','default'=>'00:00-00:00'),
+        'smsCount' => array('integer[4]','default'=>'5'),
     );
     
     public function onValidate($attr,$pass) {

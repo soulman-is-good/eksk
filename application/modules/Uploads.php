@@ -39,7 +39,7 @@ class Uploads extends X3_Module_Table {
         exit;
         return false;
     }
-
+    
     public function actionCaptcha() {
         header('Content-type: image/gif');
         if (!isset($_GET['F5']) && is_array(X3::app()->user->captcha) && X3::app()->user->captcha['times'] > 0 && is_file('uploads/' . X3::app()->user->captcha['file']) && !isset($_GET['f5'])) {

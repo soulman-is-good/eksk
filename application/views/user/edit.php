@@ -8,6 +8,13 @@ if(($acnt = $addreses->count())==0){
 }
 $uerr = $user->getTable()->getErrors();
 $perr = $profile->getTable()->getErrors();
+
+$dayb = mktime(0,0,0,(int)date('m'),(int)date('j'),(int)date('Y'));
+$daye = mktime(23,59,59,(int)date('m'),(int)date('j'),(int)date('Y'));
+$phone = '7'.preg_replace("/[^0-9]/", "", $user->phone);
+$smsLeft = X3::db()->fetch("SELECT COUNT(0) `cnt` FROM `sms_stack` WHERE phone='$phone' AND status=0 AND sent_at BETWEEN $dayb AND $daye");//sent sms
+$smsLeft = $profile->smsCount - $smsLeft['cnt'];
+if($smsLeft<0) $smsLeft = 0;
 ?>
 <div class="eksk-wnd">
     <div class="head">
@@ -488,8 +495,10 @@ $perr = $profile->getTable()->getErrors();
             </div>
             <div class="tab" id="mail-settings">
                 <?/*<em>В разработке</em>*/?>
-                <?=SysSettings::getValue('User_Settings.Notify', 'text', 'Текст в настройках уведомлений', null, '<p>Внимание! Укажите номер телефона чтобы получить уведомления о событиях на сайте.</p>
-                <p>Отметьте события о которых вы хотите получать уведомления по эл. почте или в SMS (для абонентов Билайн, KCell, Active, TELE2, Pathword, Дос в Казахстане)</p>')?>
+                <?$msg = SysSettings::getValue('User_Settings.Notify', 'text', 'Текст в настройках уведомлений', null, '<p>Внимание! Укажите номер телефона чтобы получить уведомления о событиях на сайте.</p>
+                <p>Отметьте события о которых вы хотите получать уведомления по эл. почте или в SMS (для абонентов Билайн, KCell, Active, TELE2, Pathword, Дос в Казахстане)</p>
+                <p>SMS-оповещения будут приходить на номер <b>[phone]</b>.
+Изменить номер, к которому привязана страница, Вы можете <a href="#link" id="phone-change">здесь</a>.</p>');echo str_replace("[phone]", $user->phone, $msg);?>
                 <br/>
                 <form method="post">
                     <table class="eksk-form" width="50%">
@@ -548,6 +557,17 @@ $perr = $profile->getTable()->getErrors();
                                 <?=$form2->checkbox('smsVote')?>
                             </td>
                         </tr>
+                        <tr>
+                            <td class="label">
+                                <label><?=X3::translate('Отчеты');?></label>
+                            </td>
+                            <td class="field" style="text-align:center">
+                                <?=$form2->checkbox('mailReport')?>
+                            </td>
+                            <td class="field" style="text-align:center">
+                                <?=$form2->checkbox('smsReport')?>
+                            </td>
+                        </tr>
                     </table>
                     <?php
                     $time = explode('-',$profile->smsTime);
@@ -566,6 +586,14 @@ $perr = $profile->getTable()->getErrors();
                                 <label><?=X3::translate('до');?></label> 
                                 <div class="wrapper inline-block"><?=X3_Html::form_tag('input', array('type'=>'text','style'=>'width:48px','id'=>'endtime','value'=>$time[1],'class'=>'string time'))?></div> 
                                 <label><?=X3::translate('по алматинскому времени');?></label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="label">
+                                <label><?=X3::translate('Количество SMS в день');?></label>
+                            </td>
+                            <td class="field" colspan="2">
+                                <div class="wrapper inline-block"><?=$form2->input('smsCount',array('style'=>'width:45px','error'=>$form2->error('smsCount')))?></div> <em>/ на сегодня <?=X3_String::create('')->numeral($smsLeft, array('осталась','осталось','осталось'))?> <?=$smsLeft?> смс </em>
                             </td>
                         </tr>
                         <tr>
@@ -646,9 +674,10 @@ $perr = $profile->getTable()->getErrors();
                 }
                 phone = phone.join(' ');
             }
+            var theid = el.attr('id') + '_Mask';
             var in_code = $('<input />').data('elem',el).css({'width':'46px','padding-left':'0px','text-align':'right'}).change(function(){
                 $(this).data('elem').updateVal();
-            }).attr({'type':'text','maxlength':o}).addClass('string').mask(cmsk).val(code)
+            }).attr({'type':'text','maxlength':o,'id':theid}).addClass('string').mask(cmsk).val(code)
             .insertBefore(el).wrap($('<div class="wrapper inline-block" style="margin-right:5px"></div>'));
             var in_phone = $('<input />').data('elem',el).css({'width':'288px'}).change(function(){
                 $(this).data('elem').updateVal();
@@ -827,7 +856,13 @@ $perr = $profile->getTable()->getErrors();
             if(h=='') h = '#main-info';
             $(h).prepend($(success).css('cursor','pointer').click(function(){$(this).fadeOut(function(){$(this).remove()})}))
         <?endif;?>
-    })
+        $('#phone-change').click(function(e){
+            $('[href="#login-settings"]').click();
+            $('#User_phone_Mask').focus();
+            $(document).scrollTop(426);
+            return false;
+        });
+    });
     function setCoords(coords, id){
         if(typeof coords.join != 'function')
             return false;
@@ -838,4 +873,10 @@ $perr = $profile->getTable()->getErrors();
         $('#coord_'+id).val(val)
         return true;
     }
+    $('[error]').each(function(){
+        var error = $(this).attr('error');
+        if(error!=''){
+            $(this).css({'box-shadow':'0 0 12px #D55'}).tipTip({'attribute':'error'})
+        }
+    })
 </script>

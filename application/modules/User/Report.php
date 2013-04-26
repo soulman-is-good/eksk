@@ -424,13 +424,16 @@ class User_Report extends X3_Module_Table {
             }else
                 $c = "1";
         }
-        $users = X3::db()->query("SELECT CONCAT(name,' ',surname) username, email FROM data_user u INNER JOIN user_address a1 ON a1.user_id=u.id WHERE 
+        $users = X3::db()->query("SELECT u.id, CONCAT(name,' ',surname) username, email, phone FROM data_user u INNER JOIN user_address a1 ON a1.user_id=u.id WHERE 
             u.id<>$id AND ($role $c)
             GROUP BY u.id
             ");
         while($user = mysql_fetch_assoc($users)){
-        //                        var_dump($user);
-            Notify::sendMail('newReport', array('text'=>$model->title,'name'=>$user['username'],'from'=>X3::user()->fullname,'link'=>X3::app()->baseUrl.'/reports/'), $user['email']);
+            $userset = X3::db()->fetch("SELECT mailReport, smsReport FROM user_settings us WHERE user_id='{$user['id']}'");
+            if($userset['mailReport'])
+                Notify::sendMail('newReport', array('name'=>$user['username'],'from'=>X3::user()->fullname,'link'=>X3::app()->baseUrl.'/reports/'), $user['email']);
+            if($userset['smsReport'])
+                Notify::sendSms('newReport', $user['phone'], array('name'=>X3::user()->fullname));
         }
     }
 

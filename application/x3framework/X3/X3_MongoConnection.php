@@ -60,8 +60,10 @@ class X3_MongoConnection extends X3_Component {
         }catch(Exception $e){
             if(X3_DEBUG)
                 throw new X3_Exception($e->getMessage(),500);
-            else
+            else{
                 @mail('i@soulman.kz','eksk.kz Mongo failed to start!',$e->getMessage());
+                return false;
+            }
         }
         if($connection===false){
             throw new X3_Exception("Could not connect to mongo server", 500);
@@ -80,14 +82,16 @@ class X3_MongoConnection extends X3_Component {
     }
 
     public function fetchAll($sql=null) {
-        $this->connect();
+        if(!$this->connect())
+            return false;
         $data = array();
         if(!($query = $this->query($sql))) return NULL;        
         return iterator_to_array($query);
     }
     
     public function query($val=null,$pass=true) {
-        $this->connect();
+        if(!$this->connect())
+            return false;
         if(!class_exists('Mongo')) return NULL;
         if(is_string($val)){
             //TODO: if json to array() if sql to array;
@@ -126,7 +130,8 @@ class X3_MongoConnection extends X3_Component {
     }
 
     public function commit() {
-        $this->connect();
+        if(!$this->connect())
+            return false;
         $this->bTransaction = false;
         if(!mysql_query("START TRANSACTION",self::$_db))
             return false;

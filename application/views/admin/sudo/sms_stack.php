@@ -28,6 +28,10 @@ $pk = $module->getTable()->getPK();
                         <div class="middle_side" style="width:auto">
                             <a href="/admin/view/module/<?=$class?>/id/<?=$model[$pk]?>.html"><?=  $model['phone']?></a><br/>
                             <p style="font:11px Tahoma;color:#888"><?=$model['text']?></p>
+                            <em style="font-size:10px"><b>Добавлено:</b><?=date('d.m.Y H:i:s',$model['created_at'])?></em>
+                            <?if($model['status']>-1):?>
+                            <br/><em style="font-size:10px"><b>Обработано:</b><?=date('d.m.Y H:i:s',$model['sent_at'])?></em>
+                            <?endif;?>
                         </div>
                         <div class="right_side" style="float:right;position:relative;top:-8px;text-align: right;width:250px;">
                             <?/*<a href="/admin/edit/module/<?=$class?>/id/<?=$model[$pk]?>.html" class="button no-rb no-rt">Редактировать</a>*/?>
