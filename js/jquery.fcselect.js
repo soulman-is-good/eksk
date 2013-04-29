@@ -3,6 +3,10 @@
  * decorates <select> form tags
  * 
  */
+jQuery.expr[':'].contains = function(a, i, m) {
+  return jQuery(a).text().toUpperCase()
+      .indexOf(m[3].toUpperCase()) >= 0;
+};
 (function($){
     $.fn.attrs = function(){
         var attributes = this[0].attributes;
@@ -145,31 +149,39 @@
                 container.addClass('autocomplete').css({'background':'#fff'});
                 ops.emulateChangeAction = false;
                 if(self[0].tagName === 'SELECT' && (typeof ops.data == 'object')){
-                    var data = {};
-                    console.log(self.children('option').length);
+                    var data = [];
+                    var active = '';
                     self.children('option').each(function(){
                         var k = $(this).val();
                         var v = $(this).text();
-                        data[k] = v;
+                        if(this.hasAttribute('selected'))
+                            active = v;
+                        data.push({key:k,value:v});
                     });
                     ops.data = data;
                 }
-                var input = $('<input />').attr({'type':'text'}).css({'padding':'0','border':'none','box-shadow':'none'});
+                var input = $('<input />').attr({'type':'text'}).css({'padding':'0','border':'none','box-shadow':'none'}).val(active);
                 var xhr = null;
                 container.append(input);
                 input.val(ops.value);
                 input.bind('keydown',function(e){
                     if(options.is(':visible') && e.keyCode == 13){
+                        var val = $(this).val();
                         var a = options.find('.active');
                         if(typeof a[0] != 'undefined'){
                             a.click();
-                            return false;
+                        }else if(val!=''){
+                            
+                            options.find(":contains('"+val.toLowerCase()+"')").click();
                         }
+                            return false;
                     }
                 })
                 input.bind('keyup',function(e){
-                    if(e.keyCode == 13)
+                    var val = $(this).val();
+                    if(e.keyCode == 13){
                         return false;
+                    }
                     if(e.keyCode == 40 || e.keyCode == 38){
                         if(options.is(':visible')){
                             if(e.keyCode == 38){
@@ -192,7 +204,6 @@
                         return false;
                     }
                     container.addClass('loading');
-                    var val = $(this).val();
                     if(typeof ops.data == 'string'){
                         if(xhr != null){
                             xhr.abort();
@@ -225,8 +236,8 @@
                         options.html('');
                         self.showOptions();
                         for(i in ops.data){
-                            if(ops.data[i].indexOf(val)===-1) continue;
-                            var option = $('<div />').addClass('option').attr({'val':i}).append(ops.data[i]);
+                            if(ops.data[i].value.toLowerCase().indexOf(val.toLowerCase())===-1) continue;
+                            var option = $('<div />').addClass('option').attr({'val':ops.data[i].key}).append(ops.data[i].value);
                             option.bind('click',function(e){
                                 e.stopPropagation();
                                 if($(this).hasClass('active') && ops.emulateChangeAction){

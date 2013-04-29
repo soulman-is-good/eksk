@@ -277,7 +277,7 @@ if($smsLeft<0) $smsLeft = 0;
                                         <label><?=$address->fieldName('region_id')?></label>
                                     </td>
                                     <td class="field">
-                                        <div class="wrapper inline-block"><?=X3_Html::form_tag('select',array('name'=>"Address[$i][region_id]",'id'=>"Address_region_id_$i",'class'=>'region_id','rid'=>$address->region_id,'fcselect'=>'1','data-width'=>'345'))?></div>
+                                        <div class="wrapper inline-block"><?=X3_Html::form_tag('select',array('name'=>"Address[$i][region_id]",'id'=>"Address_region_id_$i",'class'=>'region_id','rid'=>$address->region_id,'fcselect'=>'autocomplete','data-width'=>'345'))?></div>
                                     </td>
                                     <td class="error">
                                         <?=$aform->error('region_id')?>
@@ -348,7 +348,7 @@ if($smsLeft<0) $smsLeft = 0;
                                         <label><?=$address->fieldName('region_id')?></label>
                                     </td>
                                     <td class="field">
-                                        <div class="wrapper inline-block"><?=X3_Html::form_tag('select',array('name'=>"Address[$i][region_id]",'id'=>"Address_region_id_$i",'class'=>'region_id','rid'=>$address->region_id,'fcselect'=>'1','data-width'=>'345'))?></div>
+                                        <div class="wrapper inline-block"><?=X3_Html::form_tag('select',array('name'=>"Address[$i][region_id]",'id'=>"Address_region_id_$i",'class'=>'region_id','rid'=>$address->region_id,'fcselect'=>'autocomplete','data-width'=>'345'))?></div>
                                     </td>
                                     <td class="error">
                                         <?=$aform->error('region_id')?>

@@ -56,7 +56,7 @@ class City extends X3_Module_Table {
         if(IS_AJAX && isset($_GET['id']) && ($id = (int)$_GET['id'])>0){
             $query = array(
                     '@condition'=>array('city_region.city_id'=>$id),
-                    '@order'=>'city_region.weight'
+                    '@order'=>'city_region.weight, city_region.title'
                 );
             if(X3::user()->isKsk() && !X3::user()->superAdmin){
                 $query['@join'] = "INNER JOIN user_address a ON a.region_id=city_region.id";
@@ -78,6 +78,7 @@ class City extends X3_Module_Table {
                 }
                 $result[] = array('id'=>$reg['id'],'title'=>$reg['title'],'houses'=>$houses);
             }
+            header('Content-Type: application/json',true,200);
             echo json_encode($result);
             exit;
         }
