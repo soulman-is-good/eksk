@@ -101,7 +101,7 @@ if($smsLeft<0) $smsLeft = 0;
                             <label><?=$user->fieldName('gender')?></label>
                         </td>
                         <td class="field">
-                            <div class="wrapper inline-block"><?=$form->select(array('Мужской'=>X3::translate('Мужской'),'Женский'=>X3::translate('Женский')),array('fcselect'=>'1','%select'=>$user->gender,'data-width'=>'345'))?></div>
+                            <div class="wrapper inline-block"><?=$form->select(array('Мужской'=>X3::translate('Мужской'),'Женский'=>X3::translate('Женский')),array('fcselect'=>'1','%select'=>$user->gender,'data-width'=>'345','name'=>'User[gender]'))?></div>
                         </td>
                         <td class="error">
                             <?=$form->error('gender')?>

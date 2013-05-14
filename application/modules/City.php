@@ -70,12 +70,14 @@ class City extends X3_Module_Table {
                     $f = "SELECT DISTINCT house FROM user_address WHERE region_id={$reg['id']} AND user_id=".X3::user()->id." AND status=1";
                 }else
                     $f = "SELECT DISTINCT house FROM user_address WHERE region_id={$reg['id']}";
-                $houses = array();
+                $houses = array_map(create_function('$item', 'return trim($item);'),  explode("\r\n", $reg['houses']));
                 $q = X3::db()->query($f);
                 if(is_resource($q))
                 while($a = mysql_fetch_assoc($q)){
                     $houses[] = $a['house'];
                 }
+                $houses = array_unique($houses);
+                asort($houses);
                 $result[] = array('id'=>$reg['id'],'title'=>$reg['title'],'houses'=>$houses);
             }
             header('Content-Type: application/json',true,200);

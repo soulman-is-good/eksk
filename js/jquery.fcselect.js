@@ -154,16 +154,17 @@ jQuery.expr[':'].contains = function(a, i, m) {
                     self.children('option').each(function(){
                         var k = $(this).val();
                         var v = $(this).text();
-                        if(this.hasAttribute('selected'))
+                        if($(this).is(':selected')){
                             active = v;
+                        }
                         data.push({key:k,value:v});
                     });
                     ops.data = data;
                 }
-                var input = $('<input />').attr({'type':'text'}).css({'padding':'0','border':'none','box-shadow':'none'}).val(active);
+                var input = $('<input />').attr({'type':'text','value':active}).css({'padding':'0','border':'none','box-shadow':'none'});
                 var xhr = null;
                 container.append(input);
-                input.val(ops.value);
+                //input.val(ops.value);
                 input.bind('keydown',function(e){
                     if(options.is(':visible') && e.keyCode == 13){
                         var val = $(this).val();
