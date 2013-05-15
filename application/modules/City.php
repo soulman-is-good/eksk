@@ -58,7 +58,7 @@ class City extends X3_Module_Table {
                     '@condition'=>array('city_region.city_id'=>$id),
                     '@order'=>'city_region.weight, city_region.title'
                 );
-            if(X3::user()->isKsk() && !X3::user()->superAdmin){
+            if(0 && X3::user()->isKsk() && !X3::user()->superAdmin){
                 $query['@join'] = "INNER JOIN user_address a ON a.region_id=city_region.id";
                 $query['@condition']['a.user_id'] = X3::user()->id;
                 $query['@group'] = "city_region.id";
@@ -66,7 +66,7 @@ class City extends X3_Module_Table {
             $regions = City_Region::get($query,0,'City_Region',1);
             $result = array();
             foreach($regions as $reg){
-                if(X3::user()->isKsk() && !X3::user()->superAdmin){
+                if(0 && X3::user()->isKsk() && !X3::user()->superAdmin){
                     $f = "SELECT DISTINCT house FROM user_address WHERE region_id={$reg['id']} AND user_id=".X3::user()->id." AND status=1";
                 }else
                     $f = "SELECT DISTINCT house FROM user_address WHERE region_id={$reg['id']}";

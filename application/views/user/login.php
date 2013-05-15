@@ -65,7 +65,7 @@ $errors = array_merge($errors,$address->getTable()->getErrors());
                     <label><?=$address->fieldName('region_id')?></label>
                 </td>
                 <td class="field">
-                    <div class="wrapper inline-block"><?=X3_Html::form_tag('select',array('class'=>'region_id','name'=>'User_Address[region_id]','id'=>'User_Address_region_id','rid'=>$address->region_id,'fcselect'=>'1','data-width'=>'345'))?></div>
+                    <div class="wrapper inline-block"><?=X3_Html::form_tag('select',array('class'=>'region_id','name'=>'User_Address[region_id]','id'=>'User_Address_region_id','rid'=>$address->region_id,'fcselect'=>'autocomplete','data-width'=>'345'))?></div>
                 </td>
                 <td class="error">
                     <?//$form->error('region_id')?>
