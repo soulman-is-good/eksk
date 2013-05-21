@@ -115,6 +115,7 @@ $errors = array_merge($errors,$address->getTable()->getErrors());
 </div>
 <script>
     $(function(){
+        //$('#User_Address_region_id').val();
         $('#User_email').attr({'placeholder':'например +7 777 123 45 67 или 777 123 45 67'})
         
         

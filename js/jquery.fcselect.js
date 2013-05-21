@@ -3,6 +3,9 @@
  * decorates <select> form tags
  * 
  */
+IS_IPAD = navigator.userAgent.match(/iPad/i) != null;
+IS_IPHONE = (navigator.userAgent.match(/iPhone/i) != null) || (navigator.userAgent.match(/iPod/i) != null);
+
 jQuery.expr[':'].contains = function(a, i, m) {
   return jQuery(a).text().toUpperCase()
       .indexOf(m[3].toUpperCase()) >= 0;
@@ -270,6 +273,10 @@ jQuery.expr[':'].contains = function(a, i, m) {
                 options.css('top',(container.innerHeight())+'px');
                 if(!ops.selectableText)
                     container.bind('click',function(e){
+                        if(IS_IPAD || IS_IPHONE){
+                            $(self).click();
+                            return false;
+                        }
                         if(options.is(':visible')){
                             options.toggle();
                             $(document).unbind('click',self.hideOptions)
