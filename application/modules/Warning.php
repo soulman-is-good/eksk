@@ -303,7 +303,7 @@ class Warning extends X3_Module_Table {
             $userset = X3::db()->fetch("SELECT * FROM user_settings us WHERE user_id='{$user['id']}'");
             if($userset['mailWarning'])
                 Notify::sendMail('newNotify', array('text'=>$model->title,'name'=>$user['username'],'from'=>X3::user()->fullname), $user['email']);
-            if($userset['smsWarning'])
+            if($userset['smsWarning'] && X3::user()->isAdmin())
                 Notify::sendSms('newNotify',$user['phone'],array('text'=>$model->title,'name'=>X3::user()->fullname));
         }
     }
