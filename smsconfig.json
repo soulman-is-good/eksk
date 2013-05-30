@@ -1,0 +1,18 @@
+{
+    "host": "89.111.21.7",
+    "port": "2345",
+    "login": "eokz",
+    "password": "62d96e",
+    "mysql":{
+        "host":"localhost",
+        "user":"eksk",
+        "password":"1234qwert=",
+        "database":"eksk",
+        "table":"sms_stack",
+        "attributes":{
+            "phone":"phone",
+            "message":"text",
+            "sender":"from"
+        }
+    }
+}

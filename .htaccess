@@ -1,0 +1,22 @@
+#AuthType Basic
+#AuthName "Запаролено:"
+#AuthUserFile /var/www/.htpasswd
+#Require user admin
+
+#Options +FollowSymLinks
+#IndexIgnore */*
+#AddDefaultCharset utf-8
+#AddHandler application/x-httpd-php .html
+#Include .htblacklist
+Options -Indexes
+RewriteEngine on
+
+#RewriteCond %{HTTP_HOST} ^kansha.kz
+#RewriteRule (.*) http://www.kansha.kz/$1 [R=301,L]
+
+# if a directory or a file exists, use it directly
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# otherwise forward it to index.php
+RewriteRule . index.php

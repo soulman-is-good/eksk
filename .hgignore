@@ -1,0 +1,12 @@
+\.orig$
+\.orig\..*$
+\.chg\..*$
+\.rej$
+\.conflict\~$
+
+syntax: glob
+*.log
+nbproject
+PHPExcel
+PHPExcel.php
+config/main.php
