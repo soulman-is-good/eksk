@@ -528,7 +528,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
     }
 
     public function beforeValidate() {
-        if(isset($this->id) && (!isset($_POST['User']['password']) || $_POST['User']['password']=='')){
+        if(isset($this->id) && (!isset($_POST['User']['password']) || $_POST['User']['password']=='') && (!isset($_POST['Change']['password_new']) || $_POST['Change']['password_new']=='')){
             $user = User::newInstance()->table->select('password')->where("id=$this->id")->asArray(true);
             $this->password = $user['password'];
             $_POST['notouch']=true;
@@ -540,7 +540,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
     }
 
     public function afterValidate() {
-        if(isset($_POST['User']['password']) && $_POST['User']['password']!='' && !isset($_POST['notouch']))
+        if(isset($_POST['User']['password']) && $_POST['User']['password']!='' && !isset($_POST['notouch']) && isset($_POST['Change']['password_new']) && $_POST['Change']['password_new']!='')
             $this->password = md5($_POST['User']['password']);
     }
 
