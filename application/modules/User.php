@@ -127,11 +127,11 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
     }
     
     public function isOnline() {
-        $online = null;
+        $online = 0;
         if(X3::app()->hasComponent('mongo') && X3::mongo()!=null){
-            $online = X3::mongo()->query(array('online:findOne'=>array('user_id'=>$this->id)));
+            $online = X3::mongo()->query(array('online:count'=>array('user_id'=>"$this->id")));
         }
-        return !is_null($online);
+        return 0 != $online;
     }
     
     public static function isUserOnline($id) {
@@ -148,7 +148,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
         else
             $id = X3::user()->id;
         $user = User::getByPk($id);
-        if($user == null || ($user->role == 'admin' && !X3::user()->isAdmin()) || (X3::user()->isUser() && $user->role=='ksk' && !self::isMyKsk($id)) || (X3::user()->isUser() && $user->role=='user' && !self::isMyNeibor($id)))
+        if($user == null || ($user->role == 'admin' && !X3::user()->isAdmin()) || (X3::user()->isUser() && $user->role=='ksk' && !self::isMyKsk($id)) || (X3::user()->isUser() && $user->role=='user' && !self::isMyNeibor($id) && X3::user()->id != $user->id))
             throw new X3_404();
         $this->template->render('@views:site:index.php',array('user'=>$user));
     }
@@ -237,21 +237,22 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             }
             $data = $_POST['User_Settings'];
             $profile->getTable()->acquire($data);
-            $profile->mailWarning = (int)isset($data['mailWarning']);
-            $profile->smsWarning = (int)isset($data['smsWarning']);
-            $profile->mailMessages = (int)isset($data['mailMessages']);
-            $profile->smsMessages = (int)isset($data['smsMessages']);
-            $profile->mailForum = (int)isset($data['mailForum']);
-            $profile->smsForum = (int)isset($data['smsForum']);
-            $profile->mailVote = (int)isset($data['mailVote']);
-            $profile->smsVote = (int)isset($data['smsVote']);
-            $profile->mailReport = (int)isset($data['mailReport']);
-            $profile->smsReport = (int)isset($data['smsReport']);
+            if(isset($data['smsTime'])){
+                $hash = '#mail-settings';
+                $profile->mailWarning = (int)isset($data['mailWarning']);
+                $profile->smsWarning = (int)isset($data['smsWarning']);
+                $profile->mailMessages = (int)isset($data['mailMessages']);
+                $profile->smsMessages = (int)isset($data['smsMessages']);
+                $profile->mailForum = (int)isset($data['mailForum']);
+                $profile->smsForum = (int)isset($data['smsForum']);
+                $profile->mailVote = (int)isset($data['mailVote']);
+                $profile->smsVote = (int)isset($data['smsVote']);
+                $profile->mailReport = (int)isset($data['mailReport']);
+                $profile->smsReport = (int)isset($data['smsReport']);
+            }
             if(!$profile->save() && X3::user()->isAdmin()){
                 //echo '<h1>Это сообщение видят только администраторы: '.X3_HTML::errorSummary($profile).' '.X3::db()->getErrors();
             }
-            if(isset($data['smsTime']))
-                $hash = '#mail-settings';
         }
         $address_errors = array();
         if(isset($_POST['Address'])){
@@ -418,7 +419,11 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
     }
     
     public function actionLogout() {
+        $sid = X3_Session::getInstance()->getSessionId();
         if(X3::app()->user->logout()){
+            if(X3::app()->hasComponent('mongo') && X3::mongo()!=null){
+                X3::mongo()->query(array('online:remove'=>array('_id'=>$sid)));
+            }
             $this->controller->redirect('/');
         }
     }
@@ -506,6 +511,9 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
                 $address->save();
             }
             if(empty($errors) && $user->save()){
+                $up = new User_Settings();
+                $up->user_id = $user->id;
+                $up->save();
                 Notify::sendMessage("Пользователь $user->name $user->surname ($user->email) зарегистрировался на сайте.");
                 Notify::sendMail('userActivated',array('name'=>$user->fullname,'email'=>$user->email,'password'=>$post['password']),$user->email);
                 if(X3::user()->isGuest()){

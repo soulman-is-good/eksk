@@ -1,60 +1,7 @@
 #!/usr/bin/php
 <?php
-declare (ticks = 1);
-if(PHP_VERSION_ID>50300)
-    pcntl_signal_dispatch();
-
-$stop_server = false;
-//system signal handler
-function sigHandler($signo) {
-  global $stop_server;
-  switch($signo) {
-    case SIGTERM: {
-      $stop_server = true;
-      break;
-    }
-    default: {
-      //все остальные сигналы
-    }
-  }
-}
-pcntl_signal(SIGTERM, "sigHandler");
-
 define('ROOT','/var/www');
 $baseDir = dirname(__FILE__);
-//OUTPUT Redefinition
-ini_set('error_log',ROOT . '/application/log/sms-error.log');
-fclose(STDIN);
-fclose(STDOUT);
-fclose(STDERR);
-$date = date('d_m_Y');
-$STDIN = fopen('/dev/null', 'r');
-$STDOUT = fopen(ROOT . "/application/log/sms$date.log", 'ab');
-$STDERR = fopen(ROOT . "/application/log/sms$date.log", 'ab');
-
-$pid = pcntl_fork();
-
-$child_processes = array();
-if ($pid == -1) {
-    fwrite($STDERR, date('d.m.Y H:i:s') . "> Error creating child process...");
-    exit();
-} elseif ($pid) {
-    $child_processes[$pid] = true;
-} else {
-    $pid = getmypid();
-    //TODO: дочерний процесс - тут рабочая нагрузка
-    exit;
-}
-$status = false;
-while ($signaled_pid = pcntl_waitpid(-1, $status, WNOHANG)) {
-    if ($signaled_pid == -1) {
-        $child_processes = array();
-        break;
-    } else {
-        unset($child_processes[$signaled_pid]);
-    }
-}
-
 $config = array('host'=>'89.111.21.7','port'=>'2345','login'=>'eokz','password'=>'62d96e');
 $config = json_decode(file_get_contents(ROOT."/smsconfig.json"), 1);
 if (empty($config) || !isset($config['mysql']))
@@ -90,8 +37,9 @@ $smpp = new SmppClient($transport);
 $smpp->debug = true;
 $transport->debug = true;
 
+
 $from = new SmppAddress('eksk', SMPP::TON_ALPHANUMERIC);
-while (!$stop_server) {
+while (1) {
     $q = $db->query("
         SELECT id,
         `{$attributes['phone']}` AS `phone`,`{$attributes['message']}` AS `message`,`{$attributes['sender']}` AS `sender`, COUNT(0) AS `cnt`
@@ -123,7 +71,7 @@ while (!$stop_server) {
             $dayb = mktime(0,0,0,(int)date('m'),(int)date('j'),(int)date('Y'));
             $daye = mktime(23,59,59,(int)date('m'),(int)date('j'),(int)date('Y'));
             $sent = $db->fetch("SELECT COUNT(0) `cnt` FROM `$table` WHERE phone='{$model['phone']}' AND status=0 AND sent_at BETWEEN $dayb AND $daye");//sent sms
-            if($user && ($mongo==null || is_null($mongodb->online->findOne(array('user_id'=>$user['id'])))) && $sent['cnt']<=$user['smsCount']){
+            if($user && ($mongo==null || $mongodb->online->count(array('user_id'=>$user['id']))!=0) && $sent['cnt']<=$user['smsCount']){
                 $time = explode('-',$user['smsTime']);
                 $f = explode(':',$time[0]);$f = (int)$f[0] * 60 + (int)$f[1];
                 $t = explode(':',$time[1]);$t = (int)$t[0] * 60 + (int)$t[1];

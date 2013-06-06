@@ -48,7 +48,8 @@ class X3_MongoConnection extends X3_Component {
     }
 
     public function connect($config = array()) {
-        if(self::$_db !== NULL || !class_exists('Mongo')) return false;
+        if(self::$_db !== NULL) return true;
+        if(!class_exists('Mongo')) return false;
         if(empty($config)) $config = $this->config;
         $server  = (isset($config['user']))?$config['user']:'';
         $server .= (isset($config['password']))?':'.$config['password']:'';
@@ -56,7 +57,7 @@ class X3_MongoConnection extends X3_Component {
         $server .= (isset($config['host']))?$config['host']:'localhost';
         $dbname = (isset($config['database']))?$config['database']:'local';
         try{
-            $connection = new Mongo($server);        
+            $connection = new Mongo($server);
         }catch(Exception $e){
             if(X3_DEBUG)
                 throw new X3_Exception($e->getMessage(),500);
@@ -70,6 +71,7 @@ class X3_MongoConnection extends X3_Component {
         }if(false===(self::$_db = $connection->selectDB($dbname))){
             throw new X3_Exception("Could not connect to database", 500);
         }
+        return true;
     }
 
     public function validate() {

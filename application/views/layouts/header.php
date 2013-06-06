@@ -25,7 +25,7 @@ $form = new Form();
 <? else: ?>
 <div class="fright user-block">
     <a class="fright quit" href="/user/logout.html"><img src="/images/quit.png" title="Выход" alt="X" /></a>
-    <a class="user" href="/user/"><?=X3::user()->fullname?></a>
+    <a class="user" href="/user/<?=X3::user()->id?>.html"><?=X3::user()->fullname?></a>
 </div>
 <div class="fleft inline-block">
     <?=$form->start(array('action'=>'/search.html'))?>
