@@ -20,6 +20,7 @@ $errors = array_merge($errors,$address->getTable()->getErrors());
         //echo $form->renderPartial(array('email'=>X3::translate('Ваш E-mail'),'password'=>X3::translate('Пароль')));
         echo $form->renderPartial(array('email'=>X3::translate('Ваш E-mail или мобильный телефон'),'password'=>X3::translate('Пароль')));
         ?>
+            <tr><td align="right"><a style="font-size: 12px;" href="/user/recover.html">Восстановить пароль</a></td><td colspan="2"></td></tr>
             <tr><td align="center" colspan="3"><div class="wrapper inline-block"><button type="submit"><?=X3::translate('Войти');?></button></div></td></tr>
         </table>
         <?=$form->end()?>
