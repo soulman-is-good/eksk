@@ -369,6 +369,8 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
                 $pass = false;
             }
             $user->getTable()->acquire($_POST['User']);
+            unset($_POST['User']['password']);
+            unset($_POST['User']['password_repeat']);
             $address->getTable()->acquire($_POST['User_Address']);
             $user->role = 'user';
             $user->status = 0;
@@ -378,6 +380,8 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             }
             if($user->password != $user->password_repeat){
                 $user->addError('password_repeat', X3::translate('Пароли не совпадают'));
+            }else{
+                $user->password = md5($user->password_repeat);
             }
             if(trim($address->flat)=='' || preg_match("/^[0-9A-Za-z]+$/", $address->flat)==0){
                 $address->addError('flat', X3::translate('Нужно ввести номер квартиры'));
@@ -479,10 +483,18 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             $address->user_id = $user->id;
         }
         if(isset($_POST['User'])){
+            $password = false;
+            if($user->password != ''){
+                $password = md5($_POST['User']['password']);
+                unset($_POST['User']['password']);
+            }
             $post = $_POST['User'];
             $user->getTable()->acquire($post);
             if($user->password == ''){
                 $user->addError('password', X3::translate('Нужно задать пароль'));
+            }
+            if($password!==false && $user->password !== $password){
+                $user->addError('password',X3::translate('Пароль указан не верно'));
             }
             if($user->name == ''){
                 if($user->role == 'ksk')
