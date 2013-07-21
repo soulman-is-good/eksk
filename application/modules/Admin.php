@@ -96,7 +96,7 @@ class Admin extends X3_Module {
         if(X3::user()->superAdmin){
             echo json_encode(array(
                 '/admin/list/module/Menu'=>'Меню',
-                '/admin/list/module/Page'=>'Тестовые страницы',
+                '/admin/list/module/Page'=>'Текстовые страницы',
                 '/admin/list/module/Notify'=>'Письма',
                 '/admin/list/module/Sms'=>'Шаблоны СМС',
                 '/admin/list/module/Sms_Stack'=>'Очередь СМС рассылки',

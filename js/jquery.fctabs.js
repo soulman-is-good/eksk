@@ -26,8 +26,8 @@ $.fn.fctabs = function(hash){
                 return false;
             $(self).find('[href="'+hash+'"]').removeClass('active').parent().removeClass('active');
             $(self).find('[href="'+href+'"]').addClass('active').parent().addClass('active');
-            $(hash).css('display','none');
-            $(href).css('display','block');
+            $(hash).slideUp('fast');//.css('display','none');
+            $(href).slideDown('fast');//css('display','block');
             hash = href;
             location.href = hash;
             $(document).scrollTop(0);

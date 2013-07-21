@@ -401,7 +401,7 @@ class Vote extends X3_Module_Table {
             $userset = X3::db()->fetch("SELECT * FROM user_settings us WHERE user_id='{$user['id']}'");
             if($userset['mailVote'])
                 Notify::sendMail('newVote', array('text'=>$model->title,'name'=>$user['username'],'from'=>X3::user()->fullname), $user['email']);
-            if($userset['smsVote'])
+            if($userset['smsVote'] && X3::user()->isAdmin())
                 Notify::sendSms('newVote', $user['phone'], array('text'=>$model->title,'name'=>X3::user()->fullname));
         }
     }
