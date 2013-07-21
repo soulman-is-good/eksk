@@ -31,8 +31,8 @@ class Uploads extends X3_Module_Table {
     public function beforeAction(&$action) {
         if ($this->controller->action == 'captcha' || $this->controller->action == 'get'  || $this->controller->action == 'excel')
             return true;
-        if(!X3_DEBUG && !X3::user()->isAdmin())
-            throw new X3_404();
+//        if(!X3_DEBUG && !X3::user()->isAdmin())
+//            throw new X3_404();
         $act = $action;
         //$act = str_replace('action', '', $act);
         $resize = new Resize($act);

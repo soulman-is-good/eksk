@@ -93,7 +93,7 @@ class User extends X3_Module_Table {
     public function filter() {
         return array(
             'allow'=>array(
-                '*'=>array('login','logout','deny','add','rank'),
+                '*'=>array('login','logout','deny','add','rank','recover'),
                 'user'=>array('index','edit','logout','password','list'),
                 'ksk'=>array('index','edit','logout','password','list','send','block','unblock'),
                 'admin'=>array('index','edit','admins','logout','password','delete','list','block','send','block','unblock')
@@ -127,11 +127,11 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
     }
     
     public function isOnline() {
-        $online = null;
+        $online = 0;
         if(X3::app()->hasComponent('mongo') && X3::mongo()!=null){
-            $online = X3::mongo()->query(array('online:findOne'=>array('user_id'=>$this->id)));
+            $online = X3::mongo()->query(array('online:count'=>array('user_id'=>"$this->id")));
         }
-        return !is_null($online);
+        return 0 != $online;
     }
     
     public static function isUserOnline($id) {
@@ -148,7 +148,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
         else
             $id = X3::user()->id;
         $user = User::getByPk($id);
-        if($user == null || ($user->role == 'admin' && !X3::user()->isAdmin()) || (X3::user()->isUser() && $user->role=='ksk' && !self::isMyKsk($id)) || (X3::user()->isUser() && $user->role=='user' && !self::isMyNeibor($id)))
+        if($user == null || ($user->role == 'admin' && !X3::user()->isAdmin()) || (X3::user()->isUser() && $user->role=='ksk' && !self::isMyKsk($id)) || (X3::user()->isUser() && $user->role=='user' && !self::isMyNeibor($id) && X3::user()->id != $user->id))
             throw new X3_404();
         $this->template->render('@views:site:index.php',array('user'=>$user));
     }
@@ -237,21 +237,22 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             }
             $data = $_POST['User_Settings'];
             $profile->getTable()->acquire($data);
-            $profile->mailWarning = (int)isset($data['mailWarning']);
-            $profile->smsWarning = (int)isset($data['smsWarning']);
-            $profile->mailMessages = (int)isset($data['mailMessages']);
-            $profile->smsMessages = (int)isset($data['smsMessages']);
-            $profile->mailForum = (int)isset($data['mailForum']);
-            $profile->smsForum = (int)isset($data['smsForum']);
-            $profile->mailVote = (int)isset($data['mailVote']);
-            $profile->smsVote = (int)isset($data['smsVote']);
-            $profile->mailReport = (int)isset($data['mailReport']);
-            $profile->smsReport = (int)isset($data['smsReport']);
+            if(isset($data['smsTime'])){
+                $hash = '#mail-settings';
+                $profile->mailWarning = (int)isset($data['mailWarning']);
+                $profile->smsWarning = (int)isset($data['smsWarning']);
+                $profile->mailMessages = (int)isset($data['mailMessages']);
+                $profile->smsMessages = (int)isset($data['smsMessages']);
+                $profile->mailForum = (int)isset($data['mailForum']);
+                $profile->smsForum = (int)isset($data['smsForum']);
+                $profile->mailVote = (int)isset($data['mailVote']);
+                $profile->smsVote = (int)isset($data['smsVote']);
+                $profile->mailReport = (int)isset($data['mailReport']);
+                $profile->smsReport = (int)isset($data['smsReport']);
+            }
             if(!$profile->save() && X3::user()->isAdmin()){
                 //echo '<h1>Это сообщение видят только администраторы: '.X3_HTML::errorSummary($profile).' '.X3::db()->getErrors();
             }
-            if(isset($data['smsTime']))
-                $hash = '#mail-settings';
         }
         $address_errors = array();
         if(isset($_POST['Address'])){
@@ -264,9 +265,9 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
                         $address = User_Address::get(array('user_id'=>$id,'id'=>$adr['id']),1);
                     }else{
                         $address = new User_Address;
-                        if(X3::user()->isKsk() && X3::db()->count("SELECT id FROM user_address WHERE user_id=$id AND house='".trim($adr['house'])."'")>0)
+                        if(X3::user()->isKsk() && X3::db()->count("SELECT id FROM user_address WHERE user_id=$id AND house='".trim($adr['house'])."' AND status=1")>0)
                             continue;
-                        if(X3::user()->isKsk() && (FALSE!=($e = X3::db()->fetch("SELECT u.name AS `name` FROM user_address a INNER JOIN data_user u ON u.id=a.user_id WHERE role='ksk' AND user_id<>$id AND house='".trim($adr['house'])."'")))){
+                        if(X3::user()->isKsk() && (FALSE!=($e = X3::db()->fetch("SELECT u.name AS `name` FROM user_address a INNER JOIN data_user u ON u.id=a.user_id WHERE role='ksk' AND user_id<>$id AND house='".trim($adr['house'])."' AND status=1")))){
                             $address_errors[] = strtr(X3::translate("Дом номер {number} зарегистрирован за '{ksk}'"),array('{number}'=>$adr['house'],'{ksk}'=>$e['name']));
                             continue;
                         }
@@ -392,7 +393,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
                 $pass = false;
             }
             if(($a = array_pop(X3::db()->fetch("SELECT '$address->house' IN (SELECT house FROM user_address WHERE region_id='$address->region_id')")))==0){
-                var_dump("SELECT '$address->house' IN (SELECT id FROM user_address WHERE region_id='$address->region_id')",$a);exit;
+//                var_dump("SELECT '$address->house' IN (SELECT id FROM user_address WHERE region_id='$address->region_id')",$a);exit;
                 $address->addError('house', X3::translate('Нужно выбрать дом'));
                 $pass = false;
             }
@@ -423,9 +424,55 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
     }
     
     public function actionLogout() {
+        $sid = X3_Session::getInstance()->getSessionId();
         if(X3::app()->user->logout()){
+            if(X3::app()->hasComponent('mongo') && X3::mongo()!=null){
+                X3::mongo()->query(array('online:remove'=>array('_id'=>$sid)));
+            }
             $this->controller->redirect('/');
         }
+    }
+    
+    public function actionRecover() {
+        $err = false;
+        if(!X3::user()->isGuest()) {
+            throw new X3_404();
+        }
+        if(isset($_GET['key'])){
+            $key = X3::db()->validateSQL($_GET['key']);
+            $user = X3::db()->fetch("SELECT * FROM data_user WHERE MD5(CONCAT(`akey`,'Recover',`lastbeen_at`))='$key'");
+            if($user){
+                if(isset($_POST['passwd'])){
+                    $p1 = $_POST['passwd'];$p2 = $_POST['passwd_rpt'];
+                    if($p1 === $p2){
+                        User::update(array('password'=>md5($p2),'lastbeen_at'=>time()),array('id'=>$user['id']));
+                        $this->redirect('/page/recover_done.html');
+                        exit;
+                    }else
+                        $err = X3::translate('Пароли не совпадают!');
+                }
+                $this->template->render('recover_form',array('err'=>$err));
+            } else
+                throw new X3_404();
+        }else if(isset($_POST['User'])){
+            $email = X3::db()->validateSQL($_POST['User']['email']);
+            $user = User::get(array('email'=>$email),1);
+            if($user) {
+                $time = time();
+                $user->lastbeen_at = $time;
+                $user->save();
+                $key = md5($user->akey . 'Recover' . $time);
+                if(false !== Notify::sendMail('PasswordRecover',array('name'=>$user->fullName,'link'=>X3::app()->baseUrl . '/user/recover/key/'.$key),$user->email)){
+                    $this->redirect('/page/recover_success.html');
+                    exit;
+                }else{
+                    $err = X3::translate('Не удалось отправить письмо. Попробуйте позднее.');
+                }
+            }else {
+                $err = X3::translate('Пользователя с таким E-Mail не существует.');
+            }
+        }
+        $this->template->render('recover',array('user'=>$user,'error'=>$err));
     }
     
     /**
@@ -519,6 +566,9 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
                 $address->save();
             }
             if(empty($errors) && $user->save()){
+                $up = new User_Settings();
+                $up->user_id = $user->id;
+                $up->save();
                 Notify::sendMessage("Пользователь $user->name $user->surname ($user->email) зарегистрировался на сайте.");
                 Notify::sendMail('userActivated',array('name'=>$user->fullname,'email'=>$user->email,'password'=>$post['password']),$user->email);
                 if(X3::user()->isGuest()){
@@ -533,7 +583,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
     }
 
     public function beforeValidate() {
-        if(isset($this->id) && (!isset($_POST['User']['password']) || $_POST['User']['password']=='') && (!isset($_POST['Change']['password_old']) || $_POST['Change']['password_old']=='') ){
+        if(isset($this->id) && (!isset($_POST['User']['password']) || $_POST['User']['password']=='') && (!isset($_POST['Change']['password_new']) || $_POST['Change']['password_new']=='')){
             $user = User::newInstance()->table->select('password')->where("id=$this->id")->asArray(true);
             $this->password = $user['password'];
             $_POST['notouch']=true;
@@ -545,7 +595,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
     }
 
     public function afterValidate() {
-        if(isset($_POST['User']['password']) && $_POST['User']['password']!='' && !isset($_POST['notouch'])) {
+        if(isset($_POST['User']['password']) && $_POST['User']['password']!='' && !isset($_POST['notouch']) && isset($_POST['Change']['password_new']) && $_POST['Change']['password_new']!='') {
             $this->password = md5($_POST['User']['password']);
         }
     }

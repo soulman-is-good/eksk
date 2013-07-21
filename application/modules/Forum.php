@@ -390,7 +390,7 @@ class Forum extends X3_Module_Table {
                     if($userset['mailForum'])
                         $msg = Notify::sendMail('forumAnswer', array('name'=>$to['username'],'from'=>$from->getFullname(),'time'=>date('H:i',$mes->created_at).', '.I18n::date($mes->created_at,'ru'),'text'=>nl2br($mes->content),
                             'forum'=>$forum->title,'link'=>X3::app()->baseUrl . '/forum/'.$forum->id.'.html'), $to['email']);
-                    if($userset['smsForum'])
+                    if($userset['smsForum'] && X3::user()->isAdmin())
                         Notify::sendSms('forumAnswer',$to['phone'], array('name'=>$from->getFullname(),'forum'=>$forum->title));
                 }
                 echo json_encode (array('status'=>'ok','message'=>X3::translate('Сообщение успешно отправлено')));
@@ -492,7 +492,7 @@ class Forum extends X3_Module_Table {
                 $uids[] = $user['id'];
                 Notify::sendMail('newForum', array('text'=>$model->title,'name'=>$user['username'],'from'=>X3::user()->fullname,'link'=>X3::app()->baseUrl . '/forum/'.md5($model->title.$model->id).'.html'), $user['email']);
             }
-            if($userset['smsForum'])
+            if($userset['smsForum'] && X3::user()->isAdmin())
                 Notify::sendSms('newForum', $user['phone'], array('forum'=>$model->title,'name'=>X3::user()->fullname));
         }
     }
