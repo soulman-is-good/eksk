@@ -1,4 +1,3 @@
-#!/usr/bin/php
 <?php
 define('ROOT','/var/www');
 $baseDir = dirname(__FILE__);
@@ -72,26 +71,19 @@ while (1) {
         try{
             $message = $model['message'];
             $phone = implode(' ',array(substr($model['phone'], 1,3),substr($model['phone'], 4,3),substr($model['phone'], 7,2),substr($model['phone'], 9,2)));
-            $user = $db->fetch("SELECT u.id, smsTime, smsCount FROM user_settings s INNER JOIN data_user u ON u.id=s.user_id WHERE u.phone LIKE '$phone'");
-            $mongo = null;
+            $user = $db->fetch("SELECT u.id, smsTime, smsCount,last_action FROM user_settings s INNER JOIN data_user u ON u.id=s.user_id WHERE u.phone LIKE '$phone'");
             log_msg("Trying sms to $phone");
-            try {
-                $mongo = new Mongo("localhost");
-                $mongodb = $mongo->selectDB('eksk');
-            }catch(Exception $e){
-                log_msg("Mongo init error: ".$e->getMessage());
-            }
             $dayb = mktime(0,0,0,(int)date('m'),(int)date('j'),(int)date('Y'));
             $daye = mktime(23,59,59,(int)date('m'),(int)date('j'),(int)date('Y'));
             $sent = $db->fetch("SELECT COUNT(0) `cnt` FROM `$table` WHERE phone='{$model['phone']}' AND status=0 AND sent_at BETWEEN $dayb AND $daye");//sent sms
-            if($user && ($mongo==null || $mongodb->online->count(array('user_id'=>$user['id']))==0) && $sent['cnt']<$user['smsCount']){
+            if($user && time() - $user['last_action'] > 300 && $sent['cnt']<$user['smsCount']){
                 $time = explode('-',$user['smsTime']);
                 $f = explode(':',$time[0]);$f = (int)$f[0] * 60 + (int)$f[1];
                 $t = explode(':',$time[1]);$t = (int)$t[0] * 60 + (int)$t[1];
                 $curtime = (int)date("H") * 60 + (int)date("i");
                 $now = date("H:i");
                 echo "===========================\r\ntime:$time[0]-$time[1],now:$now\r\n$f < $curtime < $t\r\n===================================\r\n\r\n";
-                if(($f < $t && $curtime > $f && $curtime <= $t) || ($f >= $t && ( ($f<=$curtime && $curtime<1440) || (0<=$curtime && $curtime<=$t) ))) {
+                if(($f <= $t && $curtime > $f && $curtime <= $t) || ($f >= $t && ( ($f<=$curtime && $curtime<1440) || (0<=$curtime && $curtime<=$t) ))) {
                     $res = 0;
                     if($model['cnt']>1){
                         log_msg("\t...{$model['cnt']} events.");
@@ -107,7 +99,7 @@ while (1) {
                     $encodedMessage = iconv('UTF-8', "UTF-16BE", $message);
                     $to = new SmppAddress($model['phone'], SMPP::TON_INTERNATIONAL,SMPP::NPI_E164);
                     $id = $smpp->sendSMS($from, $to, $encodedMessage,null,SMPP::DATA_CODING_UCS2);
-                    log_msg("Message $id sent to $to");
+                    log_msg("Message $id sent to {$model['phone']}");
                 }
             }else{
                 if(!$user)

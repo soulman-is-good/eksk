@@ -90,6 +90,7 @@ jQuery.expr[':'].contains = function(a, i, m) {
             container.html('');
             container.unbind('click');
             options.html('');
+            options.css({'height':'auto','overflow-y':'visible','overflow-x':'visible'});
             selected.html('');
             this.draw();
         }
@@ -260,6 +261,10 @@ jQuery.expr[':'].contains = function(a, i, m) {
                             container.removeClass('loading');
                         }
                     }
+                });
+                input.bind('change',function(){
+                    var val = $(this).val().replace(/[^\w\s]/,'');
+                    options.find('.option:contains("'+val+'")').click();
                 });
                 container
                 //    .append(self)
