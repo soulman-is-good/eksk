@@ -91,11 +91,12 @@ $errors = array_merge($errors,$address->getTable()->getErrors());
             </tr>
             <tr>
                 <td class="label">
-                    <label><?=X3::translate('Введите код на картинке');?></label>
+                    <label><?=strtr(X3::translate('Выберите {some} число'),array('{some}'=>X3::user()->loginMax?X3::translate('наибольшее'):X3::translate('наименшее')));?></label>
                 </td>
                 <td class="field" colspan="2">
                     <div class="wrapper inline-block"><input name="captcha" id="captcha" value="" style="width:167px" type="text" /></div>
                     <a href="#update" onclick="$(this).children('img').attr('src','/uploads/captcha.gif?F5='+Math.random()*100);return false;"><img width="178" height="28" src="/uploads/captcha.gif" /></a>
+                    <img src="/user/captcha1" />
                 </td>
             </tr>
             <tr>

@@ -74,11 +74,13 @@ class City extends X3_Module_Table {
                 $q = X3::db()->query($f);
                 if(is_resource($q))
                 while($a = mysql_fetch_assoc($q)){
-                    $houses[] = $a['house'];
+                    if(trim($a['house']) != "")
+                        $houses[] = $a['house'];
                 }
                 $houses = array_unique($houses);
                 asort($houses);
-                $result[] = array('id'=>$reg['id'],'title'=>$reg['title'],'houses'=>$houses);
+                $houses = array_diff($houses, array(""));
+                $result[] = array('id'=>$reg['id'],'title'=>$reg['title'],'houses'=>  array_values($houses));
             }
             header('Content-Type: application/json',true,200);
             echo json_encode($result);

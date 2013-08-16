@@ -19,6 +19,7 @@ class Starter extends X3_Component {
         'user/deny',
         'user/add',
         'user/recover',
+        'user/captcha1',
         'uploads/captcha',
         'page/*',
         'city/*',
@@ -46,14 +47,17 @@ class Starter extends X3_Component {
             $controller = 'user';
             $action = 'login';
         }
-        if(X3::app()->hasComponent('mongo') && X3::mongo()!=null){
-            $time = time() - 18000; //5 minutes
-            X3::mongo()->query(array('online:remove'=>array('time'=>array('$lt'=>$time))));
-            if(!X3::user()->isGuest()){
-                X3::mongo()->query(array('online:save'=>array('_id'=>X3_Session::getInstance()->getSessionId(),'user_id'=>X3::user()->id,
-                    'time'=>time(),'ip'=>$_SERVER['REMOTE_ADDR'],'user_agent'=>$_SERVER['HTTP_USER_AGENT'],'last_action'=>$_SERVER['REQUEST_URI'])));
-            }
+        if(!X3::user()->isGuest()) {
+            X3::db()->query("UPDATE data_user SET last_action=".time()." WHERE id=".X3::user()->id);
         }
+//        if(X3::app()->hasComponent('mongo') && X3::mongo()!=null){
+//            $time = time() - 18000; //5 minutes
+//            X3::mongo()->query(array('online:remove'=>array('time'=>array('$lt'=>$time))));
+//            if(!X3::user()->isGuest()){
+//                X3::mongo()->query(array('online:save'=>array('_id'=>X3_Session::getInstance()->getSessionId(),'user_id'=>X3::user()->id,
+//                    'time'=>time(),'ip'=>$_SERVER['REMOTE_ADDR'],'user_agent'=>$_SERVER['HTTP_USER_AGENT'],'last_action'=>$_SERVER['REQUEST_URI'])));
+//            }
+//        }
         $this->stopBubbling(__METHOD__);
         if(in_array($controller . "/" . $action, $this->admin)){
             $_GET['module'] = ucfirst($controller);

@@ -34,6 +34,7 @@ class User extends X3_Module_Table {
         'akey'=>array('string[255]','default'=>''),
         'date_of_birth'=>array('integer[11]','default'=>'0'),
         'rank'=>array('integer[11]','default'=>'0'),
+        'last_action'=>array('datetime','default'=>'0'),
         'lastbeen_at'=>array('datetime','default'=>'0'),
         'created_at'=>array('datetime','default'=>'0'),
         'status'=>array('integer[1]','unsigned','default'=>'0'),
@@ -42,7 +43,7 @@ class User extends X3_Module_Table {
         'password_new'=>array('string[6|50]','password','default'=>'','unused'),
         'password_repeat'=>array('string[50]','password','default'=>'','unused'),
         'captcha'=>array('string[255]','default'=>'','unused'),
-        'iagree'=>array('boolean','default'=>'0','unused'),
+        'iagree'=>array('boolean','default'=>'1','unused'),
     );
     
     public function onValidate($attr,$pass) {
@@ -128,18 +129,19 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
     
     public function isOnline() {
         $online = 0;
-        if(X3::app()->hasComponent('mongo') && X3::mongo()!=null){
-            $online = X3::mongo()->query(array('online:count'=>array('user_id'=>"$this->id")));
-        }
-        return 0 != $online;
+//        if(X3::app()->hasComponent('mongo') && X3::mongo()!=null){
+//            $online = X3::mongo()->query(array('online:count'=>array('user_id'=>"$this->id")));
+//        }
+        return time() - $this->last_action < 300;
     }
     
     public static function isUserOnline($id) {
         $online = null;
-        if(X3::app()->hasComponent('mongo') && X3::mongo()!=null){
-            $online = X3::mongo()->query(array('online:findOne'=>array('user_id'=>$id)));
-        }
-        return !is_null($online);
+//        if(X3::app()->hasComponent('mongo') && X3::mongo()!=null){
+//            $online = X3::mongo()->query(array('online:findOne'=>array('user_id'=>$id)));
+//        }
+        $user = User::getByPk((int)$id);
+        return time() - $user->last_action < 300;
     }
     
     public function actionIndex() {
@@ -263,7 +265,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
                 }else if(trim($adr['flat'])!='' && trim($adr['house'])!=''){
                     if($adr['id']>0){
                         $address = User_Address::get(array('user_id'=>$id,'id'=>$adr['id']),1);
-                    }else{
+                    } else {
                         $address = new User_Address;
                         if(X3::user()->isKsk() && X3::db()->count("SELECT id FROM user_address WHERE user_id=$id AND house='".trim($adr['house'])."' AND status=1")>0)
                             continue;
@@ -310,6 +312,8 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
         
         $this->template->render('edit',array('user'=>$user,'profile'=>$profile,'hash'=>$hash,'adrerrors'=>$address_errors));
     }
+    
+    
     
     public function actionBlock() {
         if(X3::user()->isUser() || !isset($_GET['id']))
@@ -363,6 +367,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
         $u = array('email'=>'','password'=>'');
         $user = new User;
         $address = new User_Address;
+        $captcha = new MCaptcha();
         if(isset($_POST['captcha'])){
             $pass = true;
             if(md5(strtolower($_POST['captcha'])) != X3::user()->captcha['text']){
@@ -420,15 +425,24 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
                 $this->refresh();
             }
         }
-        $this->template->render('login',array('error'=>$error,'user'=>$user,'address'=>$address));
+        $captcha->generate();
+        $this->template->render('login',array('error'=>$error,'user'=>$user,'address'=>$address,'captcha'=>$captcha));
+    }
+    
+    public function actionCaptcha1(){
+        $captcha = new MCaptcha();
+        $captcha->renderNumber();
+        exit;
     }
     
     public function actionLogout() {
-        $sid = X3_Session::getInstance()->getSessionId();
+        $id = X3::user()->id;
         if(X3::app()->user->logout()){
-            if(X3::app()->hasComponent('mongo') && X3::mongo()!=null){
-                X3::mongo()->query(array('online:remove'=>array('_id'=>$sid)));
-            }
+            $t = time() - 301;
+            X3::db()->query("UPDATE data_user SET last_action=$t WHERE id=$id");
+//            if(X3::app()->hasComponent('mongo') && X3::mongo()!=null){
+//                X3::mongo()->query(array('online:remove'=>array('_id'=>$sid)));
+//            }
             $this->controller->redirect('/');
         }
     }
