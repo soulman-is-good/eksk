@@ -21,7 +21,7 @@ $errors = array_merge($errors,$address->getTable()->getErrors());
         echo $form->renderPartial(array('email'=>X3::translate('Ваш E-mail или мобильный телефон'),'password'=>X3::translate('Пароль')));
         ?>
             <tr><td align="right"><a style="font-size: 12px;" href="/user/recover.html">Восстановить пароль</a></td><td colspan="2"></td></tr>
-            <tr><td align="center" colspan="3"><div class="wrapper inline-block"><button type="submit"><?=X3::translate('Войти');?></button></div></td></tr>
+            <tr><td align="center" colspan="3"><div class="wrapper inline-block"><button name="login" type="submit"><?=X3::translate('Войти');?></button></div></td></tr>
         </table>
         <?=$form->end()?>
     </div>
@@ -91,12 +91,12 @@ $errors = array_merge($errors,$address->getTable()->getErrors());
             </tr>
             <tr>
                 <td class="label">
-                    <label><?=strtr(X3::translate('Выберите {some} число'),array('{some}'=>X3::user()->loginMax?X3::translate('наибольшее'):X3::translate('наименшее')));?></label>
+                    <label><?=$captcha->label?></label>
                 </td>
                 <td class="field" colspan="2">
-                    <div class="wrapper inline-block"><input name="captcha" id="captcha" value="" style="width:167px" type="text" /></div>
-                    <a href="#update" onclick="$(this).children('img').attr('src','/uploads/captcha.gif?F5='+Math.random()*100);return false;"><img width="178" height="28" src="/uploads/captcha.gif" /></a>
-                    <img src="/user/captcha1" />
+                    <?/*<div class="wrapper inline-block"><input name="captcha" id="captcha" value="" style="width:167px" type="text" /></div>
+                    <a href="#update" onclick="$(this).children('img').attr('src','/uploads/captcha.gif?F5='+Math.random()*100);return false;"><img width="178" height="28" src="/uploads/captcha.gif" /></a>*/?>
+                    <span><input type="radio" name="captcha" value="<?=$captcha->key1?>" /><img class="captcha_select" src="/uploads/captcha1.gif" width="100" /></span>&nbsp;<span><input type="radio" name="captcha" value="<?=$captcha->key2?>" /><img class="captcha_select" src="/uploads/captcha2.gif" width="100" /></span>
                 </td>
             </tr>
             <tr>
@@ -109,7 +109,7 @@ $errors = array_merge($errors,$address->getTable()->getErrors());
                     <?//$form->error('region_id')?>
                 </td>
             </tr>
-            <tr><td align="center" colspan="3"><div class="wrapper inline-block"><button type="submit"><?=X3::translate('Зарегистрироваться');?></button></div></td></tr>
+            <tr><td align="center" colspan="3"><div class="wrapper inline-block"><button name="register" type="submit"><?=X3::translate('Зарегистрироваться');?></button></div></td></tr>
         </table>
         <?=$form->end()?>
     </div>
@@ -117,6 +117,19 @@ $errors = array_merge($errors,$address->getTable()->getErrors());
 </div>
 <script>
     $(function(){
+        $('.captcha_select').each(function(){
+            var el = $(this).parent().children('input');
+            el.css({'opacity':'0','visibility':'hidden'})
+            $(this).data('el',el).css({'cursor':'pointer'}).on('click',function(e){
+                e.preventDefault();
+                if($(this).hasClass('active'))
+                    return false;
+                $('.captcha_select').removeClass('active');
+                $(this).addClass('active');
+                $(this).data('el').click();
+                return false;
+            });
+        })
         //$('#User_Address_region_id').val();
         $('#User_email').attr({'placeholder':'например +7 777 123 45 67 или 777 123 45 67'})
         
@@ -154,7 +167,7 @@ $errors = array_merge($errors,$address->getTable()->getErrors());
                 H.append(o);
             }
             H.data('fcselect').redraw();
-        })
+        });
         $('.city_id').change();
         <?if(!empty($errors)):?>
         $('.body').addClass('flipped');

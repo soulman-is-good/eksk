@@ -4,55 +4,76 @@ class MCaptcha extends X3_Component {
 
     const TYPE_LESS = 0;
     const TYPE_MORE = 1;
+    
+    const SUCCESS = 0;
+    const ERROR_WRONG_KEY = -1;
+    const ERROR_WRONG_NUMBER = -2;
+    const ERROR_OLD_SESSION = -3;
 
     private $key = 'X3.MCaptcha.';
-    public $updateAfter = 3;
-    
-    public function init() {
-        parent::init();
-    }
+    public $fontFile = "css/verdana.ttf";
+    public $backgroundFile = "images/captcha.png";
 
-    public function get() {
+    public function getCaptcha() {
         return X3_Session::read($this->key . 'captcha');
     }
 
-    public function set($captcha) {
+    public function setCaptcha($captcha) {
         X3_Session::write($this->key . 'captcha', $captcha);
     }
 
     public function getKey1() {
-        $captcha = $this->get();
-        if ($captcha == null)
-            $captcha = $this->generate();
+        $captcha = $this->getCaptcha();
         list($key1, $key2) = $captcha['keys'];
         return $key1;
     }
 
     public function getKey2() {
-        $captcha = $this->get();
-        if ($captcha == null)
-            $captcha = $this->generate();
+        $captcha = $this->getCaptcha();
         list($key1, $key2) = $captcha['keys'];
         return $key2;
     }
     
     public function getNumber1() {
-        $captcha = $this->get();
-        if ($captcha == null)
-            $captcha = $this->generate();
+        $captcha = $this->getCaptcha();
         list($key1, $key2) = $captcha['keys'];
         return $captcha[$key1];
     }
 
     public function getNumber2() {
-        $captcha = $this->get();
-        if ($captcha == null)
-            $captcha = $this->generate();
+        $captcha = $this->getCaptcha();
         list($key1, $key2) = $captcha['keys'];
         return $captcha[$key2];
     }
+    
+    public function getType() {
+        $captcha = $this->getCaptcha();
+        return $captcha['type'];
+    }
+    
+    public function getLabel() {
+        $ctype = array(X3::translate('наименшее'), X3::translate('наибольшее'));
+        return strtr(X3::translate('Выберите {some} число'),array('{some}'=>$ctype[$this->getType()]));
+    }
+    
+    public function checkByKey($key) {
+        $captcha = $this->getCaptcha();
+        if ($captcha == null)
+            return ERROR_OLD_SESSION;
+        list($key1, $key2) = $captcha['keys'];
+        if(!isset($captcha[$key]))
+            return self::ERROR_WRONG_KEY;
+        if($captcha['type'] == self::TYPE_LESS) {
+            if(($captcha[$key1] < $captcha[$key2] && $key === $key1) || ($captcha[$key1] > $captcha[$key2] && $key === $key2))
+                return self::SUCCESS;
+        } else { //self::TYPE_MORE
+            if(($captcha[$key1] > $captcha[$key2] && $key === $key1) || ($captcha[$key1] < $captcha[$key2] && $key === $key2))
+                return self::SUCCESS;
+        }
+        return self::ERROR_WRONG_NUMBER;
+    }
 
-    public function generate() {
+    public function regenerateCaptcha() {
         $captcha = array();
         $captcha['counter'] = 3;
         $captcha['type'] = rand(0, 1);
@@ -61,12 +82,12 @@ class MCaptcha extends X3_Component {
         $captcha['keys'] = array($key1, $key2);
         $captcha[$key1] = rand(100, 999);
         while ($captcha[$key1] === ($captcha[$key2] = rand(100, 999)));
-        $this->set($captcha);
+        $this->setCaptcha($captcha);
         return $captcha;
     }
 
     public function renderNumber($n = 0) {
-        ob_start();
+        $texrstr = 0;
         if ($n == 0)
             $textstr = $this->getNumber1();
         else
@@ -82,22 +103,20 @@ class MCaptcha extends X3_Component {
 
         // output error image
         $this->produceCaptchaImage($textstr);
-        
-        ob_end_flush();
     }
 
     private function produceCaptchaImage($text) {
         // constant values
-        $backgroundSizeX = 2000;
-        $backgroundSizeY = 350;
-        $sizeX = 200;
+        $backgroundSizeX = 178;
+        $backgroundSizeY = 28;
+        $sizeX = 100;
         $sizeY = 50;
-        $fontFile = "css/verdana.ttf";
+        $fontFile = $this->fontFile;
         $textLength = strlen($text);
 
         // generate random security values
-        $backgroundOffsetX = rand(0, $backgroundSizeX - $sizeX - 1);
-        $backgroundOffsetY = rand(0, $backgroundSizeY - $sizeY - 1);
+        $backgroundOffsetX = 0;//rand(0, $backgroundSizeX - $sizeX - 1);
+        $backgroundOffsetY = 0;//rand(0, $backgroundSizeY - $sizeY - 1);
         $angle = rand(-5, 5);
         $fontColorR = rand(0, 127);
         $fontColorG = rand(0, 127);
@@ -107,24 +126,18 @@ class MCaptcha extends X3_Component {
         $textX = rand(0, (int) ($sizeX - 0.9 * $textLength * $fontSize)); // these coefficients are empiric
         $textY = rand((int) (1.25 * $fontSize), (int) ($sizeY - 0.2 * $fontSize)); // don't try to learn how they were taken out
 
-        $gdInfoArray = gd_info();
-        if (!$gdInfoArray['PNG Support'])
-            return IMAGE_ERROR_GD_TYPE_NOT_SUPPORTED;
-
         // create image with background
-        $src_im = imagecreatefrompng("images/captcha.png");
+        $src_im = imagecreatefrompng($this->backgroundFile);
         if (function_exists('imagecreatetruecolor')) {
             // this is more qualitative function, but it doesn't exist in old GD
             $dst_im = imagecreatetruecolor($sizeX, $sizeY);
-            $resizeResult = imagecopyresampled($dst_im, $src_im, 0, 0, $backgroundOffsetX, $backgroundOffsetY, $sizeX, $sizeY, $sizeX, $sizeY);
+            $resizeResult = imagecopyresampled($dst_im, $src_im, 0, 0, 0, 0, $sizeX, $sizeY, $backgroundSizeX, $backgroundSizeY);
         } else {
             // this is for old GD versions
             $dst_im = imagecreate($sizeX, $sizeY);
             $resizeResult = imagecopyresized($dst_im, $src_im, 0, 0, $backgroundOffsetX, $backgroundOffsetY, $sizeX, $sizeY, $sizeX, $sizeY);
         }
 
-        if (!$resizeResult)
-            return IMAGE_ERROR_GD_RESIZE_ERROR;
 
         // write text on image
         if (!function_exists('imagettftext'))
@@ -141,8 +154,6 @@ class MCaptcha extends X3_Component {
         // free memory
         imagedestroy($src_im);
         imagedestroy($dst_im);
-
-        return IMAGE_ERROR_SUCCESS;
     }
 }
 ?>

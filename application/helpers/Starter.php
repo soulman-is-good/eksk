@@ -19,7 +19,8 @@ class Starter extends X3_Component {
         'user/deny',
         'user/add',
         'user/recover',
-        'user/captcha1',
+        'uploads/captcha1',
+        'uploads/captcha2',
         'uploads/captcha',
         'page/*',
         'city/*',
@@ -37,6 +38,7 @@ class Starter extends X3_Component {
     );
     
     public function init() {
+        //$captcha = new MCaptcha();var_dump($captcha->get());exit;
         $this->addTrigger('onStartApp');
         $this->addTrigger('onRender');
         $this->addTrigger('onEndApp');

@@ -147,6 +147,7 @@ working with Zuber.kz
         </div>
     </div>
     <script>
+    <?if(!X3::user()->isGuest()):?>
         var message_timeout = null;
         var message_count = function(){
             $.get('/message/count.html',function(m){
@@ -162,6 +163,7 @@ working with Zuber.kz
                 }
             },'json')
         }
+    <?endif;?>
         $(function(){
             $('.eksk-wnd:not(.noresize)').css('min-height',$('.body').height()+'px');
             message_count();
