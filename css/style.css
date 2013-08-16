@@ -438,6 +438,18 @@ Active/Passive buttons
 .user.login .head {
     position:relative;
 }
+.captcha_select {
+    border:2px solid #FFF;
+}
+.captcha_select.active {
+    border-color:#0077CC;
+    box-shadow: 0px 0px 3px #0077CC;
+    -webkit-box-shadow: 0px 0px 3px #0077CC;
+    -moz-box-shadow: 0px 0px 3px #0077CC;
+    transition: box-shadow 0.5s;
+    -webkit-transition: -webkit-box-shadow 0.5s;
+    -moz-transition: -moz-box-shadow 0.5s;
+}
 #login .head a {
     border-bottom-style: dashed;
     position: absolute;

@@ -29,7 +29,7 @@ class Uploads extends X3_Module_Table {
     }
     
     public function beforeAction(&$action) {
-        if ($this->controller->action == 'captcha' || $this->controller->action == 'get'  || $this->controller->action == 'excel')
+        if ($this->controller->action == 'captcha2' || $this->controller->action == 'captcha1' || $this->controller->action == 'captcha' || $this->controller->action == 'get'  || $this->controller->action == 'excel')
             return true;
 //        if(!X3_DEBUG && !X3::user()->isAdmin())
 //            throw new X3_404();
@@ -38,6 +38,18 @@ class Uploads extends X3_Module_Table {
         $resize = new Resize($act);
         exit;
         return false;
+    }
+    
+    public function actionCaptcha1(){
+        $captcha = new MCaptcha();
+        $captcha->renderNumber();
+        exit;
+    }
+    
+    public function actionCaptcha2(){
+        $captcha = new MCaptcha();
+        $captcha->renderNumber(1);
+        exit;
     }
     
     public function actionCaptcha() {

@@ -94,7 +94,7 @@ class User extends X3_Module_Table {
     public function filter() {
         return array(
             'allow'=>array(
-                '*'=>array('login','logout','deny','add','rank','recover'),
+                '*'=>array('login','logout','deny','add','rank','recover','captcha1','captcha2'),
                 'user'=>array('index','edit','logout','password','list'),
                 'ksk'=>array('index','edit','logout','password','list','send','block','unblock'),
                 'admin'=>array('index','edit','admins','logout','password','delete','list','block','send','block','unblock')
@@ -368,10 +368,13 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
         $user = new User;
         $address = new User_Address;
         $captcha = new MCaptcha();
-        if(isset($_POST['captcha'])){
+        if(isset($_POST['register'])) {
             $pass = true;
-            if(md5(strtolower($_POST['captcha'])) != X3::user()->captcha['text']){
-                $user->addError('captcha', X3::translate('Неверный код с картинки'));
+            if(!isset($_POST['captcha'])){
+                $user->addError('captcha', X3::translate('Выберите число'));
+                $pass = false;
+            }elseif($captcha->checkByKey($_POST['captcha']) !== MCaptcha::SUCCESS){
+                $user->addError('captcha', X3::translate('Выбрано некорректное число'));
                 $pass = false;
             }
             $user->getTable()->acquire($_POST['User']);
@@ -413,7 +416,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
                 }
             }
         }
-        if(!isset($_POST['captcha']) && isset($_POST['User'])){
+        if(isset($_POST['login'])) {
             $u = array_extend($u,$_POST['User']);
             $u['email'] = mysql_real_escape_string($u['email']);
             $u['password'] = mysql_real_escape_string($u['password']);
@@ -425,13 +428,8 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
                 $this->refresh();
             }
         }
-        $captcha->generate();
+        $captcha->regenerateCaptcha();
         $this->template->render('login',array('error'=>$error,'user'=>$user,'address'=>$address,'captcha'=>$captcha));
-    }
-    
-    public function actionCaptcha1(){
-        $captcha = new MCaptcha();
-        $captcha->renderNumber();
         exit;
     }
     
