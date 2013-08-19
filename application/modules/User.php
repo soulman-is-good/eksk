@@ -396,7 +396,11 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
                 $address->addError('flat', X3::translate('Нужно ввести номер квартиры'));
                 $pass = false;
             }
-            if(NULL == City_Region::getByPk($address->region_id)){
+            if(NULL == ($city = City::getByPk($address->city_id))){
+                $address->addError('region_id', X3::translate('Нужно выбрать город'));
+                $pass = false;
+            }
+            if(NULL == ($street = City_Region::getByPk($address->region_id))){
                 $address->addError('region_id', X3::translate('Нужно выбрать улицу'));
                 $pass = false;
             }
@@ -410,7 +414,11 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
                     $address->user_id = $user->id;
                     if($address->save()){
                         $link = base64_encode($user->akey . "|" . X3::user()->id);
-                        Notify::sendMail('welcomeUser',array('link'=>$link),$user->email);
+                        $ctitle = $city->title;
+                        $stitle = $street->title;
+                        $h = $address->house;
+                        $f = $address->flat;
+                        Notify::sendMail('welcomeUser',array('link'=>$link,'city'=>$ctitle, 'street'=>$stitle, 'house'=>$h, 'flat'=>$f),$user->email);
                         $this->redirect('/page/success.html');
                     }
                 }
@@ -540,6 +548,17 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
         if($user->role == 'ksk'){
             $address = new User_Address();
             $address->user_id = $user->id;
+        }elseif($user->role == 'user'){
+            $user->status = 1;
+            $user->save();
+            $userI = new UserIdentity($user->email, $user->password, false);
+            $error = $userI->login();
+            if(!is_string($error)){
+                User_Stat::add();
+                $this->redirect('/');
+            }else {
+                $user->addError('email', $error);
+            }
         }
         if(isset($_POST['User'])){
             $password = false;

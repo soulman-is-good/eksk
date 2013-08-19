@@ -48,7 +48,9 @@ $errors = array_merge($errors,$address->getTable()->getErrors());
         echo $form->renderPartial(array(
             'email'=>X3::translate('Ваш E-mail'),
             'password'=>X3::translate('Пароль'),
-            'password_repeat'=>X3::translate('Повторите пароль')));
+            'password_repeat'=>X3::translate('Повторите пароль'),
+            'phone'=>X3::translate('Номер Вашего мобильного телефона'),
+            ));
         ?>
             <tr>
                 <td class="label">
@@ -168,6 +170,46 @@ $errors = array_merge($errors,$address->getTable()->getErrors());
             }
             H.data('fcselect').redraw();
         });
+        function phone(el,o,t,cmsk,msk){
+            var val = el.val().split(' ');
+            var code = val.shift();
+            var phone = val.join(' ');
+            if(code.length>0 && o==5 && code.length < 5)
+                code = code + "_".repeat(5-code.length);
+            if(phone.length>0 && t==9 && phone.length < 9){
+                phone = phone + "_".repeat(9-phone.length);
+            }
+            if(phone.length>0 && t==18){
+                phone = phone.split(' ');
+                if(phone.length == 4){
+                    if(phone[2].length == 1)
+                        phone[2] += '_';
+                    if(phone[3].length < 6)
+                        phone[3] = phone[3] + "_".repeat(6-phone[3].length);
+                    phone[3] = '(' + phone[3] + ')';
+                }
+                phone = phone.join(' ');
+            }
+            var theid = el.attr('id') + '_Mask';
+            var in_code = $('<input />').data('elem',el).css({'width':'46px','padding-left':'0px','text-align':'right','margin-right':'5px'}).change(function(){
+                $(this).data('elem').updateVal();
+            }).attr({'type':'text','maxlength':o,'id':theid}).addClass('string').mask(cmsk).val(code)
+            .insertBefore(el);
+            var in_phone = $('<input />').data('elem',el).css({'width':'292px'}).change(function(){
+                $(this).data('elem').updateVal();
+            }).attr({'type':'text','maxlength':t}).addClass('string').mask(msk).val(phone)
+            .insertBefore(el);
+            el.data({'code':in_code,'phone':in_phone}).updateVal = function(){
+                var a = in_code.val();
+                var b = in_phone.val().replace(/[)(]/g, '');
+                if(a=='' && b=='')
+                    $(this).val('');
+                else
+                    $(this).val((a+' '+b).replace(/\_/g, ''));
+            }
+            el.css({opacity:0,width:0,height:0,position:'absolute','left':'-9999px'}).attr({tabindex:'-1'});
+        }
+        phone($('#User_phone'),3,9,"999","999 99 99");
         $('.city_id').change();
         <?if(!empty($errors)):?>
         $('.body').addClass('flipped');
