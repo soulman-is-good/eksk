@@ -11,9 +11,12 @@
  */
 class UserIdentity extends X3_User{
     
-    public function __construct($username,$password) {
+    public function __construct($username,$password,$md5=true) {
         $this->username = mysql_real_escape_string($username);
-        $this->password = md5($password);
+        if($md5)
+            $this->password = md5($password);
+        else
+            $this->password = $password;
         parent::__construct();
     }
     
