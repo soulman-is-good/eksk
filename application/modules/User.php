@@ -546,6 +546,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
             throw new X3_404();
         $address = null;
         if($user->role == 'ksk'){
+            X3::db()->query("DELETE FROM user_address WHERE user_id=$user->id");
             $address = new User_Address();
             $address->user_id = $user->id;
         }elseif($user->role == 'user'){
@@ -562,18 +563,17 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
         }
         if(isset($_POST['User'])){
             $password = false;
-            if($user->password != ''){
-                $password = md5($_POST['User']['password']);
-                unset($_POST['User']['password']);
-            }
             $post = $_POST['User'];
-            $user->getTable()->acquire($post);
-            if($user->password == ''){
+            if($post['password'] != ''){
+                $user->password = $password = md5($_POST['User']['password']);
+                $_POST['notouch'] = true;
+                unset($post['password']);
+            }else
                 $user->addError('password', X3::translate('Нужно задать пароль'));
-            }
-            if($password!==false && $user->password !== $password){
+            $user->getTable()->acquire($post);
+            /*if($password!==false && $user->password !== $password){
                 $user->addError('password',X3::translate('Пароль указан не верно'));
-            }
+            }*/
             if($user->name == ''){
                 if($user->role == 'ksk')
                     $user->addError('name', X3::translate('Введите название КСК'));
@@ -603,7 +603,7 @@ WHERE a2.user_id=$id AND a1.user_id<>a2.user_id AND `a2`.`city_id` = a1.city_id 
                 Notify::sendMessage("Пользователь $user->name $user->surname ($user->email) зарегистрировался на сайте.");
                 Notify::sendMail('userActivated',array('name'=>$user->fullname,'email'=>$user->email,'password'=>$post['password']),$user->email);
                 if(X3::user()->isGuest()){
-                    $u = new UserIdentity($user->email, $post['password']);
+                    $u = new UserIdentity($user->email, $password, false);
                     if($u->login())
                         $this->redirect('/');
                 }

@@ -24,12 +24,12 @@ class User_Address extends X3_Module_Table {
     );
     
     public function onValidate($attr,$pass) {
-        $pass = false;
+        /*$pass = false;
         if(($attr == 'mobile' || $attr == 'home' || $attr == 'work') && $this->$attr != '') {
             if(preg_match("/^[0-9]{3} [0-9]{3}.{0,1}[0-9]{2}.{0,1}[0-9]{2}$/",$this->$attr) == false){
                 $this->addError($attr,'Не корректно указан номер телефона.');
             }
-        }
+        }*/
     }
 
     public function fieldNames() {
