@@ -97,10 +97,6 @@ class User_Settings extends X3_Module_Table {
     public static function getByPk($pk, $class = __CLASS__,$asArray=false) {
         return parent::getByPk($pk, $class,$asArray);
     }
-    
-    public function beforeValidate() {
-
-    }
 
 }
 
