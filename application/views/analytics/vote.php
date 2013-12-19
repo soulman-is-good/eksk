@@ -20,7 +20,7 @@ $types = array(
             </ul>
             <div class="tab" id="vote">
                 <div class="stats">
-                    <b><?=X3::translate('Опросов');?>: <?=$count?></b> <a href="/uploads/excel/generate/vote.xls" class="excel"><span><?=X3::translate('Экспорт в Excel');?></span></a>
+                    <b><?=X3::translate('Опросов');?>: <?=$count?></b> <a href="/uploads/excel/generate/vote.xls" class="excel" target="_blank"><span><?=X3::translate('Экспорт в Excel');?></span></a>
                 </div>
                 <table class="admin-list">
                     <?foreach($models as $model):?>

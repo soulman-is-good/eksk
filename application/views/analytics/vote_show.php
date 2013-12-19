@@ -21,7 +21,7 @@ $total = X3::db()->count("SELECT id FROM vote_stat WHERE vote_id=$model->id");
             </ul>
             <div class="tab" id="vote">
                 <div class="stats">
-                    <b><?=X3::translate('Результаты голосования');?>:</b> <a href="/uploads/excel/generate/vote<?=$model->id?>.xls" class="excel"><span><?=X3::translate('Экспорт в Excel');?></span></a>
+                    <b><?=X3::translate('Результаты голосования');?>:</b> <a href="/uploads/excel/generate/vote<?=$model->id?>.xls" class="excel" target="_blank"><span><?=X3::translate('Экспорт в Excel');?></span></a>
                 </div>
                 <div id="ch_theme">
                     <div class="votelist mt-15">

@@ -12,7 +12,7 @@
             </ul>
             <div class="tab" id="ksk">
                 <div class="stats">
-                    <b><?=X3::translate('КСК');?>: <?=$count?></b> <a href="/uploads/excel/generate/ksk.xls" class="excel"><span><?=X3::translate('Экспорт в Excel');?></span></a>
+                    <b><?=X3::translate('КСК');?>: <?=$count?></b> <a href="/uploads/excel/generate/ksk.xls" class="excel" target="_blank"><span><?=X3::translate('Экспорт в Excel');?></span></a>
                 </div>
                 <table class="admin-list">
                     <?foreach($models as $model):
