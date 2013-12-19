@@ -285,8 +285,7 @@ function testFormula($sheet,$cell) {
                 }
                 $k++;
             }
-        }
-        if($type == 'vote'){
+        }elseif($type == 'vote'){
             $models = X3::db()->query("SELECT v.id, v.user_id, v.title, v.status, v.created_at, v.end_at, v.answer, u.name, u.kskname, u.surname, u.ksksurname FROM data_vote v INNER JOIN data_user u ON u.id=v.user_id");
             $j=0;
             $sheet->setCellValue("{$abs[$j++]}1", 'ID');$sheet->getColumnDimension("{$abs[$j]}")->setAutoSize(true);
